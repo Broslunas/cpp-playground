@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { Toolbar } from "@/components/playground/Toolbar";
 import { Editor } from "@/components/playground/Editor";
 import { StdinPanel } from "@/components/playground/StdinPanel";
@@ -14,6 +15,10 @@ import {
 import { TemplateSelectorModal } from "@/components/playground/TemplateSelectorModal";
 import { ShortcutsModal } from "@/components/playground/ShortcutsModal";
 import {
+  CustomLayoutModal,
+  DEFAULT_CUSTOM_LAYOUT,
+} from "@/components/playground/CustomLayoutModal";
+import {
   getProjectsByLanguage,
   saveLanguageProjects,
   getActiveProjectId,
@@ -24,7 +29,16 @@ import { generateShareUrl, decodeShareableState } from "@/lib/share";
 import { downloadSourceFile, generateCMakeLists, generateMakefile } from "@/lib/export";
 import { formatCode } from "@/lib/formatter";
 import { getLanguage } from "@/lib/languages";
-import { Project, CompileResponse, CompilerSettings, CodeTemplate, SupportedLanguage, PlaygroundLayout } from "@/types";
+import {
+  Project,
+  CompileResponse,
+  CompilerSettings,
+  CodeTemplate,
+  SupportedLanguage,
+  PlaygroundLayout,
+  CustomLayoutConfig,
+  PanelId,
+} from "@/types";
 
 interface PlaygroundWorkspaceProps {
   initialLanguage?: SupportedLanguage;
@@ -63,6 +77,11 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
   const [layout, setLayout] = useState<PlaygroundLayout>("standard");
   const [showStdin, setShowStdin] = useState(true);
 
+  // Custom layout modal & configuration
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+  const [customConfig, setCustomConfig] = useState<CustomLayoutConfig>(DEFAULT_CUSTOM_LAYOUT);
+  const [maximizedPanel, setMaximizedPanel] = useState<PanelId | null>(null);
+
   // Resizing state & persistence
   const [sidebarWidth, setSidebarWidth] = useState(260);
   // Standard layout (editor height % + stdin width %)
@@ -87,8 +106,14 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
     if (typeof window === "undefined") return;
     try {
       const savedLayout = localStorage.getItem("cpp_playground_layout");
-      if (savedLayout && ["standard", "two-column", "columns", "vertical"].includes(savedLayout)) {
+      if (savedLayout && ["standard", "two-column", "columns", "vertical", "custom"].includes(savedLayout)) {
         setLayout(savedLayout as PlaygroundLayout);
+      }
+      const savedCustom = localStorage.getItem("cpp_custom_layout");
+      if (savedCustom) {
+        try {
+          setCustomConfig(JSON.parse(savedCustom));
+        } catch {}
       }
       const savedStdin = localStorage.getItem("cpp_show_stdin");
       if (savedStdin !== null) {
@@ -125,8 +150,19 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
       "two-column": "Diseño 2 Columnas",
       columns: "Diseño 3 Columnas",
       vertical: "Diseño Vertical",
+      custom: "Diseño Personalizado",
     };
     showNotification(`${labels[newLayout]} activado ✓`);
+  };
+
+  const handleSaveCustomLayout = (newConfig: CustomLayoutConfig) => {
+    setCustomConfig(newConfig);
+    setLayout("custom");
+    try {
+      localStorage.setItem("cpp_custom_layout", JSON.stringify(newConfig));
+      localStorage.setItem("cpp_playground_layout", "custom");
+    } catch {}
+    showNotification("Diseño personalizado configurado ✓");
   };
 
   const handleToggleStdin = () => {
@@ -482,9 +518,11 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
         e.preventDefault();
         setIsShortcutsOpen(true);
       } else if (e.key === "Escape") {
+        setMaximizedPanel((prev) => (prev ? null : prev));
         setIsSettingsOpen(false);
         setIsTemplatesOpen(false);
         setIsShortcutsOpen(false);
+        setIsCustomModalOpen(false);
       }
     };
 
@@ -497,13 +535,28 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
   const effectiveShowStdin = !isWebPreview && showStdin;
 
   const editorPanel = (
-    <Editor
-      value={code}
-      onChange={setCode}
-      onRun={handleRun}
-      language={language}
-      readOnly={isRunning}
-    />
+    <div className="relative w-full h-full min-h-0 min-w-0 group/editor">
+      <Editor
+        value={code}
+        onChange={setCode}
+        onRun={handleRun}
+        language={language}
+        readOnly={isRunning}
+      />
+      <button
+        type="button"
+        onClick={() => setMaximizedPanel(maximizedPanel === "editor" ? null : "editor")}
+        className="absolute top-2 right-2 z-20 opacity-0 group-hover/editor:opacity-100 transition-opacity p-1 bg-zinc-900/90 border border-zinc-700/80 rounded text-zinc-400 hover:text-neon-green shadow-md"
+        title={maximizedPanel === "editor" ? "Restaurar editor (Esc)" : "Maximizar editor"}
+        aria-label={maximizedPanel === "editor" ? "Restaurar editor" : "Maximizar editor"}
+      >
+        {maximizedPanel === "editor" ? (
+          <Minimize2 className="w-3.5 h-3.5 text-neon-green" />
+        ) : (
+          <Maximize2 className="w-3.5 h-3.5" />
+        )}
+      </button>
+    </div>
   );
 
   const stdinPanel = (
@@ -511,6 +564,8 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
       value={stdin}
       onChange={setStdin}
       disabled={isRunning}
+      onMaximize={() => setMaximizedPanel(maximizedPanel === "stdin" ? null : "stdin")}
+      isMaximized={maximizedPanel === "stdin"}
     />
   );
 
@@ -521,8 +576,17 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
       onClear={() => setOutput(null)}
       language={language}
       code={code}
+      onMaximize={() => setMaximizedPanel(maximizedPanel === "output" ? null : "output")}
+      isMaximized={maximizedPanel === "output"}
     />
   );
+
+  const renderPanel = (pid: PanelId) => {
+    if (pid === "editor") return editorPanel;
+    if (pid === "stdin") return stdinPanel;
+    if (pid === "output") return outputPanel;
+    return null;
+  };
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#090a0f]">
@@ -555,6 +619,7 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
           showStdin={showStdin}
           onToggleStdin={handleToggleStdin}
           onResetSizes={handleResetSizes}
+          onOpenCustomModal={() => setIsCustomModalOpen(true)}
         />
       )}
 
@@ -626,7 +691,31 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
             </button>
           )}
 
-          {/* 1. Standard Layout: Editor Top, Stdin & Output Bottom */}
+          {/* Maximized Panel Overlay */}
+          {maximizedPanel && (
+            <div className="w-full h-full relative overflow-hidden">
+              <div className="absolute top-2 right-4 z-40 flex items-center gap-2">
+                <span className="px-2 py-0.5 bg-zinc-900/90 border border-zinc-700 text-neon-green text-[10px] font-mono rounded shadow-lg">
+                  Panel {maximizedPanel === "editor" ? "Editor" : maximizedPanel === "stdin" ? "Entrada" : "Salida"} al 100%
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setMaximizedPanel(null)}
+                  className="px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-zinc-200 text-[10px] font-mono shadow-lg flex items-center gap-1"
+                >
+                  <Minimize2 className="w-3 h-3" />
+                  <span>Restaurar (Esc)</span>
+                </button>
+              </div>
+              <div className="w-full h-full min-h-0 min-w-0">
+                {renderPanel(maximizedPanel)}
+              </div>
+            </div>
+          )}
+
+          {!maximizedPanel && (
+            <>
+              {/* 1. Standard Layout: Editor Top, Stdin & Output Bottom */}
           {layout === "standard" && (
             <div className="w-full h-full flex flex-col overflow-hidden">
               <div
@@ -1023,6 +1112,425 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
               )}
             </div>
           )}
+
+          {/* 5. Custom Layout: Split */}
+          {layout === "custom" && customConfig.type === "split" && (() => {
+            const primaryId = customConfig.primaryPanel;
+            const isPrimaryHidden =
+              customConfig.hiddenPanels.includes(primaryId) ||
+              (isWebPreview && primaryId === "stdin");
+            const secondaryPanels = (customConfig.secondaryOrder || ["stdin", "output"]).filter(
+              (p) =>
+                p !== primaryId &&
+                !customConfig.hiddenPanels.includes(p) &&
+                !(isWebPreview && p === "stdin")
+            );
+
+            const isOuterRow = customConfig.direction === "row";
+            const primaryPercent = customConfig.splitPrimaryPercent ?? 55;
+            const secondaryPercent = customConfig.splitSecondaryPercent ?? 45;
+
+            const primaryElement = !isPrimaryHidden && (
+              <div
+                style={
+                  isOuterRow
+                    ? { width: secondaryPanels.length === 0 ? "100%" : `calc(${primaryPercent}% - 4px)` }
+                    : { height: secondaryPanels.length === 0 ? "100%" : `calc(${primaryPercent}% - 4px)` }
+                }
+                className="w-full h-full min-h-0 min-w-0 overflow-hidden"
+              >
+                {renderPanel(primaryId)}
+              </div>
+            );
+
+            const primaryResizer = secondaryPanels.length > 0 && !isPrimaryHidden && (
+              <div
+                role="separator"
+                aria-orientation={isOuterRow ? "vertical" : "horizontal"}
+                aria-label="Redimensionar panel principal"
+                className={`${
+                  isOuterRow
+                    ? "w-2 hover:w-2 cursor-col-resize -mx-0.5"
+                    : "h-2 hover:h-2 cursor-row-resize -my-0.5"
+                } relative z-10 group shrink-0 flex items-center justify-center touch-none select-none`}
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                }}
+                onPointerMove={(e) => {
+                  if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+                  const main = mainRef.current;
+                  if (!main) return;
+                  const rect = main.getBoundingClientRect();
+                  const dim = isOuterRow ? rect.width : rect.height;
+                  if (dim <= 0) return;
+                  const clientPos = isOuterRow ? e.clientX - rect.left : e.clientY - rect.top;
+                  const rawPercent = (clientPos / dim) * 100;
+                  const effectivePercent =
+                    customConfig.primaryPosition === "end" ? 100 - rawPercent : rawPercent;
+                  const clamped = Math.max(15, Math.min(85, effectivePercent));
+                  setCustomConfig((prev) => {
+                    const updated = { ...prev, splitPrimaryPercent: clamped };
+                    try {
+                      localStorage.setItem("cpp_custom_layout", JSON.stringify(updated));
+                    } catch {}
+                    return updated;
+                  });
+                }}
+                onPointerUp={(e) => {
+                  try {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                  } catch {}
+                }}
+              >
+                <div
+                  className={`${
+                    isOuterRow ? "w-[2px] h-full" : "h-[2px] w-full"
+                  } bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors`}
+                />
+              </div>
+            );
+
+            const isSecRow = customConfig.secondaryDirection === "row";
+
+            const secondaryContainer = secondaryPanels.length > 0 && (
+              <div
+                style={
+                  isPrimaryHidden
+                    ? { width: "100%", height: "100%" }
+                    : isOuterRow
+                    ? { width: `calc(${100 - primaryPercent}% - 4px)` }
+                    : { height: `calc(${100 - primaryPercent}% - 4px)` }
+                }
+                className={`min-h-0 min-w-0 flex overflow-hidden ${
+                  isSecRow ? "flex-row" : "flex-col"
+                } ${isPrimaryHidden ? "w-full h-full" : "flex-1"}`}
+              >
+                {secondaryPanels.length === 1 && (
+                  <div className="w-full h-full min-h-0 min-w-0 overflow-hidden">
+                    {renderPanel(secondaryPanels[0])}
+                  </div>
+                )}
+
+                {secondaryPanels.length === 2 && (
+                  <>
+                    <div
+                      style={
+                        isSecRow
+                          ? { width: `calc(${secondaryPercent}% - 4px)` }
+                          : { height: `calc(${secondaryPercent}% - 4px)` }
+                      }
+                      className="w-full h-full min-h-0 min-w-0 overflow-hidden"
+                    >
+                      {renderPanel(secondaryPanels[0])}
+                    </div>
+
+                    <div
+                      role="separator"
+                      aria-orientation={isSecRow ? "vertical" : "horizontal"}
+                      aria-label="Redimensionar paneles secundarios"
+                      className={`${
+                        isSecRow
+                          ? "w-2 hover:w-2 cursor-col-resize -mx-0.5"
+                          : "h-2 hover:h-2 cursor-row-resize -my-0.5"
+                      } relative z-10 group shrink-0 flex items-center justify-center touch-none select-none`}
+                      onPointerDown={(e) => {
+                        e.currentTarget.setPointerCapture(e.pointerId);
+                      }}
+                      onPointerMove={(e) => {
+                        if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+                        const target = e.currentTarget.parentElement;
+                        if (!target) return;
+                        const rect = target.getBoundingClientRect();
+                        const dim = isSecRow ? rect.width : rect.height;
+                        if (dim <= 0) return;
+                        const clientPos = isSecRow ? e.clientX - rect.left : e.clientY - rect.top;
+                        const clamped = Math.max(15, Math.min(85, (clientPos / dim) * 100));
+                        setCustomConfig((prev) => {
+                          const updated = { ...prev, splitSecondaryPercent: clamped };
+                          try {
+                            localStorage.setItem("cpp_custom_layout", JSON.stringify(updated));
+                          } catch {}
+                          return updated;
+                        });
+                      }}
+                      onPointerUp={(e) => {
+                        try {
+                          e.currentTarget.releasePointerCapture(e.pointerId);
+                        } catch {}
+                      }}
+                    >
+                      <div
+                        className={`${
+                          isSecRow ? "w-[2px] h-full" : "h-[2px] w-full"
+                        } bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors`}
+                      />
+                    </div>
+
+                    <div
+                      style={
+                        isSecRow
+                          ? { width: `calc(${100 - secondaryPercent}% - 4px)` }
+                          : { height: `calc(${100 - secondaryPercent}% - 4px)` }
+                      }
+                      className="w-full h-full min-h-0 min-w-0 overflow-hidden flex-1"
+                    >
+                      {renderPanel(secondaryPanels[1])}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+
+            if (isPrimaryHidden && secondaryPanels.length === 0) {
+              return (
+                <div className="w-full h-full flex flex-col items-center justify-center text-zinc-500 font-mono text-xs gap-2">
+                  <p>Todos los paneles están ocultos en este layout.</p>
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomModalOpen(true)}
+                    className="px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-neon-green border border-zinc-700 text-xs"
+                  >
+                    Abrir configuración de layout
+                  </button>
+                </div>
+              );
+            }
+
+            return (
+              <div
+                className={`w-full h-full flex overflow-hidden ${
+                  isOuterRow ? "flex-row" : "flex-col"
+                }`}
+              >
+                {isPrimaryHidden ? (
+                  secondaryContainer
+                ) : customConfig.primaryPosition === "start" ? (
+                  <>
+                    {primaryElement}
+                    {primaryResizer}
+                    {secondaryContainer}
+                  </>
+                ) : (
+                  <>
+                    {secondaryContainer}
+                    {primaryResizer}
+                    {primaryElement}
+                  </>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* 6. Custom Layout: Linear */}
+          {layout === "custom" && customConfig.type === "linear" && (() => {
+            const visiblePanels = customConfig.order.filter(
+              (p) =>
+                !customConfig.hiddenPanels.includes(p) &&
+                !(isWebPreview && p === "stdin")
+            );
+            const isRow = customConfig.direction === "row";
+
+            if (visiblePanels.length === 0) {
+              return (
+                <div className="w-full h-full flex flex-col items-center justify-center text-zinc-500 font-mono text-xs gap-2">
+                  <p>Todos los paneles están ocultos en este layout.</p>
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomModalOpen(true)}
+                    className="px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-neon-green border border-zinc-700 text-xs"
+                  >
+                    Abrir configuración de layout
+                  </button>
+                </div>
+              );
+            }
+
+            if (visiblePanels.length === 1) {
+              return (
+                <div className="w-full h-full min-h-0 min-w-0 overflow-hidden">
+                  {renderPanel(visiblePanels[0])}
+                </div>
+              );
+            }
+
+            if (visiblePanels.length === 2) {
+              const p1Percent = customConfig.splitPrimaryPercent ?? 50;
+              return (
+                <div className={`w-full h-full flex overflow-hidden ${isRow ? "flex-row" : "flex-col"}`}>
+                  <div
+                    style={isRow ? { width: `calc(${p1Percent}% - 4px)` } : { height: `calc(${p1Percent}% - 4px)` }}
+                    className="w-full h-full min-h-0 min-w-0 overflow-hidden"
+                  >
+                    {renderPanel(visiblePanels[0])}
+                  </div>
+
+                  <div
+                    role="separator"
+                    aria-orientation={isRow ? "vertical" : "horizontal"}
+                    aria-label="Redimensionar paneles"
+                    className={`${
+                      isRow ? "w-2 hover:w-2 cursor-col-resize -mx-0.5" : "h-2 hover:h-2 cursor-row-resize -my-0.5"
+                    } relative z-10 group shrink-0 flex items-center justify-center touch-none select-none`}
+                    onPointerDown={(e) => {
+                      e.currentTarget.setPointerCapture(e.pointerId);
+                    }}
+                    onPointerMove={(e) => {
+                      if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+                      const main = mainRef.current;
+                      if (!main) return;
+                      const rect = main.getBoundingClientRect();
+                      const dim = isRow ? rect.width : rect.height;
+                      if (dim <= 0) return;
+                      const clientPos = isRow ? e.clientX - rect.left : e.clientY - rect.top;
+                      const clamped = Math.max(15, Math.min(85, (clientPos / dim) * 100));
+                      setCustomConfig((prev) => {
+                        const updated = { ...prev, splitPrimaryPercent: clamped };
+                        try {
+                          localStorage.setItem("cpp_custom_layout", JSON.stringify(updated));
+                        } catch {}
+                        return updated;
+                      });
+                    }}
+                    onPointerUp={(e) => {
+                      try {
+                        e.currentTarget.releasePointerCapture(e.pointerId);
+                      } catch {}
+                    }}
+                  >
+                    <div
+                      className={`${
+                        isRow ? "w-[2px] h-full" : "h-[2px] w-full"
+                      } bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors`}
+                    />
+                  </div>
+
+                  <div
+                    style={isRow ? { width: `calc(${100 - p1Percent}% - 4px)` } : { height: `calc(${100 - p1Percent}% - 4px)` }}
+                    className="w-full h-full min-h-0 min-w-0 overflow-hidden flex-1"
+                  >
+                    {renderPanel(visiblePanels[1])}
+                  </div>
+                </div>
+              );
+            }
+
+            const p1 = customConfig.linearPercents?.[0] ?? 35;
+            const p2 = customConfig.linearPercents?.[1] ?? 30;
+
+            return (
+              <div className={`w-full h-full flex overflow-hidden ${isRow ? "flex-row" : "flex-col"}`}>
+                <div
+                  style={isRow ? { width: `calc(${p1}% - 4px)` } : { height: `calc(${p1}% - 4px)` }}
+                  className="w-full h-full min-h-0 min-w-0 overflow-hidden"
+                >
+                  {renderPanel(visiblePanels[0])}
+                </div>
+
+                <div
+                  role="separator"
+                  aria-orientation={isRow ? "vertical" : "horizontal"}
+                  aria-label="Redimensionar panel 1"
+                  className={`${
+                    isRow ? "w-2 hover:w-2 cursor-col-resize -mx-0.5" : "h-2 hover:h-2 cursor-row-resize -my-0.5"
+                  } relative z-10 group shrink-0 flex items-center justify-center touch-none select-none`}
+                  onPointerDown={(e) => {
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                  }}
+                  onPointerMove={(e) => {
+                    if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+                    const main = mainRef.current;
+                    if (!main) return;
+                    const rect = main.getBoundingClientRect();
+                    const dim = isRow ? rect.width : rect.height;
+                    if (dim <= 0) return;
+                    const clientPos = isRow ? e.clientX - rect.left : e.clientY - rect.top;
+                    const clamped = Math.max(15, Math.min(60, (clientPos / dim) * 100));
+                    setCustomConfig((prev) => {
+                      const updated = {
+                        ...prev,
+                        linearPercents: [clamped, prev.linearPercents?.[1] ?? 30, 0],
+                      };
+                      try {
+                        localStorage.setItem("cpp_custom_layout", JSON.stringify(updated));
+                      } catch {}
+                      return updated;
+                    });
+                  }}
+                  onPointerUp={(e) => {
+                    try {
+                      e.currentTarget.releasePointerCapture(e.pointerId);
+                    } catch {}
+                  }}
+                >
+                  <div
+                    className={`${
+                      isRow ? "w-[2px] h-full" : "h-[2px] w-full"
+                    } bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors`}
+                  />
+                </div>
+
+                <div
+                  style={isRow ? { width: `calc(${p2}% - 4px)` } : { height: `calc(${p2}% - 4px)` }}
+                  className="w-full h-full min-h-0 min-w-0 overflow-hidden"
+                >
+                  {renderPanel(visiblePanels[1])}
+                </div>
+
+                <div
+                  role="separator"
+                  aria-orientation={isRow ? "vertical" : "horizontal"}
+                  aria-label="Redimensionar panel 2"
+                  className={`${
+                    isRow ? "w-2 hover:w-2 cursor-col-resize -mx-0.5" : "h-2 hover:h-2 cursor-row-resize -my-0.5"
+                  } relative z-10 group shrink-0 flex items-center justify-center touch-none select-none`}
+                  onPointerDown={(e) => {
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                  }}
+                  onPointerMove={(e) => {
+                    if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+                    const main = mainRef.current;
+                    if (!main) return;
+                    const rect = main.getBoundingClientRect();
+                    const dim = isRow ? rect.width : rect.height;
+                    if (dim <= 0) return;
+                    const clientPos = isRow ? e.clientX - rect.left : e.clientY - rect.top;
+                    const totalPos = (clientPos / dim) * 100;
+                    const clamped = Math.max(15, Math.min(50, totalPos - p1));
+                    setCustomConfig((prev) => {
+                      const updated = {
+                        ...prev,
+                        linearPercents: [p1, clamped, 0],
+                      };
+                      try {
+                        localStorage.setItem("cpp_custom_layout", JSON.stringify(updated));
+                      } catch {}
+                      return updated;
+                    });
+                  }}
+                  onPointerUp={(e) => {
+                    try {
+                      e.currentTarget.releasePointerCapture(e.pointerId);
+                    } catch {}
+                  }}
+                >
+                  <div
+                    className={`${
+                      isRow ? "w-[2px] h-full" : "h-[2px] w-full"
+                    } bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors`}
+                  />
+                </div>
+
+                <div
+                  style={isRow ? { width: `calc(${100 - p1 - p2}% - 4px)` } : { height: `calc(${100 - p1 - p2}% - 4px)` }}
+                  className="w-full h-full min-h-0 min-w-0 overflow-hidden flex-1"
+                >
+                  {renderPanel(visiblePanels[2])}
+                </div>
+              </div>
+            );
+          })()}
+        </>
+      )}
         </main>
       </div>
 
@@ -1044,6 +1552,14 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
       <ShortcutsModal
         isOpen={isShortcutsOpen}
         onClose={() => setIsShortcutsOpen(false)}
+      />
+
+      <CustomLayoutModal
+        isOpen={isCustomModalOpen}
+        onClose={() => setIsCustomModalOpen(false)}
+        config={customConfig}
+        onSave={handleSaveCustomLayout}
+        isHtml={isWebPreview}
       />
 
       {/* Toast Notification */}

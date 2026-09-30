@@ -1053,4 +1053,85 @@ function main(): void {
 main();
 `,
   },
+  // Linux Terminal & Bash Templates
+  {
+    id: "bash-system-diag",
+    title: "Bash: Diagnóstico de Sistema Linux",
+    language: "bash",
+    category: "basics",
+    description: "Inspección de kernel, arquitectura, memoria, espacio de disco y variables de entorno.",
+    standard: "Bash 5.2",
+    code: `#!/usr/bin/env bash
+set -euo pipefail
+
+# Colores ANSI
+CYAN='\\033[0;36m'
+GREEN='\\033[0;32m'
+YELLOW='\\033[1;33m'
+NC='\\033[0m' # No Color
+
+echo -e "\${CYAN}==============================================\${NC}"
+echo -e "\${GREEN}🐧 Diagnóstico de Entorno Linux en Ejecución\${NC}"
+echo -e "\${CYAN}==============================================\${NC}"
+
+echo -e "\${YELLOW}[1] Kernel y Sistema Operativo:\${NC}"
+uname -a
+
+echo -e "\\n\${YELLOW}[2] CPU e Información de Hardware:\${NC}"
+grep -m 1 "model name" /proc/cpuinfo || echo "CPU: x86_64 Virtual Container"
+echo "Núcleos detectados: $(nproc)"
+
+echo -e "\\n\${YELLOW}[3] Memoria RAM del Sistema:\${NC}"
+free -h 2>/dev/null || cat /proc/meminfo | head -n 4
+
+echo -e "\\n\${YELLOW}[4] Espacio en Disco (Filesystem):\${NC}"
+df -h / | awk 'NR==1 || NR==2 { printf "  %-15s %-8s %-8s %-8s %-5s %s\\n", $1, $2, $3, $4, $5, $6 }'
+
+echo -e "\\n\${YELLOW}[5] Usuario y Permisos:\${NC}"
+id
+`,
+  },
+  {
+    id: "bash-pipeline-tools",
+    title: "Bash: Procesamiento de Texto con Pipes & Awk",
+    language: "bash",
+    category: "basics",
+    description: "Pipeline de análisis de logs con grep, awk, sed, sort y uniq.",
+    standard: "Bash 5.2",
+    code: `#!/usr/bin/env bash
+set -euo pipefail
+
+echo "=== Generando archivo de logs simulado ==="
+cat << 'EOF' > /tmp/access.log
+192.168.1.10 - [2026-09-30] "GET /api/v1/users HTTP/1.1" 200 1420
+192.168.1.12 - [2026-09-30] "POST /api/v1/auth HTTP/1.1" 401 230
+192.168.1.10 - [2026-09-30] "GET /favicon.ico HTTP/1.1" 404 150
+192.168.1.15 - [2026-09-30] "GET /api/v1/users HTTP/1.1" 200 1420
+192.168.1.10 - [2026-09-30] "GET /dashboard HTTP/1.1" 200 5230
+192.168.1.12 - [2026-09-30] "POST /api/v1/auth HTTP/1.1" 200 450
+192.168.1.20 - [2026-09-30] "GET /api/v1/health HTTP/1.1" 500 89
+EOF
+
+echo "✓ Archivo /tmp/access.log generado con 7 entradas."
+
+echo -e "\\n=== Peticiones por Dirección IP (Top Clientes) ==="
+awk '{print $1}' /tmp/access.log | sort | uniq -c | sort -nr | while read -r count ip; do
+    printf "  IP: %-15s => %d peticiones\\n" "$ip" "$count"
+done
+
+echo -e "\\n=== Códigos de Estado HTTP ==="
+awk '{print $9}' /tmp/access.log | sort | uniq -c | while read -r count status; do
+    if [ "$status" -ge 400 ]; then
+        echo "  [ERROR $status] : $count ocurrencias"
+    else
+        echo "  [OK    $status] : $count ocurrencias"
+    fi
+done
+
+echo -e "\\n=== Total de Bytes Transferidos en respuestas exitosas (200) ==="
+awk '$9 == "200" { sum += $10 } END { printf "  Total: %d bytes (%.2f KB)\\n", sum, sum/1024 }' /tmp/access.log
+
+rm -f /tmp/access.log
+`,
+  },
 ];

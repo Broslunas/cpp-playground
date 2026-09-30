@@ -6,6 +6,7 @@ import {
   Columns2,
   Columns3,
   Rows3,
+  SlidersHorizontal,
   Check,
   Eye,
   EyeOff,
@@ -19,6 +20,7 @@ interface LayoutSelectorProps {
   showStdin: boolean;
   onToggleStdin: () => void;
   onResetSizes: () => void;
+  onOpenCustomModal?: () => void;
   isHtml?: boolean;
 }
 
@@ -52,6 +54,12 @@ const LAYOUT_OPTIONS: {
     description: "Todos los paneles apilados en filas",
     icon: Rows3,
   },
+  {
+    id: "custom",
+    title: "Personalizado",
+    description: "Disposición libre (ejes, orden y dominante)",
+    icon: SlidersHorizontal,
+  },
 ];
 
 export function LayoutSelector({
@@ -60,6 +68,7 @@ export function LayoutSelector({
   showStdin,
   onToggleStdin,
   onResetSizes,
+  onOpenCustomModal,
   isHtml = false,
 }: LayoutSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -162,7 +171,23 @@ export function LayoutSelector({
 
           <div className="my-2 border-t border-zinc-800" />
 
-          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              onLayoutChange("custom");
+              onOpenCustomModal?.();
+              setIsOpen(false);
+            }}
+            className="w-full flex items-center justify-between p-2 rounded hover:bg-zinc-800/80 text-neon-green hover:text-white transition-colors text-left border border-neon-green/30 bg-neon-green/5"
+          >
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-neon-green" />
+              <span className="font-semibold">Configurar Personalizado...</span>
+            </div>
+          </button>
+
+          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mt-2">
             Personalizar Paneles
           </div>
 

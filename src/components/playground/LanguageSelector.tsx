@@ -223,6 +223,36 @@ console.log(\`» TS 5.6 cargado: \${u.nombre} [\${u.rol}]\`);`,
       { title: "Utility Types", desc: "Pick, Omit, Partial" },
     ],
   },
+  bash: {
+    id: "bash",
+    name: "Linux Terminal (Bash)",
+    badge: "Ubuntu Core",
+    version: "Bash 5.2 • Linux 6.8",
+    shortDesc: "Shell interactivo en contenedor Linux con comandos coreutils (grep, awk, sed, pipes y subshells).",
+    accentColor: "#10b981",
+    accentBorder: "border-[#10b981]/40 hover:border-[#10b981]",
+    glowColor: "rgba(16, 185, 129, 0.2)",
+    gradientText: "from-[#10b981] via-[#34d399] to-[#6ee7b7]",
+    iconBg: "bg-[#10b981]/10 text-[#10b981] border-[#10b981]/30",
+    bannerBg: "from-[#10b981]/10 to-transparent",
+    keyNumber: "6",
+    keyLetter: "B",
+    href: "/bash/playground",
+    engine: "GNU Bash 5.2 (Ubuntu)",
+    sampleCode: `#!/usr/bin/env bash
+echo "» Linux Kernel: $(uname -r)"
+echo "» Usuario: $(whoami) en $(pwd)"
+ls -la / | head -n 4`,
+    sampleOutput: {
+      stdout: ["» Linux Kernel: 6.8.0-137-generic", "» Usuario: wandbox en /home/wandbox", "total 64"],
+      execTime: "0.015s",
+    },
+    templates: [
+      { title: "Diagnóstico Linux", desc: "CPU, memoria, disco y red" },
+      { title: "Pipes & Awk/Sed", desc: "Procesamiento de texto" },
+      { title: "Scripts CLI", desc: "Condicionales y argumentos" },
+    ],
+  },
 };
 
 const UPCOMING_LANGUAGES = [

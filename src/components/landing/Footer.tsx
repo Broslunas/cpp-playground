@@ -62,6 +62,13 @@ export function Footer() {
           >
             TypeScript
           </Link>
+          <span>•</span>
+          <Link
+            href="/bash/playground"
+            className="hover:text-emerald-400 transition-colors"
+          >
+            Linux Terminal
+          </Link>
         </div>
       </div>
     </footer>

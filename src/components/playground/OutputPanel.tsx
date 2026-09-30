@@ -14,6 +14,8 @@ import {
   Search,
   Eye,
   RotateCw,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { CompileResponse, SupportedLanguage } from "@/types";
 
@@ -23,6 +25,8 @@ interface OutputPanelProps {
   onClear: () => void;
   language?: SupportedLanguage;
   code?: string;
+  onMaximize?: () => void;
+  isMaximized?: boolean;
 }
 
 type TabType = "preview" | "stdout" | "stderr" | "compiler";
@@ -33,6 +37,8 @@ export function OutputPanel({
   onClear,
   language = "cpp",
   code = "",
+  onMaximize,
+  isMaximized = false,
 }: OutputPanelProps) {
   const isHtml = language === "html";
   const [activeTab, setActiveTab] = useState<TabType>(isHtml ? "preview" : "stdout");
@@ -337,6 +343,22 @@ export function OutputPanel({
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
+
+          {onMaximize && (
+            <button
+              type="button"
+              onClick={onMaximize}
+              className="p-1 rounded text-zinc-400 hover:text-neon-green hover:bg-zinc-800 transition-colors"
+              title={isMaximized ? "Restaurar panel (Esc)" : "Maximizar panel"}
+              aria-label={isMaximized ? "Restaurar panel" : "Maximizar panel"}
+            >
+              {isMaximized ? (
+                <Minimize2 className="w-3.5 h-3.5 text-neon-green" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
         </div>
       </div>
 

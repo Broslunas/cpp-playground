@@ -2,6 +2,7 @@
 
 import { use } from "react";
 import { PlaygroundWorkspace } from "@/components/playground/PlaygroundWorkspace";
+import { LinuxTerminalWorkspace } from "@/components/playground/LinuxTerminalWorkspace";
 import { SupportedLanguage } from "@/types";
 
 interface PageProps {
@@ -21,7 +22,13 @@ export default function LanguagePlaygroundPage({ params }: PageProps) {
       ? "javascript"
       : language === "typescript" || language === "ts"
       ? "typescript"
+      : language === "bash" || language === "sh" || language === "linux" || language === "terminal"
+      ? "bash"
       : "cpp";
+
+  if (validLang === "bash") {
+    return <LinuxTerminalWorkspace />;
+  }
 
   return <PlaygroundWorkspace initialLanguage={validLang} />;
 }

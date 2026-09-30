@@ -1,15 +1,23 @@
 "use client";
 
 import React from "react";
-import { Terminal } from "lucide-react";
+import { Terminal, Maximize2, Minimize2 } from "lucide-react";
 
 interface StdinPanelProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  onMaximize?: () => void;
+  isMaximized?: boolean;
 }
 
-export function StdinPanel({ value, onChange, disabled = false }: StdinPanelProps) {
+export function StdinPanel({
+  value,
+  onChange,
+  disabled = false,
+  onMaximize,
+  isMaximized = false,
+}: StdinPanelProps) {
   return (
     <div className="flex flex-col h-full bg-[#0c0e14] border border-zinc-800 rounded overflow-hidden">
       <div className="px-3 py-2 bg-[#090a0f] border-b border-zinc-800 flex items-center justify-between shrink-0">
@@ -17,9 +25,26 @@ export function StdinPanel({ value, onChange, disabled = false }: StdinPanelProp
           <Terminal className="w-3.5 h-3.5 text-neon-cyan" />
           <span className="font-semibold text-zinc-200">STANDARD INPUT (stdin)</span>
         </div>
-        <span className="text-[11px] font-mono text-zinc-500">
-          Passed to std::cin
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-mono text-zinc-500 hidden sm:inline">
+            Passed to std::cin
+          </span>
+          {onMaximize && (
+            <button
+              type="button"
+              onClick={onMaximize}
+              className="p-1 rounded text-zinc-400 hover:text-neon-green hover:bg-zinc-800 transition-colors"
+              title={isMaximized ? "Restaurar panel (Esc)" : "Maximizar panel"}
+              aria-label={isMaximized ? "Restaurar panel" : "Maximizar panel"}
+            >
+              {isMaximized ? (
+                <Minimize2 className="w-3.5 h-3.5 text-neon-green" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 min-h-0 p-2">

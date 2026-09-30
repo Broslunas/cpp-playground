@@ -7,7 +7,23 @@ export interface CompilerSettings {
 
 export type SupportedLanguage = "cpp" | "python" | "html" | "javascript" | "typescript" | "bash";
 
-export type PlaygroundLayout = "standard" | "two-column" | "columns" | "vertical";
+export type PlaygroundLayout = "standard" | "two-column" | "columns" | "vertical" | "custom";
+
+export type PanelId = "editor" | "stdin" | "output";
+
+export interface CustomLayoutConfig {
+  type: "linear" | "split";
+  direction: "row" | "column";
+  order: PanelId[];
+  primaryPanel: PanelId;
+  primaryPosition: "start" | "end";
+  secondaryDirection: "row" | "column";
+  secondaryOrder: [PanelId, PanelId];
+  hiddenPanels: PanelId[];
+  splitPrimaryPercent?: number;
+  splitSecondaryPercent?: number;
+  linearPercents?: number[];
+}
 
 export interface LanguageDefinition {
   id: SupportedLanguage;

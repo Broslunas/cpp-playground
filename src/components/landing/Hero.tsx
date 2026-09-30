@@ -80,6 +80,13 @@ export function Hero() {
             <Code2 className="w-4 h-4 text-blue-400" />
             TypeScript 📘
           </Link>
+          <Link
+            href="/bash/playground"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-zinc-900 border border-emerald-500/40 text-emerald-400 hover:text-emerald-300 hover:border-emerald-400 font-semibold text-sm font-mono transition-all transform hover:-translate-y-0.5 shadow-[0_0_15px_rgba(16,185,129,0.15)] focus:outline-none"
+          >
+            <Terminal className="w-4 h-4 text-emerald-400" />
+            Linux Terminal 🐧
+          </Link>
         </div>
 
         {/* Quick Highlights */}

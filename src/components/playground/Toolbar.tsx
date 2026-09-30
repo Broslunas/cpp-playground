@@ -50,6 +50,7 @@ interface ToolbarProps {
   showStdin: boolean;
   onToggleStdin: () => void;
   onResetSizes: () => void;
+  onOpenCustomModal?: () => void;
 }
 
 export function Toolbar({
@@ -79,6 +80,7 @@ export function Toolbar({
   showStdin,
   onToggleStdin,
   onResetSizes,
+  onOpenCustomModal,
 }: ToolbarProps) {
   const [copiedShare, setCopiedShare] = useState(false);
 
@@ -204,6 +206,7 @@ export function Toolbar({
             showStdin={showStdin}
             onToggleStdin={onToggleStdin}
             onResetSizes={onResetSizes}
+            onOpenCustomModal={onOpenCustomModal}
             isHtml={Boolean(langDef.isWebPreview || language === "html")}
           />
         </div>
