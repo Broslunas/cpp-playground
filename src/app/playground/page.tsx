@@ -77,7 +77,7 @@ export default function PlaygroundPage() {
   }, [activeProjectId, code, stdin, compiler, standard]);
 
   // Auto-save debounced
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
     if (!activeProjectId) return;
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
