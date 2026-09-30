@@ -87,9 +87,47 @@ export function formatCppCode(source: string, indentSize: number = 4): string {
   return formattedLines.join("\n") + "\n";
 }
 
+export function formatHtmlCode(source: string, indentSize: number = 2): string {
+  const lines = source.split("\n");
+  const indentChar = " ".repeat(indentSize);
+  let depth = 0;
+  const formattedLines: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (!trimmed) {
+      if (formattedLines.length > 0 && formattedLines[formattedLines.length - 1] !== "") {
+        formattedLines.push("");
+      }
+      continue;
+    }
+
+    const isClosing = /^<\/[^>]+>/.test(trimmed) || trimmed.startsWith("}") || trimmed.startsWith("</");
+    if (isClosing) {
+      depth = Math.max(0, depth - 1);
+    }
+
+    formattedLines.push(indentChar.repeat(depth) + trimmed);
+
+    // Self closing or void tags don't increment
+    const isVoid = /<(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)[^>]*\/?>/i.test(trimmed);
+    const hasOpening = /<[a-zA-Z0-9]+[^>]*[^\/]>/i.test(trimmed) && !trimmed.includes("</") && !isVoid;
+    const hasOpenBrace = trimmed.endsWith("{");
+
+    if (hasOpening || hasOpenBrace) {
+      depth++;
+    }
+  }
+
+  return formattedLines.join("\n") + "\n";
+}
+
 export function formatCode(source: string, language: string = "cpp"): string {
   if (language === "python") {
     return formatPythonCode(source);
+  }
+  if (language === "html") {
+    return formatHtmlCode(source);
   }
   return formatCppCode(source);
 }

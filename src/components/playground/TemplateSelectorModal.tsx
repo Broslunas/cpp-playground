@@ -71,6 +71,8 @@ export function TemplateSelectorModal({
             { id: "all", label: "Todas las plantillas" },
             { id: "cpp", label: "C++" },
             { id: "python", label: "Python 🐍" },
+            { id: "html", label: "HTML/CSS/JS 🌐" },
+            { id: "javascript", label: "JavaScript (Node) ⚡" },
           ].map((tab) => (
             <button
               key={tab.id}

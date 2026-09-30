@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Terminal, Github } from "lucide-react";
+import { Terminal } from "lucide-react";
 
 export function Footer() {
   return (
@@ -9,33 +9,52 @@ export function Footer() {
         <div className="flex items-center gap-2">
           <Terminal className="w-5 h-5 text-neon-green" />
           <span className="font-mono font-bold text-white tracking-wider text-sm">
-            C++ PLAYGROUND
+            CODE PLAYGROUND
           </span>
           <span className="text-xs text-zinc-500 font-mono ml-2">
-            v1.0.0
+            v1.1.0
           </span>
         </div>
 
         <p className="text-xs text-zinc-500 font-mono text-center">
-          Desarrollado para la comunidad de desarrolladores de C++. Impulsado por Wandbox API.
+          Entorno de ejecución y prototipado multilingüe. Impulsado por Wandbox API.
         </p>
 
         <div className="flex items-center gap-4 text-xs font-mono text-zinc-400">
           <Link
             href="/playground"
-            className="hover:text-neon-green transition-colors"
-          >
-            Playground
-          </Link>
-          <span>•</span>
-          <a
-            href="https://isocpp.org/"
-            target="_blank"
-            rel="noopener noreferrer"
             className="hover:text-neon-cyan transition-colors"
           >
-            ISO C++
-          </a>
+            Selector de Entornos
+          </Link>
+          <span>•</span>
+          <Link
+            href="/cpp/playground"
+            className="hover:text-neon-green transition-colors"
+          >
+            C++
+          </Link>
+          <span>•</span>
+          <Link
+            href="/python/playground"
+            className="hover:text-yellow-400 transition-colors"
+          >
+            Python
+          </Link>
+          <span>•</span>
+          <Link
+            href="/html/playground"
+            className="hover:text-cyan-400 transition-colors"
+          >
+            HTML/CSS/JS
+          </Link>
+          <span>•</span>
+          <Link
+            href="/javascript/playground"
+            className="hover:text-amber-400 transition-colors"
+          >
+            JavaScript
+          </Link>
         </div>
       </div>
     </footer>

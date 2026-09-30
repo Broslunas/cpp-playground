@@ -93,10 +93,10 @@ export function Toolbar({
       {/* Left Section: navigation & project title */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         <Link
-          href="/"
+          href="/playground"
           className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800/80 transition-colors"
-          title="Regresar a la página principal"
-          aria-label="Regresar a la página principal"
+          title="Volver al selector de Playgrounds"
+          aria-label="Volver al selector de Playgrounds"
         >
           <ArrowLeft className="w-4 h-4" />
         </Link>

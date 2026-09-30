@@ -5,7 +5,7 @@ export interface CompilerSettings {
   customFlags: string;
 }
 
-export type SupportedLanguage = "cpp" | "python";
+export type SupportedLanguage = "cpp" | "python" | "html" | "javascript";
 
 export interface LanguageDefinition {
   id: SupportedLanguage;
@@ -16,6 +16,7 @@ export interface LanguageDefinition {
   defaultStandard: string;
   compilers: CompilerOption[];
   hasCompilerSettings?: boolean;
+  isWebPreview?: boolean;
 }
 
 export interface Project {
@@ -62,7 +63,17 @@ export interface CodeTemplate {
   id: string;
   title: string;
   language?: SupportedLanguage;
-  category: "basics" | "cpp20" | "cpp23" | "dsa" | "testing" | "python-features" | "python-advanced";
+  category:
+    | "basics"
+    | "cpp20"
+    | "cpp23"
+    | "dsa"
+    | "testing"
+    | "python-features"
+    | "python-advanced"
+    | "html-demos"
+    | "js-basics"
+    | "js-advanced";
   description: string;
   standard: string;
   code: string;

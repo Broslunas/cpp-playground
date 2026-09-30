@@ -17,6 +17,8 @@ import {
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { cpp } from "@codemirror/lang-cpp";
 import { python } from "@codemirror/lang-python";
+import { html } from "@codemirror/lang-html";
+import { javascript } from "@codemirror/lang-javascript";
 import { oneDark } from "@codemirror/theme-one-dark";
 import {
   syntaxHighlighting,
@@ -62,7 +64,16 @@ export function Editor({
   });
 
   const getLanguageExtension = (lang: string) => {
-    return lang === "python" ? python() : cpp();
+    switch (lang) {
+      case "python":
+        return python();
+      case "html":
+        return html();
+      case "javascript":
+        return javascript();
+      default:
+        return cpp();
+    }
   };
 
   useEffect(() => {

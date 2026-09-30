@@ -526,4 +526,377 @@ if __name__ == "__main__":
     main()
 `,
   },
+  // HTML / CSS / JS All-in-one Templates
+  {
+    id: "html-canvas-particles",
+    title: "HTML/CSS/JS: Canvas Particles & Physics",
+    language: "html",
+    category: "html-demos",
+    description: "Animación de partículas interactiva con HTML5 Canvas, CSS moderno y bucle de renderizado requestAnimationFrame.",
+    standard: "HTML5",
+    code: `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Canvas Partículas</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #090b10;
+      color: #fff;
+      font-family: sans-serif;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    #ui {
+      position: absolute;
+      top: 20px;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 12px 20px;
+      border-radius: 999px;
+      font-size: 14px;
+      color: #38bdf8;
+      pointer-events: none;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="ui">Mueve el ratón o haz clic para interactuar</div>
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener("resize", () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    const particles = [];
+    const mouse = { x: width / 2, y: height / 2 };
+
+    window.addEventListener("mousemove", (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+      for (let i = 0; i < 3; i++) createParticle(mouse.x, mouse.y);
+    });
+
+    window.addEventListener("click", (e) => {
+      for (let i = 0; i < 25; i++) createParticle(e.clientX, e.clientY, true);
+    });
+
+    function createParticle(x, y, burst = false) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = burst ? Math.random() * 6 + 2 : Math.random() * 2 + 0.5;
+      particles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        radius: Math.random() * 3 + 1.5,
+        life: 1,
+        decay: Math.random() * 0.02 + 0.01,
+        hue: (Date.now() / 20) % 360,
+      });
+    }
+
+    function animate() {
+      ctx.fillStyle = "rgba(9, 11, 16, 0.2)";
+      ctx.fillRect(0, 0, width, height);
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= p.decay;
+
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = \`hsla(\${p.hue}, 90%, 60%, \${p.life})\`;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = \`hsla(\${p.hue}, 90%, 60%, 0.8)\`;
+        ctx.fill();
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    for (let i = 0; i < 40; i++) {
+      createParticle(Math.random() * width, Math.random() * height);
+    }
+    animate();
+    console.log("Canvas particle engine iniciado.");
+  </script>
+</body>
+</html>`,
+  },
+  {
+    id: "html-todo-app",
+    title: "HTML/CSS/JS: App de Tareas Interactiva",
+    language: "html",
+    category: "html-demos",
+    description: "Aplicación completa de tareas en un solo bloque con estilos CSS modernos y gestión de estado en JS.",
+    standard: "HTML5",
+    code: `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Todo App</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --accent: #238636;
+      --accent-hover: #2ea043;
+      --text: #f0f6fc;
+      --subtext: #8b949e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+    .container {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+      height: fit-content;
+    }
+    h2 { font-size: 1.5rem; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+    .input-row { display: flex; gap: 8px; margin-bottom: 20px; }
+    input[type="text"] {
+      flex: 1;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      color: var(--text);
+      outline: none;
+      font-size: 14px;
+    }
+    input[type="text"]:focus { border-color: #58a6ff; }
+    button.add-btn {
+      background: var(--accent);
+      border: none;
+      color: white;
+      font-weight: 600;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button.add-btn:hover { background: var(--accent-hover); }
+    ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    li.done span { text-decoration: line-through; color: var(--subtext); }
+    .del-btn {
+      background: transparent;
+      border: none;
+      color: #f85149;
+      cursor: pointer;
+      font-weight: bold;
+      padding: 4px 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>
+      <span>Tareas Pendientes</span>
+      <span id="counter" style="font-size: 13px; color: var(--subtext);">0 items</span>
+    </h2>
+    <div class="input-row">
+      <input type="text" id="taskInput" placeholder="Añadir nueva tarea..." />
+      <button class="add-btn" id="addBtn">Añadir</button>
+    </div>
+    <ul id="taskList"></ul>
+  </div>
+
+  <script>
+    const input = document.getElementById("taskInput");
+    const addBtn = document.getElementById("addBtn");
+    const list = document.getElementById("taskList");
+    const counter = document.getElementById("counter");
+
+    let tasks = [
+      { id: 1, text: "Aprender Next.js 16 y Turbopack", done: true },
+      { id: 2, text: "Probar el editor HTML/CSS/JS", done: false },
+    ];
+
+    function render() {
+      list.innerHTML = "";
+      tasks.forEach((t) => {
+        const li = document.createElement("li");
+        if (t.done) li.classList.add("done");
+
+        const span = document.createElement("span");
+        span.textContent = t.text;
+        span.style.cursor = "pointer";
+        span.onclick = () => toggleTask(t.id);
+
+        const btn = document.createElement("button");
+        btn.textContent = "✕";
+        btn.className = "del-btn";
+        btn.onclick = () => deleteTask(t.id);
+
+        li.appendChild(span);
+        li.appendChild(btn);
+        list.appendChild(li);
+      });
+      counter.textContent = \`\${tasks.filter(t => !t.done).length} pendientes\`;
+    }
+
+    function addTask() {
+      const val = input.value.trim();
+      if (!val) return;
+      tasks.push({ id: Date.now(), text: val, done: false });
+      input.value = "";
+      render();
+      console.log("Nueva tarea agregada:", val);
+    }
+
+    function toggleTask(id) {
+      tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+      render();
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      render();
+    }
+
+    addBtn.addEventListener("click", addTask);
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") addTask(); });
+    render();
+  </script>
+</body>
+</html>`,
+  },
+  // Standalone JavaScript (Node.js) Templates
+  {
+    id: "js-async-pipeline",
+    title: "JavaScript: Async / Await & Pipelines",
+    language: "javascript",
+    category: "js-basics",
+    description: "Orquestación asíncrona avanzada con Promise.allSettled y control de concurrencia.",
+    standard: "ES2023",
+    code: `// Simulación de tareas asíncronas con temporizadores
+function simularTarea(id, ms, debeFallar = false) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (debeFallar) {
+        reject(new Error(\`Tarea \${id} falló intencionalmente tras \${ms}ms\`));
+      } else {
+        resolve({ id, status: "OK", duracion: \`\${ms}ms\` });
+      }
+    }, ms);
+  });
+}
+
+async function main() {
+  console.log("🚀 Iniciando pipeline asíncrono con Promise.allSettled...\\n");
+
+  const tareas = [
+    simularTarea("A", 120),
+    simularTarea("B", 80),
+    simularTarea("C", 200, true), // esta fallará
+    simularTarea("D", 50),
+  ];
+
+  const resultados = await Promise.allSettled(tareas);
+
+  resultados.forEach((res) => {
+    if (res.status === "fulfilled") {
+      console.log(\`✅ [Éxito] \${JSON.stringify(res.value)}\`);
+    } else {
+      console.log(\`❌ [Error]  \${res.reason.message}\`);
+    }
+  });
+
+  const exitosas = resultados.filter(r => r.status === "fulfilled").length;
+  console.log(\`\\nResumen: \${exitosas}/\${resultados.length} tareas completadas con éxito.\`);
+}
+
+main().catch(console.error);
+`,
+  },
+  {
+    id: "js-functional-stream",
+    title: "JavaScript: Procesamiento Funcional de Datos",
+    language: "javascript",
+    category: "js-advanced",
+    description: "Uso idiomático de Map, Filter, Reduce y Sets para análisis de transacciones.",
+    standard: "ES2023",
+    code: `const transacciones = [
+  { id: 1, categoria: "Electrónica", monto: 120.5, cliente: "Ana" },
+  { id: 2, categoria: "Libros", monto: 25.0, cliente: "Carlos" },
+  { id: 3, categoria: "Electrónica", monto: 350.0, cliente: "Beatriz" },
+  { id: 4, categoria: "Hogar", monto: 80.2, cliente: "Ana" },
+  { id: 5, categoria: "Libros", monto: 45.0, cliente: "David" },
+  { id: 6, categoria: "Electrónica", monto: 99.9, cliente: "Ana" },
+];
+
+function analizarVentas(datos) {
+  const clientes = [...new Set(datos.map(t => t.cliente))];
+
+  const porCategoria = datos.reduce((acc, { categoria, monto }) => {
+    acc[categoria] = (acc[categoria] || 0) + monto;
+    return acc;
+  }, {});
+
+  const gastoClientes = datos.reduce((acc, { cliente, monto }) => {
+    acc[cliente] = (acc[cliente] || 0) + monto;
+    return acc;
+  }, {});
+
+  return {
+    totalGeneral: datos.reduce((sum, t) => sum + t.monto, 0),
+    clientesUnicos: clientes.length,
+    porCategoria,
+    mayorComprador: Object.entries(gastoClientes).sort((a, b) => b[1] - a[1])[0],
+  };
+}
+
+console.log("=== Reporte de Transacciones ===");
+const informe = analizarVentas(transacciones);
+console.log(JSON.stringify(informe, null, 2));
+`,
+  },
 ];

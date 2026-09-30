@@ -12,6 +12,7 @@ import {
   FolderOpen,
 } from "lucide-react";
 import { Project } from "@/types";
+import { getLanguage } from "@/lib/languages";
 
 interface ProjectSidebarProps {
   projects: Project[];
@@ -23,6 +24,7 @@ interface ProjectSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   width?: number;
+  languageName?: string;
 }
 
 export function ProjectSidebar({
@@ -35,6 +37,7 @@ export function ProjectSidebar({
   isOpen,
   onClose,
   width = 260,
+  languageName,
 }: ProjectSidebarProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -60,7 +63,7 @@ export function ProjectSidebar({
     const element = document.createElement("a");
     const file = new Blob([project.code], { type: "text/plain" });
     element.href = URL.createObjectURL(file);
-    const ext = project.language === "python" ? ".py" : ".cc";
+    const ext = getLanguage(project.language).extension;
     element.download = `${project.name.toLowerCase().replace(/\s+/g, "_")}${ext}`;
     document.body.appendChild(element);
     element.click();
@@ -77,16 +80,16 @@ export function ProjectSidebar({
       <div className="p-3 border-b border-zinc-800 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 text-xs font-mono font-semibold text-zinc-300">
           <FolderOpen className="w-4 h-4 text-neon-green" />
-          <span>LOCAL PROJECTS</span>
+          <span>PROYECTOS {languageName ? languageName.toUpperCase() : "LOCALES"}</span>
         </div>
         <button
           onClick={onCreateProject}
           className="px-2 py-1 bg-neon-green/10 border border-neon-green/30 text-neon-green hover:bg-neon-green hover:text-black rounded text-xs font-mono flex items-center gap-1 transition-colors"
-          title="Create New Project"
-          aria-label="Create New Project"
+          title="Crear nuevo proyecto"
+          aria-label="Crear nuevo proyecto"
         >
           <Plus className="w-3.5 h-3.5" />
-          <span>New</span>
+          <span>Nuevo</span>
         </button>
       </div>
 
@@ -94,12 +97,13 @@ export function ProjectSidebar({
       <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1">
         {projects.length === 0 ? (
           <div className="p-4 text-center text-xs font-mono text-zinc-600">
-            No projects found. Create one!
+            No hay proyectos {languageName ? `en ${languageName}` : ""}. ¡Crea uno!
           </div>
         ) : (
           projects.map((project) => {
             const isActive = project.id === activeProjectId;
             const isEditing = project.id === editingId;
+            const ext = getLanguage(project.language).extension;
 
             return (
               <div
@@ -135,7 +139,7 @@ export function ProjectSidebar({
                     <button
                       type="submit"
                       className="p-1 text-neon-green hover:bg-zinc-800 rounded"
-                      aria-label="Confirm Rename"
+                      aria-label="Confirmar nombre"
                     >
                       <Check className="w-3 h-3" />
                     </button>
@@ -143,7 +147,7 @@ export function ProjectSidebar({
                       type="button"
                       onClick={() => setEditingId(null)}
                       className="p-1 text-zinc-400 hover:bg-zinc-800 rounded"
-                      aria-label="Cancel Rename"
+                      aria-label="Cancelar renombrado"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -157,25 +161,22 @@ export function ProjectSidebar({
                         }`}
                       />
                       <span className="truncate">{project.name}</span>
-                      <span className="text-[9px] px-1 py-0.2 rounded bg-zinc-950 border border-zinc-800 text-zinc-400 shrink-0 font-mono">
-                        {project.language === "python" ? "PY" : "C++"}
-                      </span>
                     </div>
 
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={(e) => handleDownload(project, e)}
                         className="p-1 text-zinc-400 hover:text-white rounded"
-                        title="Download .cc file"
-                        aria-label={`Download ${project.name}`}
+                        title={`Descargar archivo (${ext})`}
+                        aria-label={`Descargar ${project.name}`}
                       >
                         <Download className="w-3 h-3" />
                       </button>
                       <button
                         onClick={(e) => handleStartRename(project, e)}
                         className="p-1 text-zinc-400 hover:text-white rounded"
-                        title="Rename project"
-                        aria-label={`Rename ${project.name}`}
+                        title="Renombrar proyecto"
+                        aria-label={`Renombrar ${project.name}`}
                       >
                         <Edit2 className="w-3 h-3" />
                       </button>
@@ -183,13 +184,13 @@ export function ProjectSidebar({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (confirm(`Delete project "${project.name}"?`)) {
+                            if (confirm(`¿Eliminar proyecto "${project.name}"?`)) {
                               onDeleteProject(project.id);
                             }
                           }}
                           className="p-1 text-zinc-400 hover:text-red-400 rounded"
-                          title="Delete project"
-                          aria-label={`Delete ${project.name}`}
+                          title="Eliminar proyecto"
+                          aria-label={`Eliminar ${project.name}`}
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -201,12 +202,6 @@ export function ProjectSidebar({
             );
           })
         )}
-      </div>
-
-      {/* Footer Info */}
-      <div className="p-3 border-t border-zinc-800 text-[10px] font-mono text-zinc-500 flex items-center justify-between">
-        <span>Stored in localStorage</span>
-        <span>{projects.length} project(s)</span>
       </div>
     </aside>
   );

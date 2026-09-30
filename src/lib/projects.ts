@@ -9,7 +9,7 @@ export function getProjects(): Project[] {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (!data) {
-      const initial = createInitialProject();
+      const initial = createInitialProjectForLanguage("cpp");
       saveProjects([initial]);
       return [initial];
     }
@@ -33,14 +33,47 @@ export function saveProjects(projects: Project[]): void {
   }
 }
 
-export function getActiveProjectId(): string | null {
+export function getProjectsByLanguage(lang: SupportedLanguage): Project[] {
+  if (typeof window === "undefined") return [];
+  const all = getProjects();
+  const filtered = all.filter((p) => (p.language || "cpp") === lang);
+  if (filtered.length === 0) {
+    const initial = createInitialProjectForLanguage(lang);
+    saveProjects([...all, initial]);
+    return [initial];
+  }
+  return filtered;
+}
+
+export function saveLanguageProjects(lang: SupportedLanguage, langProjects: Project[]): void {
+  if (typeof window === "undefined") return;
+  const all = getProjects();
+  const others = all.filter((p) => (p.language || "cpp") !== lang);
+  saveProjects([...langProjects, ...others]);
+}
+
+export function getActiveProjectId(lang?: SupportedLanguage): string | null {
   if (typeof window === "undefined") return null;
+  if (lang) {
+    const langKey = `${ACTIVE_PROJECT_KEY}-${lang}`;
+    const saved = localStorage.getItem(langKey);
+    if (saved) return saved;
+    if (lang === "cpp") return localStorage.getItem(ACTIVE_PROJECT_KEY);
+    return null;
+  }
   return localStorage.getItem(ACTIVE_PROJECT_KEY);
 }
 
-export function setActiveProjectId(id: string): void {
+export function setActiveProjectId(id: string, lang?: SupportedLanguage): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(ACTIVE_PROJECT_KEY, id);
+  if (lang) {
+    localStorage.setItem(`${ACTIVE_PROJECT_KEY}-${lang}`, id);
+    if (lang === "cpp") {
+      localStorage.setItem(ACTIVE_PROJECT_KEY, id);
+    }
+  } else {
+    localStorage.setItem(ACTIVE_PROJECT_KEY, id);
+  }
 }
 
 export function createProject(
@@ -67,15 +100,16 @@ export function createProject(
   };
 }
 
-function createInitialProject(): Project {
+export function createInitialProjectForLanguage(lang: SupportedLanguage): Project {
+  const langDef = getLanguage(lang);
   return {
-    id: "default-hello-world",
-    name: "Hello World",
-    language: "cpp",
-    code: LANGUAGES.cpp.defaultCode,
-    stdin: "World",
-    compiler: LANGUAGES.cpp.defaultCompiler,
-    options: LANGUAGES.cpp.defaultStandard,
+    id: `default-${lang}-hello-world`,
+    name: `Hello ${langDef.name}`,
+    language: lang,
+    code: langDef.defaultCode,
+    stdin: lang === "python" ? "Mundo" : "World",
+    compiler: langDef.defaultCompiler,
+    options: langDef.defaultStandard,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };

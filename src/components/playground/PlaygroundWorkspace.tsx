@@ -14,8 +14,8 @@ import {
 import { TemplateSelectorModal } from "@/components/playground/TemplateSelectorModal";
 import { ShortcutsModal } from "@/components/playground/ShortcutsModal";
 import {
-  getProjects,
-  saveProjects,
+  getProjectsByLanguage,
+  saveLanguageProjects,
   getActiveProjectId,
   setActiveProjectId,
   createProject,
@@ -23,7 +23,7 @@ import {
 import { generateShareUrl, decodeShareableState } from "@/lib/share";
 import { downloadSourceFile, generateCMakeLists, generateMakefile } from "@/lib/export";
 import { formatCode } from "@/lib/formatter";
-import { getLanguage, LANGUAGES } from "@/lib/languages";
+import { getLanguage } from "@/lib/languages";
 import { Project, CompileResponse, CompilerSettings, CodeTemplate, SupportedLanguage } from "@/types";
 
 interface PlaygroundWorkspaceProps {
@@ -86,27 +86,22 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
     setTimeout(() => setSaveToast(false), 2000);
   };
 
-  // Sync state if initialLanguage prop changes
+  // Load language-specific projects on mount or route language change
   useEffect(() => {
-    if (initialLanguage && initialLanguage !== language) {
-      const langDef = getLanguage(initialLanguage);
-      setLanguage(initialLanguage);
-      setCompiler(langDef.defaultCompiler);
-      setStandard(langDef.defaultStandard);
-      setCode(langDef.defaultCode);
-    }
-  }, [initialLanguage]);
-
-  // Initialize: check URL hash first (for shared links), fallback to localStorage
-  useEffect(() => {
-    const loadedProjects = getProjects();
-    setProjects(loadedProjects);
+    const currentLang = initialLanguage;
+    setLanguage(currentLang);
 
     // Check if URL has shared code in hash
     if (typeof window !== "undefined" && window.location.hash) {
       const shared = decodeShareableState(window.location.hash);
       if (shared) {
-        const sharedLang: SupportedLanguage = shared.language || initialLanguage;
+        const sharedLang: SupportedLanguage = shared.language || currentLang;
+        // If shared link belongs to another language, redirect to that playground
+        if (sharedLang !== currentLang) {
+          router.push(`/${sharedLang}/playground${window.location.hash}`);
+          return;
+        }
+
         const langDef = getLanguage(sharedLang);
         const sharedProject = createProject(
           "Código Compartido",
@@ -118,12 +113,12 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
         );
         if (shared.compiler) sharedProject.compiler = shared.compiler;
 
-        const updated = [sharedProject, ...loadedProjects];
+        const langProjects = getProjectsByLanguage(sharedLang);
+        const updated = [sharedProject, ...langProjects];
         setProjects(updated);
-        saveProjects(updated);
+        saveLanguageProjects(sharedLang, updated);
         setActiveId(sharedProject.id);
-        setActiveProjectId(sharedProject.id);
-        setLanguage(sharedLang);
+        setActiveProjectId(sharedProject.id, sharedLang);
         setCode(sharedProject.code);
         setStdin(sharedProject.stdin);
         setCompiler(sharedProject.compiler);
@@ -135,47 +130,27 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
       }
     }
 
-    const savedActiveId = getActiveProjectId();
-    // Prioritize project of matching language, or fallback to saved active
+    const langProjects = getProjectsByLanguage(currentLang);
+    setProjects(langProjects);
+
+    const savedActiveId = getActiveProjectId(currentLang);
     const active =
-      loadedProjects.find((p) => p.id === savedActiveId) ||
-      loadedProjects.find((p) => (p.language || "cpp") === initialLanguage) ||
-      loadedProjects[0];
+      langProjects.find((p) => p.id === savedActiveId) || langProjects[0];
 
     if (active) {
-      const lang = active.language || initialLanguage;
-      const langDef = getLanguage(lang);
+      const langDef = getLanguage(currentLang);
       setActiveId(active.id);
-      setLanguage(lang);
+      setActiveProjectId(active.id, currentLang);
       setCode(active.code);
       setStdin(active.stdin);
       setCompiler(active.compiler || langDef.defaultCompiler);
       setStandard(active.options || langDef.defaultStandard);
       setCompilerSettings(active.settings || DEFAULT_COMPILER_SETTINGS);
       setProjectName(active.name);
-    } else {
-      const langDef = getLanguage(initialLanguage);
-      const newProj = createProject(
-        `Proyecto ${langDef.name}`,
-        langDef.defaultCode,
-        langDef.defaultStandard,
-        "",
-        DEFAULT_COMPILER_SETTINGS,
-        initialLanguage
-      );
-      setProjects([newProj]);
-      saveProjects([newProj]);
-      setActiveId(newProj.id);
-      setActiveProjectId(newProj.id);
-      setLanguage(initialLanguage);
-      setCode(newProj.code);
-      setCompiler(newProj.compiler);
-      setStandard(newProj.options);
-      setProjectName(newProj.name);
     }
-  }, [initialLanguage]);
+  }, [initialLanguage, router]);
 
-  // Save current project state
+  // Save current project state for current language
   const saveCurrentProject = useCallback(() => {
     if (!activeProjectId) return;
 
@@ -194,7 +169,7 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
             }
           : p
       );
-      saveProjects(updated);
+      saveLanguageProjects(language, updated);
       return updated;
     });
 
@@ -216,28 +191,21 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
     };
   }, [code, stdin, compiler, standard, compilerSettings, language, saveCurrentProject, activeProjectId]);
 
-  // Project selection
+  // Project selection within current language
   const handleSelectProject = (id: string) => {
     saveCurrentProject();
 
     const target = projects.find((p) => p.id === id);
     if (target) {
-      const targetLang = target.language || "cpp";
       setActiveId(target.id);
-      setActiveProjectId(target.id);
-      setLanguage(targetLang);
+      setActiveProjectId(target.id, language);
       setCode(target.code);
       setStdin(target.stdin);
       setCompiler(target.compiler);
-      setStandard(target.options || getLanguage(targetLang).defaultStandard);
+      setStandard(target.options || getLanguage(language).defaultStandard);
       setCompilerSettings(target.settings || DEFAULT_COMPILER_SETTINGS);
       setProjectName(target.name);
       setOutput(null);
-
-      // If project has a different language than current URL, navigate to its URL
-      if (targetLang !== initialLanguage) {
-        router.push(`/${targetLang}/playground`);
-      }
     }
   };
 
@@ -261,20 +229,22 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
     );
     const updated = [newProj, ...projects];
     setProjects(updated);
-    saveProjects(updated);
+    saveLanguageProjects(language, updated);
     handleSelectProject(newProj.id);
   };
 
-  // Delete Project
+  // Delete Project in current language
   const handleDeleteProject = (id: string) => {
     const updated = projects.filter((p) => p.id !== id);
     setProjects(updated);
-    saveProjects(updated);
+    saveLanguageProjects(language, updated);
 
     if (activeProjectId === id) {
-      const next = updated[0];
-      if (next) {
-        handleSelectProject(next.id);
+      if (updated.length > 0) {
+        handleSelectProject(updated[0].id);
+      } else {
+        // If deleted last project, generate a new clean project
+        handleCreateProject();
       }
     }
   };
@@ -285,16 +255,22 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
       p.id === id ? { ...p, name: newName, updatedAt: Date.now() } : p
     );
     setProjects(updated);
-    saveProjects(updated);
+    saveLanguageProjects(language, updated);
     if (activeProjectId === id) {
       setProjectName(newName);
     }
   };
 
-  // Load Template safely as new project
+  // Load Template
   const handleSelectTemplate = (template: CodeTemplate) => {
     const templateLang = template.language || "cpp";
     const langDef = getLanguage(templateLang);
+
+    // If template belongs to another language, redirect
+    if (templateLang !== language) {
+      router.push(`/${templateLang}/playground`);
+      return;
+    }
 
     const newProj = createProject(
       template.title,
@@ -308,13 +284,9 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
 
     const updated = [newProj, ...projects];
     setProjects(updated);
-    saveProjects(updated);
+    saveLanguageProjects(language, updated);
     handleSelectProject(newProj.id);
     showNotification(`Plantilla "${template.title}" cargada`);
-
-    if (templateLang !== initialLanguage) {
-      router.push(`/${templateLang}/playground`);
-    }
   };
 
   // Code Formatter
@@ -357,6 +329,21 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
     if (isRunning) return;
     setIsRunning(true);
     setOutput(null);
+
+    if (language === "html") {
+      setTimeout(() => {
+        setOutput({
+          stdout: "Renderizado DOM y estilos CSS actualizados en Vista Previa.",
+          stderr: "",
+          compilerOutput: "HTML5/CSS3/ES6+ cargado en entorno aislado.",
+          exitCode: 0,
+          time: new Date().toLocaleTimeString(),
+          executionTimeMs: 1,
+        });
+        setIsRunning(false);
+      }, 150);
+      return;
+    }
 
     try {
       const response = await fetch("/api/compile", {
@@ -423,6 +410,8 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [code, stdin, compiler, standard, compilerSettings, isRunning, saveCurrentProject, language]);
 
+  const langDef = getLanguage(language);
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#090a0f]">
       {/* Top Toolbar */}
@@ -467,6 +456,7 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
               isOpen={isSidebarOpen}
               onClose={() => setIsSidebarOpen(false)}
               width={sidebarWidth}
+              languageName={langDef.name}
             />
 
             {/* Sidebar Resizer */}
@@ -569,59 +559,76 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
             style={{ height: `calc(${100 - editorHeight}% - 4px)` }}
             className="w-full min-h-0 flex flex-row overflow-hidden"
           >
-            {/* Left: Stdin Input */}
-            <div
-              style={{ width: `calc(${stdinWidth}% - 4px)` }}
-              className="h-full min-w-0 overflow-hidden"
-            >
-              <StdinPanel
-                value={stdin}
-                onChange={setStdin}
-                disabled={isRunning}
-              />
-            </div>
+            {language !== "html" ? (
+              <>
+                {/* Left: Stdin Input */}
+                <div
+                  style={{ width: `calc(${stdinWidth}% - 4px)` }}
+                  className="h-full min-w-0 overflow-hidden"
+                >
+                  <StdinPanel
+                    value={stdin}
+                    onChange={setStdin}
+                    disabled={isRunning}
+                  />
+                </div>
 
-            {/* Vertical Resizer between Stdin and Output */}
-            <div
-              role="separator"
-              aria-orientation="vertical"
-              aria-label="Redimensionar entrada y salida"
-              className="w-2 hover:w-2 relative z-10 cursor-col-resize group shrink-0 flex items-center justify-center touch-none select-none -mx-0.5"
-              onPointerDown={(e) => {
-                e.currentTarget.setPointerCapture(e.pointerId);
-              }}
-              onPointerMove={(e) => {
-                if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
-                const bottom = bottomRef.current;
-                if (!bottom) return;
-                const rect = bottom.getBoundingClientRect();
-                if (rect.width <= 0) return;
-                const percent = Math.max(15, Math.min(85, ((e.clientX - rect.left) / rect.width) * 100));
-                setStdinWidth(percent);
-                try {
-                  localStorage.setItem("cpp_stdin_width", String(percent));
-                } catch {}
-              }}
-              onPointerUp={(e) => {
-                try {
-                  e.currentTarget.releasePointerCapture(e.pointerId);
-                } catch {}
-              }}
-            >
-              <div className="w-[2px] h-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
-            </div>
+                {/* Vertical Resizer between Stdin and Output */}
+                <div
+                  role="separator"
+                  aria-orientation="vertical"
+                  aria-label="Redimensionar entrada y salida"
+                  className="w-2 hover:w-2 relative z-10 cursor-col-resize group shrink-0 flex items-center justify-center touch-none select-none -mx-0.5"
+                  onPointerDown={(e) => {
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                  }}
+                  onPointerMove={(e) => {
+                    if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+                    const bottom = bottomRef.current;
+                    if (!bottom) return;
+                    const rect = bottom.getBoundingClientRect();
+                    if (rect.width <= 0) return;
+                    const percent = Math.max(15, Math.min(85, ((e.clientX - rect.left) / rect.width) * 100));
+                    setStdinWidth(percent);
+                    try {
+                      localStorage.setItem("cpp_stdin_width", String(percent));
+                    } catch {}
+                  }}
+                  onPointerUp={(e) => {
+                    try {
+                      e.currentTarget.releasePointerCapture(e.pointerId);
+                    } catch {}
+                  }}
+                >
+                  <div className="w-[2px] h-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
+                </div>
 
-            {/* Right: Output Panel */}
-            <div
-              style={{ width: `calc(${100 - stdinWidth}% - 4px)` }}
-              className="h-full min-w-0 overflow-hidden flex-1"
-            >
-              <OutputPanel
-                result={output}
-                isRunning={isRunning}
-                onClear={() => setOutput(null)}
-              />
-            </div>
+                {/* Right: Output Panel */}
+                <div
+                  style={{ width: `calc(${100 - stdinWidth}% - 4px)` }}
+                  className="h-full min-w-0 overflow-hidden flex-1"
+                >
+                  <OutputPanel
+                    result={output}
+                    isRunning={isRunning}
+                    onClear={() => setOutput(null)}
+                    language={language}
+                    code={code}
+                  />
+                </div>
+              </>
+            ) : (
+              /* Full Width Output & Live Preview for HTML/CSS/JS */
+              <div className="w-full h-full min-w-0 overflow-hidden">
+                <OutputPanel
+                  result={output}
+                  isRunning={isRunning}
+                  onClear={() => setOutput(null)}
+                  language={language}
+                  code={code}
+                />
+              </div>
+            )}
           </div>
         </main>
       </div>

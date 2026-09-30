@@ -4,10 +4,16 @@ import { getLanguage } from "./languages";
 export function downloadSourceFile(filename: string, code: string, language: SupportedLanguage = "cpp") {
   const langDef = getLanguage(language);
   const ext = langDef.extension;
-  const baseName = filename.replace(/\.(cpp|cc|cxx|c\+\+|c|h|hpp|py)$/i, "");
+  const baseName = filename.replace(/\.(cpp|cc|cxx|c\+\+|c|h|hpp|py|html|htm|js|mjs)$/i, "");
   const cleanName = `${baseName}${ext}`;
 
-  const mimeType = language === "python" ? "text/x-python;charset=utf-8" : "text/x-c++src;charset=utf-8";
+  const mimeMap: Record<SupportedLanguage, string> = {
+    cpp: "text/x-c++src;charset=utf-8",
+    python: "text/x-python;charset=utf-8",
+    html: "text/html;charset=utf-8",
+    javascript: "text/javascript;charset=utf-8",
+  };
+  const mimeType = mimeMap[language] || "text/plain;charset=utf-8";
   const blob = new Blob([code], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
