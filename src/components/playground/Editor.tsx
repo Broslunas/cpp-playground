@@ -22,10 +22,12 @@ export function Editor({ value, onChange, onRun, readOnly = false }: EditorProps
 
   // Keep callback refs updated without re-triggering effect
   const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
-
   const onRunRef = useRef(onRun);
-  onRunRef.current = onRun;
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+    onRunRef.current = onRun;
+  });
 
   useEffect(() => {
     if (!editorRef.current) return;

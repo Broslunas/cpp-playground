@@ -7,13 +7,22 @@ import { StdinPanel } from "@/components/playground/StdinPanel";
 import { OutputPanel } from "@/components/playground/OutputPanel";
 import { ProjectSidebar } from "@/components/playground/ProjectSidebar";
 import {
+  CompilerSettingsModal,
+  DEFAULT_COMPILER_SETTINGS,
+} from "@/components/playground/CompilerSettingsModal";
+import { TemplateSelectorModal } from "@/components/playground/TemplateSelectorModal";
+import { ShortcutsModal } from "@/components/playground/ShortcutsModal";
+import {
   getProjects,
   saveProjects,
   getActiveProjectId,
   setActiveProjectId,
   createProject,
 } from "@/lib/projects";
-import { Project, CompileResponse } from "@/types";
+import { generateShareUrl, decodeShareableState } from "@/lib/share";
+import { downloadCcFile, generateCMakeLists, generateMakefile } from "@/lib/export";
+import { formatCppCode } from "@/lib/formatter";
+import { Project, CompileResponse, CompilerSettings, CodeTemplate } from "@/types";
 
 export default function PlaygroundPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -25,17 +34,62 @@ export default function PlaygroundPage() {
   const [stdin, setStdin] = useState("");
   const [compiler, setCompiler] = useState("gcc-head");
   const [standard, setStandard] = useState("c++20");
+  const [compilerSettings, setCompilerSettings] = useState<CompilerSettings>(
+    DEFAULT_COMPILER_SETTINGS
+  );
   const [projectName, setProjectName] = useState("Loading...");
+
+  // Modals & UI View State
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isZenMode, setIsZenMode] = useState(false);
 
   // Execution state
   const [isRunning, setIsRunning] = useState(false);
   const [output, setOutput] = useState<CompileResponse | null>(null);
   const [saveToast, setSaveToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("Guardado localmente ✓");
 
-  // Initialize from localStorage
+  const showNotification = (msg: string) => {
+    setToastMessage(msg);
+    setSaveToast(true);
+    setTimeout(() => setSaveToast(false), 2000);
+  };
+
+  // Initialize: check URL hash first (for shared links), fallback to localStorage
   useEffect(() => {
     const loadedProjects = getProjects();
     setProjects(loadedProjects);
+
+    // Check if URL has shared code in hash
+    if (typeof window !== "undefined" && window.location.hash) {
+      const shared = decodeShareableState(window.location.hash);
+      if (shared) {
+        const sharedProject = createProject(
+          "Código Compartido",
+          shared.code,
+          shared.standard || "c++20",
+          shared.stdin || "",
+          shared.settings || DEFAULT_COMPILER_SETTINGS
+        );
+        if (shared.compiler) sharedProject.compiler = shared.compiler;
+
+        const updated = [sharedProject, ...loadedProjects];
+        setProjects(updated);
+        saveProjects(updated);
+        setActiveId(sharedProject.id);
+        setActiveProjectId(sharedProject.id);
+        setCode(sharedProject.code);
+        setStdin(sharedProject.stdin);
+        setCompiler(sharedProject.compiler);
+        setStandard(sharedProject.options || "c++20");
+        setCompilerSettings(sharedProject.settings || DEFAULT_COMPILER_SETTINGS);
+        setProjectName(sharedProject.name);
+        showNotification("Enlace compartido cargado ✓");
+        return;
+      }
+    }
 
     const savedActiveId = getActiveProjectId();
     const active =
@@ -47,6 +101,7 @@ export default function PlaygroundPage() {
       setStdin(active.stdin);
       setCompiler(active.compiler);
       setStandard(active.options || "c++20");
+      setCompilerSettings(active.settings || DEFAULT_COMPILER_SETTINGS);
       setProjectName(active.name);
     }
   }, []);
@@ -64,6 +119,7 @@ export default function PlaygroundPage() {
               stdin,
               compiler,
               options: standard,
+              settings: compilerSettings,
               updatedAt: Date.now(),
             }
           : p
@@ -72,9 +128,8 @@ export default function PlaygroundPage() {
       return updated;
     });
 
-    setSaveToast(true);
-    setTimeout(() => setSaveToast(false), 2000);
-  }, [activeProjectId, code, stdin, compiler, standard]);
+    showNotification("Proyecto guardado ✓");
+  }, [activeProjectId, code, stdin, compiler, standard, compilerSettings]);
 
   // Auto-save debounced
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -89,11 +144,10 @@ export default function PlaygroundPage() {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [code, stdin, compiler, standard, saveCurrentProject, activeProjectId]);
+  }, [code, stdin, compiler, standard, compilerSettings, saveCurrentProject, activeProjectId]);
 
   // Project selection
   const handleSelectProject = (id: string) => {
-    // Save current first
     saveCurrentProject();
 
     const target = projects.find((p) => p.id === id);
@@ -104,6 +158,7 @@ export default function PlaygroundPage() {
       setStdin(target.stdin);
       setCompiler(target.compiler);
       setStandard(target.options || "c++20");
+      setCompilerSettings(target.settings || DEFAULT_COMPILER_SETTINGS);
       setProjectName(target.name);
       setOutput(null);
     }
@@ -111,7 +166,7 @@ export default function PlaygroundPage() {
 
   // Create Project
   const handleCreateProject = () => {
-    const newProj = createProject(`Project ${projects.length + 1}`);
+    const newProj = createProject(`Proyecto ${projects.length + 1}`);
     const updated = [newProj, ...projects];
     setProjects(updated);
     saveProjects(updated);
@@ -144,6 +199,54 @@ export default function PlaygroundPage() {
     }
   };
 
+  // Load Template safely as new project
+  const handleSelectTemplate = (template: CodeTemplate) => {
+    const newProj = createProject(
+      template.title,
+      template.code,
+      template.standard,
+      template.stdin || "",
+      DEFAULT_COMPILER_SETTINGS
+    );
+    const updated = [newProj, ...projects];
+    setProjects(updated);
+    saveProjects(updated);
+    handleSelectProject(newProj.id);
+    showNotification(`Plantilla "${template.title}" cargada`);
+  };
+
+  // Code Formatter
+  const handleFormatCode = () => {
+    if (!code) return;
+    const formatted = formatCppCode(code);
+    setCode(formatted);
+    showNotification("Código formateado ✓");
+  };
+
+  // Share via URL hash
+  const handleShare = () => {
+    const url = generateShareUrl({
+      code,
+      stdin,
+      compiler,
+      standard,
+      settings: compilerSettings,
+    });
+    navigator.clipboard.writeText(url);
+    showNotification("¡Enlace copiado al portapapeles!");
+  };
+
+  // Export Project Files as .cc
+  const handleExport = () => {
+    downloadCcFile(projectName, code);
+    const makefile = generateMakefile(standard, compilerSettings);
+    const cmake = generateCMakeLists(projectName, standard, compilerSettings);
+    console.info("Generated Makefile:\n", makefile);
+    console.info("Generated CMakeLists.txt:\n", cmake);
+    const baseName = projectName.replace(/\.(cpp|cc|cxx|c\+\+|c|h|hpp)$/i, "");
+    showNotification(`Descargado ${baseName}.cc ✓`);
+  };
+
   // Run/Compile program
   const handleRun = async () => {
     if (isRunning) return;
@@ -159,6 +262,7 @@ export default function PlaygroundPage() {
           stdin,
           compiler,
           options: standard,
+          settings: compilerSettings,
         }),
       });
 
@@ -168,7 +272,7 @@ export default function PlaygroundPage() {
       const error = err as Error;
       setOutput({
         stdout: "",
-        stderr: error.message || "Failed to reach compilation server.",
+        stderr: error.message || "No se pudo conectar con el servidor de compilación.",
         compilerOutput: "",
         exitCode: 1,
       });
@@ -177,54 +281,99 @@ export default function PlaygroundPage() {
     }
   };
 
-  // Global Ctrl+Enter shortcut handler
+  // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      const isMod = e.ctrlKey || e.metaKey;
+
+      if (isMod && e.key === "Enter") {
         e.preventDefault();
         handleRun();
+      } else if (isMod && e.key === "s") {
+        e.preventDefault();
+        saveCurrentProject();
+      } else if (isMod && e.shiftKey && (e.key === "F" || e.key === "f")) {
+        e.preventDefault();
+        handleFormatCode();
+      } else if (isMod && (e.key === "k" || e.key === "K")) {
+        e.preventDefault();
+        setIsTemplatesOpen((prev) => !prev);
+      } else if (isMod && (e.key === "b" || e.key === "B")) {
+        e.preventDefault();
+        setIsSettingsOpen((prev) => !prev);
+      } else if (e.key === "?" && !isMod && (document.activeElement?.tagName !== "TEXTAREA" && !document.activeElement?.classList.contains("cm-content"))) {
+        e.preventDefault();
+        setIsShortcutsOpen(true);
+      } else if (e.key === "Escape") {
+        setIsSettingsOpen(false);
+        setIsTemplatesOpen(false);
+        setIsShortcutsOpen(false);
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [code, stdin, compiler, standard, isRunning]);
+  }, [code, stdin, compiler, standard, compilerSettings, isRunning, saveCurrentProject]);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#090a0f]">
       {/* Top Toolbar */}
-      <Toolbar
-        onRun={handleRun}
-        onSave={saveCurrentProject}
-        isRunning={isRunning}
-        compiler={compiler}
-        onCompilerChange={setCompiler}
-        standard={standard}
-        onStandardChange={setStandard}
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-        isSidebarOpen={isSidebarOpen}
-        projectName={projectName}
-      />
+      {!isZenMode && (
+        <Toolbar
+          onRun={handleRun}
+          onSave={saveCurrentProject}
+          isRunning={isRunning}
+          compiler={compiler}
+          onCompilerChange={setCompiler}
+          standard={standard}
+          onStandardChange={setStandard}
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          isSidebarOpen={isSidebarOpen}
+          projectName={projectName}
+          compilerSettings={compilerSettings}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenTemplates={() => setIsTemplatesOpen(true)}
+          onOpenShortcuts={() => setIsShortcutsOpen(true)}
+          onFormatCode={handleFormatCode}
+          onShare={handleShare}
+          onExport={handleExport}
+          isZenMode={isZenMode}
+          onToggleZenMode={() => setIsZenMode(!isZenMode)}
+        />
+      )}
 
       {/* Main Workspace Body */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* Projects Sidebar */}
-        <ProjectSidebar
-          projects={projects}
-          activeProjectId={activeProjectId}
-          onSelectProject={handleSelectProject}
-          onCreateProject={handleCreateProject}
-          onDeleteProject={handleDeleteProject}
-          onRenameProject={handleRenameProject}
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-        />
+        {!isZenMode && (
+          <ProjectSidebar
+            projects={projects}
+            activeProjectId={activeProjectId}
+            onSelectProject={handleSelectProject}
+            onCreateProject={handleCreateProject}
+            onDeleteProject={handleDeleteProject}
+            onRenameProject={handleRenameProject}
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+          />
+        )}
 
         {/* Central Workspace (Editor + Bottom I/O Panels) */}
         <main
           id="main-content"
-          className="flex-1 flex flex-col p-2 sm:p-3 gap-2 overflow-hidden"
+          className="flex-1 flex flex-col p-2 sm:p-3 gap-2 overflow-hidden relative"
           role="main"
         >
+          {/* Zen mode floating toggle */}
+          {isZenMode && (
+            <button
+              onClick={() => setIsZenMode(false)}
+              className="absolute top-4 right-4 z-40 px-2.5 py-1 rounded bg-zinc-900/90 border border-zinc-700 text-zinc-300 hover:text-white font-mono text-xs shadow-lg flex items-center gap-1.5"
+            >
+              Salir de Modo Zen (Esc)
+            </button>
+          )}
+
           {/* Top Half: CodeMirror Editor */}
           <div className="flex-1 min-h-[45%] h-full">
             <Editor
@@ -258,13 +407,32 @@ export default function PlaygroundPage() {
         </main>
       </div>
 
-      {/* Save Notification Toast */}
+      {/* Modals */}
+      <CompilerSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        settings={compilerSettings}
+        onChange={setCompilerSettings}
+      />
+
+      <TemplateSelectorModal
+        isOpen={isTemplatesOpen}
+        onClose={() => setIsTemplatesOpen(false)}
+        onSelectTemplate={handleSelectTemplate}
+      />
+
+      <ShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
+      />
+
+      {/* Toast Notification */}
       {saveToast && (
         <div
           role="status"
-          className="fixed bottom-4 right-4 bg-neon-green/90 text-black px-3 py-1.5 rounded shadow-lg text-xs font-mono font-semibold transition-opacity duration-300 z-50 pointer-events-none"
+          className="fixed bottom-4 right-4 bg-neon-green text-black px-3.5 py-2 rounded shadow-2xl text-xs font-mono font-bold transition-all duration-300 z-50 pointer-events-none"
         >
-          Project saved locally ✓
+          {toastMessage}
         </div>
       )}
     </div>

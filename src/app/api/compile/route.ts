@@ -53,22 +53,63 @@ export async function POST(req: NextRequest) {
     const compiler = body.compiler || "gcc-head";
     const stdOption = body.options ? `-std=${body.options}` : "-std=c++20";
 
+    // Build raw compiler flags array
+    const rawFlags: string[] = [stdOption];
+
+    // Optimization level
+    if (body.settings?.optimization) {
+      rawFlags.push(body.settings.optimization);
+    } else {
+      rawFlags.push("-O2");
+    }
+
+    // Warnings
+    if (body.settings?.warnings && body.settings.warnings.length > 0) {
+      body.settings.warnings.forEach((w) => rawFlags.push(`-${w}`));
+    } else {
+      rawFlags.push("-Wall");
+    }
+
+    // Sanitizers
+    if (body.settings?.sanitizers && body.settings.sanitizers.length > 0) {
+      body.settings.sanitizers.forEach((s) => rawFlags.push(`-fsanitize=${s}`));
+    }
+
+    // Custom flags (strip dangerous or invalid input)
+    if (body.settings?.customFlags) {
+      const customs = body.settings.customFlags
+        .split(/\s+/)
+        .map((f) => f.trim())
+        .filter((f) => f.length > 0 && f.startsWith("-"));
+      rawFlags.push(...customs);
+    }
+
+    const startTime = Date.now();
+
     // Call Wandbox API
+    const wandboxPayload: Record<string, string> = {
+      code: body.code,
+      compiler: compiler,
+      stdin: body.stdin || "",
+      options: "warning",
+      "compiler-option-raw": rawFlags.join("\n"),
+    };
+
+    if (body.args && body.args.trim().length > 0) {
+      wandboxPayload["runtime-option-raw"] = body.args.trim();
+    }
+
     const response = await fetch(WANDBOX_API, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        code: body.code,
-        compiler: compiler,
-        stdin: body.stdin || "",
-        options: "warning",
-        "compiler-option-raw": `${stdOption}\n-O2\n-Wall`,
-      }),
+      body: JSON.stringify(wandboxPayload),
       // 25 second timeout for compilation
       signal: AbortSignal.timeout(25000),
     });
+
+    const executionTimeMs = Date.now() - startTime;
 
     if (!response.ok) {
       const errText = await response.text();
@@ -91,6 +132,7 @@ export async function POST(req: NextRequest) {
       compilerOutput: data.compiler_message || data.compiler_error || "",
       exitCode: data.status !== undefined ? Number(data.status) : 0,
       time: data.created_at ? new Date(data.created_at * 1000).toLocaleTimeString() : undefined,
+      executionTimeMs,
     };
 
     return NextResponse.json(result, {

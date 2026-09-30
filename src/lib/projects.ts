@@ -1,4 +1,4 @@
-import { Project } from "@/types";
+import { Project, CompilerSettings } from "@/types";
 import { DEFAULT_CODE } from "./compiler";
 
 const STORAGE_KEY = "cpp-playground-projects";
@@ -38,14 +38,21 @@ export function setActiveProjectId(id: string): void {
   localStorage.setItem(ACTIVE_PROJECT_KEY, id);
 }
 
-export function createProject(name = "Untitled Project"): Project {
+export function createProject(
+  name = "Untitled Project",
+  code: string = DEFAULT_CODE,
+  standard: string = "c++20",
+  stdin: string = "",
+  settings?: CompilerSettings
+): Project {
   return {
     id: crypto.randomUUID(),
     name,
-    code: DEFAULT_CODE,
-    stdin: "",
+    code,
+    stdin,
     compiler: "gcc-head",
-    options: "c++20",
+    options: standard,
+    settings,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -63,3 +70,4 @@ function createInitialProject(): Project {
     updatedAt: Date.now(),
   };
 }
+

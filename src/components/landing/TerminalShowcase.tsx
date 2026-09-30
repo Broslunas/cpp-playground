@@ -33,7 +33,7 @@ export function TerminalShowcase() {
             <span className="text-zinc-500">5</span>  <span className="text-neon-green">int</span> <span className="text-blue-400">main</span>() {"{"}{"\n"}
             <span className="text-zinc-500">6</span>      <span className="text-purple-400">std::vector</span>&lt;<span className="text-neon-green">int</span>&gt; nums = {"{1, 2, 3, 4, 5}"};{"\n"}
             <span className="text-zinc-500">7</span>      {"\n"}
-            <span className="text-zinc-500">8</span>      <span className="text-zinc-500">// Modern C++20 Ranges pipeline</span>{"\n"}
+            <span className="text-zinc-500">8</span>      <span className="text-zinc-500">{"// Modern C++20 Ranges pipeline"}</span>{"\n"}
             <span className="text-zinc-500">9</span>      <span className="text-purple-400">auto</span> evens = nums | std::views::filter([](<span className="text-neon-green">int</span> n) {"{ return n % 2 == 0; }"});{"\n"}
             <span className="text-zinc-500">10</span>     <span className="text-purple-400">for</span> (<span className="text-neon-green">int</span> n : evens) {"{"}{"\n"}
             <span className="text-zinc-500">11</span>         <span className="text-purple-400">std::cout</span> &lt;&lt; <span className="text-amber-300">&quot;Par: &quot;</span> &lt;&lt; n &lt;&lt; <span className="text-amber-300">&quot;\\n&quot;</span>;{"\n"}
