@@ -4,7 +4,7 @@ import { getLanguage } from "./languages";
 export function downloadSourceFile(filename: string, code: string, language: SupportedLanguage = "cpp") {
   const langDef = getLanguage(language);
   const ext = langDef.extension;
-  const baseName = filename.replace(/\.(cpp|cc|cxx|c\+\+|c|h|hpp|py|html|htm|js|mjs)$/i, "");
+  const baseName = filename.replace(/\.(cpp|cc|cxx|c\+\+|c|h|hpp|py|html|htm|js|mjs|ts|mts|tsx)$/i, "");
   const cleanName = `${baseName}${ext}`;
 
   const mimeMap: Record<SupportedLanguage, string> = {
@@ -12,6 +12,7 @@ export function downloadSourceFile(filename: string, code: string, language: Sup
     python: "text/x-python;charset=utf-8",
     html: "text/html;charset=utf-8",
     javascript: "text/javascript;charset=utf-8",
+    typescript: "text/typescript;charset=utf-8",
   };
   const mimeType = mimeMap[language] || "text/plain;charset=utf-8";
   const blob = new Blob([code], { type: mimeType });

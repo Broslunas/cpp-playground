@@ -20,7 +20,8 @@ import {
   Check,
 } from "lucide-react";
 import { SUPPORTED_LANGUAGES_LIST, getLanguage } from "@/lib/languages";
-import { CompilerSettings, SupportedLanguage } from "@/types";
+import { CompilerSettings, SupportedLanguage, PlaygroundLayout } from "@/types";
+import { LayoutSelector } from "@/components/playground/LayoutSelector";
 
 interface ToolbarProps {
   onRun: () => void;
@@ -44,6 +45,11 @@ interface ToolbarProps {
   onExport: () => void;
   isZenMode: boolean;
   onToggleZenMode: () => void;
+  layout: PlaygroundLayout;
+  onLayoutChange: (layout: PlaygroundLayout) => void;
+  showStdin: boolean;
+  onToggleStdin: () => void;
+  onResetSizes: () => void;
 }
 
 export function Toolbar({
@@ -68,6 +74,11 @@ export function Toolbar({
   onExport,
   isZenMode,
   onToggleZenMode,
+  layout,
+  onLayoutChange,
+  showStdin,
+  onToggleStdin,
+  onResetSizes,
 }: ToolbarProps) {
   const [copiedShare, setCopiedShare] = useState(false);
 
@@ -186,6 +197,15 @@ export function Toolbar({
           >
             <Download className="w-3.5 h-3.5" />
           </button>
+
+          <LayoutSelector
+            layout={layout}
+            onLayoutChange={onLayoutChange}
+            showStdin={showStdin}
+            onToggleStdin={onToggleStdin}
+            onResetSizes={onResetSizes}
+            isHtml={Boolean(langDef.isWebPreview || language === "html")}
+          />
         </div>
 
         <div className="h-4 w-[1px] bg-zinc-800 hidden sm:block" />

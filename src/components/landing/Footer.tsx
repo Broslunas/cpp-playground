@@ -55,6 +55,13 @@ export function Footer() {
           >
             JavaScript
           </Link>
+          <span>•</span>
+          <Link
+            href="/typescript/playground"
+            className="hover:text-blue-400 transition-colors"
+          >
+            TypeScript
+          </Link>
         </div>
       </div>
     </footer>

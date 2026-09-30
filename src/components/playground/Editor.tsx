@@ -27,7 +27,9 @@ import {
   foldGutter,
   foldKeymap,
   indentOnInput,
+  StreamLanguage,
 } from "@codemirror/language";
+import { shell } from "@codemirror/legacy-modes/mode/shell";
 import {
   autocompletion,
   completionKeymap,
@@ -71,6 +73,10 @@ export function Editor({
         return html();
       case "javascript":
         return javascript();
+      case "typescript":
+        return javascript({ typescript: true });
+      case "bash":
+        return StreamLanguage.define(shell);
       default:
         return cpp();
     }

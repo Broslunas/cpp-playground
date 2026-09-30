@@ -64,10 +64,15 @@ export async function POST(req: NextRequest) {
     let defaultCompiler = "gcc-head";
     if (body.language === "python") defaultCompiler = "cpython-3.12.7";
     if (body.language === "javascript") defaultCompiler = "nodejs-20.17.0";
+    if (body.language === "typescript") defaultCompiler = "typescript-5.6.2";
 
     const compiler = body.compiler || defaultCompiler;
     const isPython = body.language === "python" || compiler.startsWith("cpython") || compiler.startsWith("pypy");
-    const isNode = body.language === "javascript" || compiler.startsWith("nodejs");
+    const isNodeOrTs =
+      body.language === "javascript" ||
+      body.language === "typescript" ||
+      compiler.startsWith("nodejs") ||
+      compiler.startsWith("typescript");
 
     const wandboxPayload: Record<string, string> = {
       code: body.code,
@@ -75,7 +80,7 @@ export async function POST(req: NextRequest) {
       stdin: body.stdin || "",
     };
 
-    if (isPython || isNode) {
+    if (isPython || isNodeOrTs) {
       // Scripting / interpreted runtime options
       if (body.args && body.args.trim().length > 0) {
         wandboxPayload["runtime-option-raw"] = body.args.trim();

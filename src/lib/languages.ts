@@ -191,6 +191,84 @@ int main() {
 }
 `;
 
+export const BASH_DEFAULT_CODE = `#!/usr/bin/env bash
+# Terminal Linux & Bash Scripting Playground
+set -euo pipefail
+
+echo "=========================================="
+echo "🐧 Linux Terminal & Bash Sandbox"
+echo "=========================================="
+
+echo "» Sistema operativo y arquitectura:"
+uname -s -r -m
+
+echo -e "\n» Versión de Bash:"
+bash --version | head -n 1
+
+echo -e "\n» Usuario actual y directorio de trabajo:"
+echo "Usuario : $(whoami)"
+echo "Ruta    : $(pwd)"
+
+echo -e "\n» Explorando el entorno Linux:"
+ls -lah /home/wandbox | head -n 6
+
+echo -e "\n» Procesamiento de texto (pipes + awk):"
+echo -e "kernel 6.8\ncoreutils 9.4\nbash 5.2\ngcc 14.2" | awk '{ printf "  Paquete: %-12s | Versión: %s\n", $1, $2 }'
+
+echo -e "\n» Entrada estándar (stdin):"
+if read -t 1 -r linea; then
+    echo "Leído de stdin: $linea"
+else
+    echo "(Sin datos en stdin. Puedes escribir en el panel de entrada)."
+fi
+`;
+
+export const TS_DEFAULT_CODE = `// TypeScript 5.6 Playground
+type Status = "idle" | "loading" | "success" | "error";
+
+interface ApiResponse<T> {
+  status: Status;
+  data?: T;
+  error?: string;
+  timestamp: Date;
+}
+
+interface User {
+  id: number;
+  name: string;
+  role: "admin" | "editor" | "viewer";
+}
+
+function formatResponse<T>(res: ApiResponse<T>): string {
+  switch (res.status) {
+    case "success":
+      return \`[OK \${res.timestamp.toISOString()}] Data: \${JSON.stringify(res.data)}\`;
+    case "error":
+      return \`[ERROR] \${res.error ?? "Desconocido"}\`;
+    default:
+      return \`[PENDING] Estado: \${res.status}\`;
+  }
+}
+
+async function main(): Promise<void> {
+  console.log("¡Hola desde TypeScript 5.6!");
+
+  const userResponse: ApiResponse<User> = {
+    status: "success",
+    data: { id: 1, name: "Ada Lovelace", role: "admin" },
+    timestamp: new Date(),
+  };
+
+  console.log(formatResponse(userResponse));
+
+  // Utility Types
+  const partialUser: Partial<User> = { name: "Alan Turing" };
+  console.log("Usuario parcial:", partialUser);
+}
+
+main().catch(console.error);
+`;
+
 export const LANGUAGES: Record<SupportedLanguage, LanguageDefinition> = {
   cpp: {
     id: "cpp",
@@ -300,6 +378,40 @@ export const LANGUAGES: Record<SupportedLanguage, LanguageDefinition> = {
         name: "Node.js 18.20.4 (LTS)",
         version: "18.20.4",
         standards: ["ES2022", "CommonJS"],
+      },
+    ],
+  },
+  typescript: {
+    id: "typescript",
+    name: "TypeScript",
+    extension: ".ts",
+    defaultCode: TS_DEFAULT_CODE,
+    defaultCompiler: "typescript-5.6.2",
+    defaultStandard: "ESNext",
+    hasCompilerSettings: false,
+    compilers: [
+      {
+        id: "typescript-5.6.2",
+        name: "TypeScript 5.6.2 (Node V8)",
+        version: "5.6.2",
+        standards: ["ESNext", "ES2023", "ES2022"],
+      },
+    ],
+  },
+  bash: {
+    id: "bash",
+    name: "Linux Bash",
+    extension: ".sh",
+    defaultCode: BASH_DEFAULT_CODE,
+    defaultCompiler: "bash",
+    defaultStandard: "Bash 5.2",
+    hasCompilerSettings: false,
+    compilers: [
+      {
+        id: "bash",
+        name: "GNU Bash 5.2 (Ubuntu Linux)",
+        version: "5.2.21",
+        standards: ["Bash 5.2", "POSIX sh"],
       },
     ],
   },

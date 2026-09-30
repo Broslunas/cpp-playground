@@ -73,6 +73,7 @@ export function TemplateSelectorModal({
             { id: "python", label: "Python 🐍" },
             { id: "html", label: "HTML/CSS/JS 🌐" },
             { id: "javascript", label: "JavaScript (Node) ⚡" },
+            { id: "typescript", label: "TypeScript 📘" },
           ].map((tab) => (
             <button
               key={tab.id}

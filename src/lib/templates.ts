@@ -899,4 +899,158 @@ const informe = analizarVentas(transacciones);
 console.log(JSON.stringify(informe, null, 2));
 `,
   },
+  // TypeScript Templates
+  {
+    id: "ts-discriminated-unions",
+    title: "TypeScript: Uniones Discriminadas & Exhaustiveness",
+    language: "typescript",
+    category: "basics",
+    description: "Modelado algebraico de tipos de dominio y comprobación exhaustiva con tipo never.",
+    standard: "ESNext",
+    code: `// Uniones discriminadas para modelar estados de pago
+type MetodoPago =
+  | { tipo: "tarjeta"; numero: string; titular: string; cvv: number }
+  | { tipo: "paypal"; email: string }
+  | { tipo: "crypto"; wallet: string; red: "ethereum" | "bitcoin" }
+  | { tipo: "transferencia"; iban: string };
+
+interface Transaccion {
+  id: string;
+  monto: number;
+  moneda: "EUR" | "USD";
+  pago: MetodoPago;
+}
+
+// Type guard para verificación exhaustiva en tiempo de compilación
+function verificarInalcanzable(x: never): never {
+  throw new Error(\`Caso no contemplado: \${JSON.stringify(x)}\`);
+}
+
+function procesarPago(tx: Transaccion): string {
+  const { pago, monto, moneda } = tx;
+
+  switch (pago.tipo) {
+    case "tarjeta":
+      return \`💳 Cobrando \${monto} \${moneda} a tarjeta ...\${pago.numero.slice(-4)}\`;
+    case "paypal":
+      return \`🅿️ Enviando solicitud PayPal a \${pago.email} (\${monto} \${moneda})\`;
+    case "crypto":
+      return \`⛓️ Emitiendo tx en red \${pago.red} hacia \${pago.wallet}\`;
+    case "transferencia":
+      return \`🏦 Orden de transferencia bancaria al IBAN \${pago.iban}\`;
+    default:
+      return verificarInalcanzable(pago);
+  }
+}
+
+function main(): void {
+  const transacciones: Transaccion[] = [
+    {
+      id: "tx-01",
+      monto: 149.99,
+      moneda: "EUR",
+      pago: { tipo: "tarjeta", numero: "4532123456789012", titular: "Ana López", cvv: 123 },
+    },
+    {
+      id: "tx-02",
+      monto: 50.0,
+      moneda: "USD",
+      pago: { tipo: "paypal", email: "dev@typescript.org" },
+    },
+    {
+      id: "tx-03",
+      monto: 850.0,
+      moneda: "EUR",
+      pago: { tipo: "crypto", wallet: "0x71C...B29", red: "ethereum" },
+    },
+  ];
+
+  console.log("=== Procesador de Pagos con Tipado Estático ===");
+  transacciones.forEach((tx) => {
+    console.log(procesarPago(tx));
+  });
+}
+
+main();
+`,
+  },
+  {
+    id: "ts-generics-builder",
+    title: "TypeScript: Generics & Fluent Builder Pattern",
+    language: "typescript",
+    category: "basics",
+    description: "Patrón constructor fluido con tipos genéricos para creación inmutable y segura.",
+    standard: "ESNext",
+    code: `interface SolicitudHttp<TBody = unknown> {
+  url: string;
+  metodo: "GET" | "POST" | "PUT" | "DELETE";
+  cabeceras: Record<string, string>;
+  cuerpo?: TBody;
+  timeoutMs: number;
+}
+
+class RequestBuilder<TBody = void> {
+  private config: Partial<SolicitudHttp<TBody>> = {
+    metodo: "GET",
+    cabeceras: { "Accept": "application/json" },
+    timeoutMs: 5000,
+  };
+
+  url(url: string): this {
+    this.config.url = url;
+    return this;
+  }
+
+  metodo(metodo: "GET" | "POST" | "PUT" | "DELETE"): this {
+    this.config.metodo = metodo;
+    return this;
+  }
+
+  cabecera(clave: string, valor: string): this {
+    this.config.cabeceras = { ...this.config.cabeceras, [clave]: valor };
+    return this;
+  }
+
+  cuerpo<B>(cuerpo: B): RequestBuilder<B> {
+    const nuevo = new RequestBuilder<B>();
+    nuevo.config = {
+      ...this.config,
+      cuerpo,
+    } as unknown as Partial<SolicitudHttp<B>>;
+    return nuevo;
+  }
+
+  build(): SolicitudHttp<TBody> {
+    if (!this.config.url) {
+      throw new Error("La URL es obligatoria.");
+    }
+    return this.config as SolicitudHttp<TBody>;
+  }
+}
+
+interface PayloadUsuario {
+  nombre: string;
+  correo: string;
+  activo: boolean;
+}
+
+function main(): void {
+  const req = new RequestBuilder()
+    .url("https://api.ejemplo.com/v1/usuarios")
+    .metodo("POST")
+    .cabecera("Authorization", "Bearer token_secreto_xyz")
+    .cuerpo<PayloadUsuario>({
+      nombre: "Ada Lovelace",
+      correo: "ada@computacion.com",
+      activo: true,
+    })
+    .build();
+
+  console.log("Solicitud HTTP fuertemente tipada creada:");
+  console.log(JSON.stringify(req, null, 2));
+}
+
+main();
+`,
+  },
 ];

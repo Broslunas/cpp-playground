@@ -189,12 +189,47 @@ main();`,
       { title: "Streams Stdin", desc: "Entrada por línea" },
     ],
   },
+  typescript: {
+    id: "typescript",
+    name: "TypeScript",
+    badge: "Tipado Estático",
+    version: "TS 5.6 • Node V8",
+    shortDesc: "Tipado estático con interfaces, genéricos, uniones discriminadas y compiler de TypeScript 5.6.",
+    accentColor: "#3178c6",
+    accentBorder: "border-[#3178c6]/40 hover:border-[#3178c6]",
+    glowColor: "rgba(49, 120, 198, 0.2)",
+    gradientText: "from-[#3178c6] via-[#60a5fa] to-[#93c5fd]",
+    iconBg: "bg-[#3178c6]/10 text-[#3178c6] border-[#3178c6]/30",
+    bannerBg: "from-[#3178c6]/10 to-transparent",
+    keyNumber: "5",
+    keyLetter: "T",
+    href: "/typescript/playground",
+    engine: "TypeScript 5.6.2",
+    sampleCode: `interface Usuario {
+    id: number;
+    nombre: string;
+    rol: "admin" | "dev";
+}
+
+const u: Usuario = { id: 1, nombre: "Ada Lovelace", rol: "dev" };
+console.log(\`» TS 5.6 cargado: \${u.nombre} [\${u.rol}]\`);`,
+    sampleOutput: {
+      stdout: ["» TS 5.6 cargado: Ada Lovelace [dev]"],
+      execTime: "0.035s",
+    },
+    templates: [
+      { title: "Uniones Discriminadas", desc: "Pattern matching seguro" },
+      { title: "Fluent Builder", desc: "Generics encadenados" },
+      { title: "Utility Types", desc: "Pick, Omit, Partial" },
+    ],
+  },
 };
 
 const UPCOMING_LANGUAGES = [
   { name: "Rust", icon: "🦀", version: "1.82+", tag: "Borrow Checker" },
   { name: "Go", icon: "🦫", version: "1.23+", tag: "Goroutines" },
-  { name: "TypeScript", icon: "⚡", version: "Node 22", tag: "Tipado Estático" },
+  { name: "Java", icon: "☕", version: "OpenJDK 22", tag: "Virtual Threads" },
+  { name: "Zig", icon: "⚡", version: "0.13+", tag: "Zero Overhead" },
 ];
 
 export function LanguageSelector() {

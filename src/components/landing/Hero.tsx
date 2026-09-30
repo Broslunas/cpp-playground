@@ -73,6 +73,13 @@ export function Hero() {
             <Terminal className="w-4 h-4 text-amber-400" />
             JavaScript (Node) ⚡
           </Link>
+          <Link
+            href="/typescript/playground"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-zinc-900 border border-blue-500/40 text-blue-400 hover:text-blue-300 hover:border-blue-400 font-semibold text-sm font-mono transition-all transform hover:-translate-y-0.5 shadow-[0_0_15px_rgba(59,130,246,0.15)] focus:outline-none"
+          >
+            <Code2 className="w-4 h-4 text-blue-400" />
+            TypeScript 📘
+          </Link>
         </div>
 
         {/* Quick Highlights */}

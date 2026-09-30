@@ -24,7 +24,7 @@ import { generateShareUrl, decodeShareableState } from "@/lib/share";
 import { downloadSourceFile, generateCMakeLists, generateMakefile } from "@/lib/export";
 import { formatCode } from "@/lib/formatter";
 import { getLanguage } from "@/lib/languages";
-import { Project, CompileResponse, CompilerSettings, CodeTemplate, SupportedLanguage } from "@/types";
+import { Project, CompileResponse, CompilerSettings, CodeTemplate, SupportedLanguage, PlaygroundLayout } from "@/types";
 
 interface PlaygroundWorkspaceProps {
   initialLanguage?: SupportedLanguage;
@@ -59,26 +59,108 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
   const [saveToast, setSaveToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("Guardado localmente ✓");
 
+  // Layout mode & panel visibility
+  const [layout, setLayout] = useState<PlaygroundLayout>("standard");
+  const [showStdin, setShowStdin] = useState(true);
+
   // Resizing state & persistence
   const [sidebarWidth, setSidebarWidth] = useState(260);
+  // Standard layout (editor height % + stdin width %)
   const [editorHeight, setEditorHeight] = useState(60);
   const [stdinWidth, setStdinWidth] = useState(30);
+  // Two-column layout (editor width % + stdin height %)
+  const [editorWidth, setEditorWidth] = useState(55);
+  const [stdinHeight, setStdinHeight] = useState(35);
+  // Columns layout (col1 width % + col2 width %)
+  const [col1Width, setCol1Width] = useState(45);
+  const [col2Width, setCol2Width] = useState(25);
+  // Vertical layout (row1 height % + row2 height %)
+  const [row1Height, setRow1Height] = useState(50);
+  const [row2Height, setRow2Height] = useState(25);
 
   const workspaceRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const rightRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
+      const savedLayout = localStorage.getItem("cpp_playground_layout");
+      if (savedLayout && ["standard", "two-column", "columns", "vertical"].includes(savedLayout)) {
+        setLayout(savedLayout as PlaygroundLayout);
+      }
+      const savedStdin = localStorage.getItem("cpp_show_stdin");
+      if (savedStdin !== null) {
+        setShowStdin(savedStdin === "true");
+      }
       const sw = localStorage.getItem("cpp_sidebar_width");
       if (sw) setSidebarWidth(Math.max(160, Math.min(500, Number(sw))));
       const eh = localStorage.getItem("cpp_editor_height");
       if (eh) setEditorHeight(Math.max(15, Math.min(85, Number(eh))));
       const siw = localStorage.getItem("cpp_stdin_width");
       if (siw) setStdinWidth(Math.max(15, Math.min(85, Number(siw))));
+      const ew = localStorage.getItem("cpp_editor_width");
+      if (ew) setEditorWidth(Math.max(20, Math.min(80, Number(ew))));
+      const sih = localStorage.getItem("cpp_stdin_height");
+      if (sih) setStdinHeight(Math.max(15, Math.min(85, Number(sih))));
+      const c1 = localStorage.getItem("cpp_col1_width");
+      if (c1) setCol1Width(Math.max(20, Math.min(65, Number(c1))));
+      const c2 = localStorage.getItem("cpp_col2_width");
+      if (c2) setCol2Width(Math.max(15, Math.min(50, Number(c2))));
+      const r1 = localStorage.getItem("cpp_row1_height");
+      if (r1) setRow1Height(Math.max(20, Math.min(65, Number(r1))));
+      const r2 = localStorage.getItem("cpp_row2_height");
+      if (r2) setRow2Height(Math.max(15, Math.min(50, Number(r2))));
     } catch {}
   }, []);
+
+  const handleLayoutChange = (newLayout: PlaygroundLayout) => {
+    setLayout(newLayout);
+    try {
+      localStorage.setItem("cpp_playground_layout", newLayout);
+    } catch {}
+    const labels: Record<PlaygroundLayout, string> = {
+      standard: "Diseño Estándar",
+      "two-column": "Diseño 2 Columnas",
+      columns: "Diseño 3 Columnas",
+      vertical: "Diseño Vertical",
+    };
+    showNotification(`${labels[newLayout]} activado ✓`);
+  };
+
+  const handleToggleStdin = () => {
+    setShowStdin((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("cpp_show_stdin", String(next));
+      } catch {}
+      showNotification(next ? "Panel Stdin visible" : "Panel Stdin oculto");
+      return next;
+    });
+  };
+
+  const handleResetSizes = () => {
+    setEditorHeight(60);
+    setStdinWidth(30);
+    setEditorWidth(55);
+    setStdinHeight(35);
+    setCol1Width(45);
+    setCol2Width(25);
+    setRow1Height(50);
+    setRow2Height(25);
+    try {
+      localStorage.removeItem("cpp_editor_height");
+      localStorage.removeItem("cpp_stdin_width");
+      localStorage.removeItem("cpp_editor_width");
+      localStorage.removeItem("cpp_stdin_height");
+      localStorage.removeItem("cpp_col1_width");
+      localStorage.removeItem("cpp_col2_width");
+      localStorage.removeItem("cpp_row1_height");
+      localStorage.removeItem("cpp_row2_height");
+    } catch {}
+    showNotification("Proporciones restablecidas ✓");
+  };
 
   const showNotification = (msg: string) => {
     setToastMessage(msg);
@@ -411,6 +493,36 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
   }, [code, stdin, compiler, standard, compilerSettings, isRunning, saveCurrentProject, language]);
 
   const langDef = getLanguage(language);
+  const isWebPreview = Boolean(langDef.isWebPreview || language === "html");
+  const effectiveShowStdin = !isWebPreview && showStdin;
+
+  const editorPanel = (
+    <Editor
+      value={code}
+      onChange={setCode}
+      onRun={handleRun}
+      language={language}
+      readOnly={isRunning}
+    />
+  );
+
+  const stdinPanel = (
+    <StdinPanel
+      value={stdin}
+      onChange={setStdin}
+      disabled={isRunning}
+    />
+  );
+
+  const outputPanel = (
+    <OutputPanel
+      result={output}
+      isRunning={isRunning}
+      onClear={() => setOutput(null)}
+      language={language}
+      code={code}
+    />
+  );
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#090a0f]">
@@ -438,6 +550,11 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
           onExport={handleExport}
           isZenMode={isZenMode}
           onToggleZenMode={() => setIsZenMode(!isZenMode)}
+          layout={layout}
+          onLayoutChange={handleLayoutChange}
+          showStdin={showStdin}
+          onToggleStdin={handleToggleStdin}
+          onResetSizes={handleResetSizes}
         />
       )}
 
@@ -492,7 +609,7 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
           </>
         )}
 
-        {/* Central Workspace (Editor + Bottom I/O Panels) */}
+        {/* Central Workspace */}
         <main
           ref={mainRef}
           id="main-content"
@@ -509,127 +626,403 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
             </button>
           )}
 
-          {/* Top: CodeMirror Editor */}
-          <div
-            style={{ height: `calc(${editorHeight}% - 4px)` }}
-            className="w-full min-h-0 overflow-hidden"
-          >
-            <Editor
-              value={code}
-              onChange={setCode}
-              onRun={handleRun}
-              language={language}
-              readOnly={isRunning}
-            />
-          </div>
+          {/* 1. Standard Layout: Editor Top, Stdin & Output Bottom */}
+          {layout === "standard" && (
+            <div className="w-full h-full flex flex-col overflow-hidden">
+              <div
+                style={{ height: `calc(${editorHeight}% - 4px)` }}
+                className="w-full min-h-0 overflow-hidden"
+              >
+                {editorPanel}
+              </div>
 
-          {/* Horizontal Resizer between Editor and Bottom Panels */}
-          <div
-            role="separator"
-            aria-orientation="horizontal"
-            aria-label="Redimensionar editor y consola"
-            className="h-2 hover:h-2 relative z-10 cursor-row-resize group shrink-0 flex items-center justify-center touch-none select-none -my-0.5"
-            onPointerDown={(e) => {
-              e.currentTarget.setPointerCapture(e.pointerId);
-            }}
-            onPointerMove={(e) => {
-              if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
-              const main = mainRef.current;
-              if (!main) return;
-              const rect = main.getBoundingClientRect();
-              if (rect.height <= 0) return;
-              const percent = Math.max(15, Math.min(85, ((e.clientY - rect.top) / rect.height) * 100));
-              setEditorHeight(percent);
-              try {
-                localStorage.setItem("cpp_editor_height", String(percent));
-              } catch {}
-            }}
-            onPointerUp={(e) => {
-              try {
-                e.currentTarget.releasePointerCapture(e.pointerId);
-              } catch {}
-            }}
-          >
-            <div className="h-[2px] w-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
-          </div>
+              {/* Horizontal Resizer between Editor and Bottom Panels */}
+              <div
+                role="separator"
+                aria-orientation="horizontal"
+                aria-label="Redimensionar editor y consola"
+                className="h-2 hover:h-2 relative z-10 cursor-row-resize group shrink-0 flex items-center justify-center touch-none select-none -my-0.5"
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                }}
+                onPointerMove={(e) => {
+                  if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+                  const main = mainRef.current;
+                  if (!main) return;
+                  const rect = main.getBoundingClientRect();
+                  if (rect.height <= 0) return;
+                  const percent = Math.max(15, Math.min(85, ((e.clientY - rect.top) / rect.height) * 100));
+                  setEditorHeight(percent);
+                  try {
+                    localStorage.setItem("cpp_editor_height", String(percent));
+                  } catch {}
+                }}
+                onPointerUp={(e) => {
+                  try {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                  } catch {}
+                }}
+              >
+                <div className="h-[2px] w-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
+              </div>
 
-          {/* Bottom: Stdin & Output Panels */}
-          <div
-            ref={bottomRef}
-            style={{ height: `calc(${100 - editorHeight}% - 4px)` }}
-            className="w-full min-h-0 flex flex-row overflow-hidden"
-          >
-            {language !== "html" ? (
-              <>
-                {/* Left: Stdin Input */}
+              {/* Bottom Panels */}
+              <div
+                ref={bottomRef}
+                style={{ height: `calc(${100 - editorHeight}% - 4px)` }}
+                className="w-full min-h-0 flex flex-row overflow-hidden"
+              >
+                {effectiveShowStdin ? (
+                  <>
+                    <div
+                      style={{ width: `calc(${stdinWidth}% - 4px)` }}
+                      className="h-full min-w-0 overflow-hidden"
+                    >
+                      {stdinPanel}
+                    </div>
+
+                    <div
+                      role="separator"
+                      aria-orientation="vertical"
+                      aria-label="Redimensionar entrada y salida"
+                      className="w-2 hover:w-2 relative z-10 cursor-col-resize group shrink-0 flex items-center justify-center touch-none select-none -mx-0.5"
+                      onPointerDown={(e) => {
+                        e.currentTarget.setPointerCapture(e.pointerId);
+                      }}
+                      onPointerMove={(e) => {
+                        if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+                        const bottom = bottomRef.current;
+                        if (!bottom) return;
+                        const rect = bottom.getBoundingClientRect();
+                        if (rect.width <= 0) return;
+                        const percent = Math.max(15, Math.min(85, ((e.clientX - rect.left) / rect.width) * 100));
+                        setStdinWidth(percent);
+                        try {
+                          localStorage.setItem("cpp_stdin_width", String(percent));
+                        } catch {}
+                      }}
+                      onPointerUp={(e) => {
+                        try {
+                          e.currentTarget.releasePointerCapture(e.pointerId);
+                        } catch {}
+                      }}
+                    >
+                      <div className="w-[2px] h-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
+                    </div>
+
+                    <div
+                      style={{ width: `calc(${100 - stdinWidth}% - 4px)` }}
+                      className="h-full min-w-0 overflow-hidden flex-1"
+                    >
+                      {outputPanel}
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full min-w-0 overflow-hidden">
+                    {outputPanel}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 2. Two-Column Layout: Editor Left, Stdin & Output Stacked Right */}
+          {layout === "two-column" && (
+            <div className="w-full h-full flex flex-row overflow-hidden">
+              <div
+                style={{ width: `calc(${editorWidth}% - 4px)` }}
+                className="h-full min-w-0 overflow-hidden"
+              >
+                {editorPanel}
+              </div>
+
+              {/* Vertical Resizer between Editor and Right Column */}
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Redimensionar editor y consola"
+                className="w-2 hover:w-2 relative z-10 cursor-col-resize group shrink-0 flex items-center justify-center touch-none select-none -mx-0.5"
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                }}
+                onPointerMove={(e) => {
+                  if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+                  const main = mainRef.current;
+                  if (!main) return;
+                  const rect = main.getBoundingClientRect();
+                  if (rect.width <= 0) return;
+                  const percent = Math.max(20, Math.min(80, ((e.clientX - rect.left) / rect.width) * 100));
+                  setEditorWidth(percent);
+                  try {
+                    localStorage.setItem("cpp_editor_width", String(percent));
+                  } catch {}
+                }}
+                onPointerUp={(e) => {
+                  try {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                  } catch {}
+                }}
+              >
+                <div className="w-[2px] h-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
+              </div>
+
+              {/* Right Column */}
+              <div
+                ref={rightRef}
+                style={{ width: `calc(${100 - editorWidth}% - 4px)` }}
+                className="h-full min-w-0 flex flex-col overflow-hidden"
+              >
+                {effectiveShowStdin ? (
+                  <>
+                    <div
+                      style={{ height: `calc(${stdinHeight}% - 4px)` }}
+                      className="w-full min-h-0 overflow-hidden"
+                    >
+                      {stdinPanel}
+                    </div>
+
+                    <div
+                      role="separator"
+                      aria-orientation="horizontal"
+                      aria-label="Redimensionar entrada y salida"
+                      className="h-2 hover:h-2 relative z-10 cursor-row-resize group shrink-0 flex items-center justify-center touch-none select-none -my-0.5"
+                      onPointerDown={(e) => {
+                        e.currentTarget.setPointerCapture(e.pointerId);
+                      }}
+                      onPointerMove={(e) => {
+                        if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+                        const right = rightRef.current;
+                        if (!right) return;
+                        const rect = right.getBoundingClientRect();
+                        if (rect.height <= 0) return;
+                        const percent = Math.max(15, Math.min(85, ((e.clientY - rect.top) / rect.height) * 100));
+                        setStdinHeight(percent);
+                        try {
+                          localStorage.setItem("cpp_stdin_height", String(percent));
+                        } catch {}
+                      }}
+                      onPointerUp={(e) => {
+                        try {
+                          e.currentTarget.releasePointerCapture(e.pointerId);
+                        } catch {}
+                      }}
+                    >
+                      <div className="h-[2px] w-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
+                    </div>
+
+                    <div
+                      style={{ height: `calc(${100 - stdinHeight}% - 4px)` }}
+                      className="w-full min-h-0 overflow-hidden flex-1"
+                    >
+                      {outputPanel}
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full min-w-0 overflow-hidden">
+                    {outputPanel}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 3. Columns Layout: Editor, Stdin & Output Side-by-Side in Columns */}
+          {layout === "columns" && (
+            <div className="w-full h-full flex flex-row overflow-hidden">
+              <div
+                style={{ width: `calc(${col1Width}% - 4px)` }}
+                className="h-full min-w-0 overflow-hidden"
+              >
+                {editorPanel}
+              </div>
+
+              {/* Resizer 1: after Editor */}
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Redimensionar editor"
+                className="w-2 hover:w-2 relative z-10 cursor-col-resize group shrink-0 flex items-center justify-center touch-none select-none -mx-0.5"
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                }}
+                onPointerMove={(e) => {
+                  if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+                  const main = mainRef.current;
+                  if (!main) return;
+                  const rect = main.getBoundingClientRect();
+                  if (rect.width <= 0) return;
+                  const maxLimit = effectiveShowStdin ? 60 : 80;
+                  const percent = Math.max(20, Math.min(maxLimit, ((e.clientX - rect.left) / rect.width) * 100));
+                  setCol1Width(percent);
+                  try {
+                    localStorage.setItem("cpp_col1_width", String(percent));
+                  } catch {}
+                }}
+                onPointerUp={(e) => {
+                  try {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                  } catch {}
+                }}
+              >
+                <div className="w-[2px] h-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
+              </div>
+
+              {effectiveShowStdin ? (
+                <>
+                  <div
+                    style={{ width: `calc(${col2Width}% - 4px)` }}
+                    className="h-full min-w-0 overflow-hidden"
+                  >
+                    {stdinPanel}
+                  </div>
+
+                  {/* Resizer 2: between Stdin and Output */}
+                  <div
+                    role="separator"
+                    aria-orientation="vertical"
+                    aria-label="Redimensionar entrada y salida"
+                    className="w-2 hover:w-2 relative z-10 cursor-col-resize group shrink-0 flex items-center justify-center touch-none select-none -mx-0.5"
+                    onPointerDown={(e) => {
+                      e.currentTarget.setPointerCapture(e.pointerId);
+                    }}
+                    onPointerMove={(e) => {
+                      if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+                      const main = mainRef.current;
+                      if (!main) return;
+                      const rect = main.getBoundingClientRect();
+                      if (rect.width <= 0) return;
+                      const currentTotal = ((e.clientX - rect.left) / rect.width) * 100;
+                      const newCol2 = Math.max(15, Math.min(45, currentTotal - col1Width));
+                      setCol2Width(newCol2);
+                      try {
+                        localStorage.setItem("cpp_col2_width", String(newCol2));
+                      } catch {}
+                    }}
+                    onPointerUp={(e) => {
+                      try {
+                        e.currentTarget.releasePointerCapture(e.pointerId);
+                      } catch {}
+                    }}
+                  >
+                    <div className="w-[2px] h-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
+                  </div>
+
+                  <div
+                    style={{ width: `calc(${100 - col1Width - col2Width}% - 4px)` }}
+                    className="h-full min-w-0 overflow-hidden flex-1"
+                  >
+                    {outputPanel}
+                  </div>
+                </>
+              ) : (
                 <div
-                  style={{ width: `calc(${stdinWidth}% - 4px)` }}
-                  className="h-full min-w-0 overflow-hidden"
-                >
-                  <StdinPanel
-                    value={stdin}
-                    onChange={setStdin}
-                    disabled={isRunning}
-                  />
-                </div>
-
-                {/* Vertical Resizer between Stdin and Output */}
-                <div
-                  role="separator"
-                  aria-orientation="vertical"
-                  aria-label="Redimensionar entrada y salida"
-                  className="w-2 hover:w-2 relative z-10 cursor-col-resize group shrink-0 flex items-center justify-center touch-none select-none -mx-0.5"
-                  onPointerDown={(e) => {
-                    e.currentTarget.setPointerCapture(e.pointerId);
-                  }}
-                  onPointerMove={(e) => {
-                    if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
-                    const bottom = bottomRef.current;
-                    if (!bottom) return;
-                    const rect = bottom.getBoundingClientRect();
-                    if (rect.width <= 0) return;
-                    const percent = Math.max(15, Math.min(85, ((e.clientX - rect.left) / rect.width) * 100));
-                    setStdinWidth(percent);
-                    try {
-                      localStorage.setItem("cpp_stdin_width", String(percent));
-                    } catch {}
-                  }}
-                  onPointerUp={(e) => {
-                    try {
-                      e.currentTarget.releasePointerCapture(e.pointerId);
-                    } catch {}
-                  }}
-                >
-                  <div className="w-[2px] h-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
-                </div>
-
-                {/* Right: Output Panel */}
-                <div
-                  style={{ width: `calc(${100 - stdinWidth}% - 4px)` }}
+                  style={{ width: `calc(${100 - col1Width}% - 4px)` }}
                   className="h-full min-w-0 overflow-hidden flex-1"
                 >
-                  <OutputPanel
-                    result={output}
-                    isRunning={isRunning}
-                    onClear={() => setOutput(null)}
-                    language={language}
-                    code={code}
-                  />
+                  {outputPanel}
                 </div>
-              </>
-            ) : (
-              /* Full Width Output & Live Preview for HTML/CSS/JS */
-              <div className="w-full h-full min-w-0 overflow-hidden">
-                <OutputPanel
-                  result={output}
-                  isRunning={isRunning}
-                  onClear={() => setOutput(null)}
-                  language={language}
-                  code={code}
-                />
+              )}
+            </div>
+          )}
+
+          {/* 4. Vertical Layout: Editor, Stdin & Output Stacked in Rows */}
+          {layout === "vertical" && (
+            <div className="w-full h-full flex flex-col overflow-hidden">
+              <div
+                style={{ height: `calc(${row1Height}% - 4px)` }}
+                className="w-full min-h-0 overflow-hidden"
+              >
+                {editorPanel}
               </div>
-            )}
-          </div>
+
+              {/* Resizer 1: after Editor */}
+              <div
+                role="separator"
+                aria-orientation="horizontal"
+                aria-label="Redimensionar editor"
+                className="h-2 hover:h-2 relative z-10 cursor-row-resize group shrink-0 flex items-center justify-center touch-none select-none -my-0.5"
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                }}
+                onPointerMove={(e) => {
+                  if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+                  const main = mainRef.current;
+                  if (!main) return;
+                  const rect = main.getBoundingClientRect();
+                  if (rect.height <= 0) return;
+                  const maxLimit = effectiveShowStdin ? 60 : 80;
+                  const percent = Math.max(20, Math.min(maxLimit, ((e.clientY - rect.top) / rect.height) * 100));
+                  setRow1Height(percent);
+                  try {
+                    localStorage.setItem("cpp_row1_height", String(percent));
+                  } catch {}
+                }}
+                onPointerUp={(e) => {
+                  try {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                  } catch {}
+                }}
+              >
+                <div className="h-[2px] w-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
+              </div>
+
+              {effectiveShowStdin ? (
+                <>
+                  <div
+                    style={{ height: `calc(${row2Height}% - 4px)` }}
+                    className="w-full min-h-0 overflow-hidden"
+                  >
+                    {stdinPanel}
+                  </div>
+
+                  {/* Resizer 2: between Stdin and Output */}
+                  <div
+                    role="separator"
+                    aria-orientation="horizontal"
+                    aria-label="Redimensionar entrada y salida"
+                    className="h-2 hover:h-2 relative z-10 cursor-row-resize group shrink-0 flex items-center justify-center touch-none select-none -my-0.5"
+                    onPointerDown={(e) => {
+                      e.currentTarget.setPointerCapture(e.pointerId);
+                    }}
+                    onPointerMove={(e) => {
+                      if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+                      const main = mainRef.current;
+                      if (!main) return;
+                      const rect = main.getBoundingClientRect();
+                      if (rect.height <= 0) return;
+                      const currentTotal = ((e.clientY - rect.top) / rect.height) * 100;
+                      const newRow2 = Math.max(15, Math.min(45, currentTotal - row1Height));
+                      setRow2Height(newRow2);
+                      try {
+                        localStorage.setItem("cpp_row2_height", String(newRow2));
+                      } catch {}
+                    }}
+                    onPointerUp={(e) => {
+                      try {
+                        e.currentTarget.releasePointerCapture(e.pointerId);
+                      } catch {}
+                    }}
+                  >
+                    <div className="h-[2px] w-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
+                  </div>
+
+                  <div
+                    style={{ height: `calc(${100 - row1Height - row2Height}% - 4px)` }}
+                    className="w-full min-h-0 overflow-hidden flex-1"
+                  >
+                    {outputPanel}
+                  </div>
+                </>
+              ) : (
+                <div
+                  style={{ height: `calc(${100 - row1Height}% - 4px)` }}
+                  className="w-full min-h-0 overflow-hidden flex-1"
+                >
+                  {outputPanel}
+                </div>
+              )}
+            </div>
+          )}
         </main>
       </div>
 

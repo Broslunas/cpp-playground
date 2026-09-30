@@ -5,7 +5,9 @@ export interface CompilerSettings {
   customFlags: string;
 }
 
-export type SupportedLanguage = "cpp" | "python" | "html" | "javascript";
+export type SupportedLanguage = "cpp" | "python" | "html" | "javascript" | "typescript" | "bash";
+
+export type PlaygroundLayout = "standard" | "two-column" | "columns" | "vertical";
 
 export interface LanguageDefinition {
   id: SupportedLanguage;

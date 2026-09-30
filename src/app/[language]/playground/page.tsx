@@ -19,6 +19,8 @@ export default function LanguagePlaygroundPage({ params }: PageProps) {
       ? "html"
       : language === "javascript" || language === "js"
       ? "javascript"
+      : language === "typescript" || language === "ts"
+      ? "typescript"
       : "cpp";
 
   return <PlaygroundWorkspace initialLanguage={validLang} />;
