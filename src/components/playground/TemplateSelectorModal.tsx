@@ -3,31 +3,37 @@
 import React, { useState } from "react";
 import { X, BookOpen, Sparkles, Binary, Check } from "lucide-react";
 import { CODE_TEMPLATES } from "@/lib/templates";
-import { CodeTemplate } from "@/types";
+import { CodeTemplate, SupportedLanguage } from "@/types";
 
 interface TemplateSelectorModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectTemplate: (template: CodeTemplate) => void;
+  currentLanguage?: SupportedLanguage;
 }
-
-type CategoryType = "all" | "basics" | "cpp20" | "cpp23" | "dsa" | "testing";
 
 export function TemplateSelectorModal({
   isOpen,
   onClose,
   onSelectTemplate,
+  currentLanguage,
 }: TemplateSelectorModalProps) {
-  const [selectedCategory, setSelectedCategory] = useState<CategoryType>("all");
-  const [activePreviewId, setActivePreviewId] = useState<string>(CODE_TEMPLATES[0].id);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(currentLanguage || "all");
+  const [activePreviewId, setActivePreviewId] = useState<string>(() => {
+    if (currentLanguage) {
+      const match = CODE_TEMPLATES.find((t) => t.language === currentLanguage);
+      if (match) return match.id;
+    }
+    return CODE_TEMPLATES[0].id;
+  });
 
   if (!isOpen) return null;
 
-  const filtered = selectedCategory === "all"
+  const filtered = selectedLanguage === "all"
     ? CODE_TEMPLATES
-    : CODE_TEMPLATES.filter((t) => t.category === selectedCategory);
+    : CODE_TEMPLATES.filter((t) => (t.language || "cpp") === selectedLanguage);
 
-  const activeTemplate = CODE_TEMPLATES.find((t) => t.id === activePreviewId) || CODE_TEMPLATES[0];
+  const activeTemplate = filtered.find((t) => t.id === activePreviewId) || filtered[0] || CODE_TEMPLATES[0];
 
   const handleApply = (template: CodeTemplate) => {
     onSelectTemplate(template);
@@ -59,28 +65,29 @@ export function TemplateSelectorModal({
           </button>
         </div>
 
-        {/* Filter Categories */}
+        {/* Filter Categories / Language */}
         <div className="px-4 py-2 border-b border-zinc-800 bg-[#0c0e16] flex items-center gap-1.5 overflow-x-auto">
-          {(
-            [
-              { id: "all", label: "Todas" },
-              { id: "basics", label: "Básico" },
-              { id: "cpp20", label: "C++20" },
-              { id: "cpp23", label: "C++23" },
-              { id: "dsa", label: "DSA / Algoritmos" },
-              { id: "testing", label: "Testing" },
-            ] as const
-          ).map((cat) => (
+          {[
+            { id: "all", label: "Todas las plantillas" },
+            { id: "cpp", label: "C++" },
+            { id: "python", label: "Python 🐍" },
+          ].map((tab) => (
             <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`px-2.5 py-1 rounded transition-colors whitespace-nowrap ${
-                selectedCategory === cat.id
+              key={tab.id}
+              onClick={() => {
+                setSelectedLanguage(tab.id);
+                const nextMatch = tab.id === "all"
+                  ? CODE_TEMPLATES[0]
+                  : CODE_TEMPLATES.find((t) => (t.language || "cpp") === tab.id);
+                if (nextMatch) setActivePreviewId(nextMatch.id);
+              }}
+              className={`px-3 py-1 rounded transition-colors whitespace-nowrap ${
+                selectedLanguage === tab.id
                   ? "bg-zinc-800 text-neon-green font-semibold"
                   : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
               }`}
             >
-              {cat.label}
+              {tab.label}
             </button>
           ))}
         </div>
@@ -99,18 +106,23 @@ export function TemplateSelectorModal({
                     : "bg-zinc-900/40 border-zinc-800 hover:border-zinc-700"
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-semibold text-zinc-100 flex items-center gap-1.5">
+                <div className="flex items-center justify-between mb-1 gap-2">
+                  <h3 className="font-semibold text-zinc-100 flex items-center gap-1.5 truncate">
                     {item.category === "dsa" ? (
-                      <Binary className="w-3.5 h-3.5 text-cyan-400" />
+                      <Binary className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                     ) : (
-                      <Sparkles className="w-3.5 h-3.5 text-neon-green" />
+                      <Sparkles className="w-3.5 h-3.5 text-neon-green shrink-0" />
                     )}
-                    {item.title}
+                    <span className="truncate">{item.title}</span>
                   </h3>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-950 text-zinc-400 border border-zinc-800">
-                    {item.standard.toUpperCase()}
-                  </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="text-[9px] px-1 py-0.5 rounded bg-zinc-800 text-zinc-300 font-semibold">
+                      {(item.language || "cpp").toUpperCase()}
+                    </span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-950 text-zinc-400 border border-zinc-800">
+                      {item.standard.toUpperCase()}
+                    </span>
+                  </div>
                 </div>
                 <p className="text-[11px] text-zinc-400 line-clamp-2">{item.description}</p>
               </div>
@@ -119,20 +131,30 @@ export function TemplateSelectorModal({
 
           {/* Right preview */}
           <div className="flex flex-col h-full bg-[#08090d] overflow-hidden">
-            <div className="px-3 py-2 border-b border-zinc-800 bg-[#0a0c12] flex items-center justify-between">
-              <span className="text-zinc-400 text-[11px]">Previsualización del código</span>
-              <button
-                type="button"
-                onClick={() => handleApply(activeTemplate)}
-                className="px-2.5 py-1 rounded bg-neon-green text-black font-semibold flex items-center gap-1 hover:bg-[#00e67a] transition-colors"
-              >
-                <Check className="w-3.5 h-3.5" />
-                Cargar en Editor
-              </button>
-            </div>
-            <pre className="flex-1 p-3 text-zinc-300 text-[11px] font-mono overflow-auto leading-relaxed whitespace-pre">
-              {activeTemplate.code}
-            </pre>
+            {activeTemplate ? (
+              <>
+                <div className="px-3 py-2 border-b border-zinc-800 bg-[#0a0c12] flex items-center justify-between">
+                  <span className="text-zinc-400 text-[11px]">
+                    Previsualización: <strong className="text-zinc-200">{activeTemplate.title}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleApply(activeTemplate)}
+                    className="px-2.5 py-1 rounded bg-neon-green text-black font-semibold flex items-center gap-1 hover:bg-[#00e67a] transition-colors"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    Cargar en Editor
+                  </button>
+                </div>
+                <pre className="flex-1 p-3 text-zinc-300 text-[11px] font-mono overflow-auto leading-relaxed whitespace-pre">
+                  {activeTemplate.code}
+                </pre>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-zinc-500">
+                Selecciona una plantilla
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,11 +1,14 @@
-import { CompilerSettings } from "@/types";
+import { CompilerSettings, SupportedLanguage } from "@/types";
+import { getLanguage } from "./languages";
 
-export function downloadCcFile(filename: string, code: string) {
-  // Always strip any existing extension and enforce .cc
-  const baseName = filename.replace(/\.(cpp|cc|cxx|c\+\+|c|h|hpp)$/i, "");
-  const cleanName = `${baseName}.cc`;
+export function downloadSourceFile(filename: string, code: string, language: SupportedLanguage = "cpp") {
+  const langDef = getLanguage(language);
+  const ext = langDef.extension;
+  const baseName = filename.replace(/\.(cpp|cc|cxx|c\+\+|c|h|hpp|py)$/i, "");
+  const cleanName = `${baseName}${ext}`;
 
-  const blob = new Blob([code], { type: "text/x-c++src;charset=utf-8" });
+  const mimeType = language === "python" ? "text/x-python;charset=utf-8" : "text/x-c++src;charset=utf-8";
+  const blob = new Blob([code], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -14,6 +17,11 @@ export function downloadCcFile(filename: string, code: string) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+// Backward compatibility alias
+export function downloadCcFile(filename: string, code: string) {
+  downloadSourceFile(filename, code, "cpp");
 }
 
 export function generateCMakeLists(projectName: string, standard: string, settings?: CompilerSettings): string {

@@ -1,24 +1,56 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { EditorState } from "@codemirror/state";
-import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine } from "@codemirror/view";
+import { EditorState, Compartment } from "@codemirror/state";
+import {
+  EditorView,
+  keymap,
+  lineNumbers,
+  highlightActiveLineGutter,
+  highlightSpecialChars,
+  drawSelection,
+  dropCursor,
+  rectangularSelection,
+  crosshairCursor,
+  highlightActiveLine,
+} from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { cpp } from "@codemirror/lang-cpp";
+import { python } from "@codemirror/lang-python";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { syntaxHighlighting, defaultHighlightStyle, bracketMatching, foldGutter, foldKeymap, indentOnInput } from "@codemirror/language";
-import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
+import {
+  syntaxHighlighting,
+  defaultHighlightStyle,
+  bracketMatching,
+  foldGutter,
+  foldKeymap,
+  indentOnInput,
+} from "@codemirror/language";
+import {
+  autocompletion,
+  completionKeymap,
+  closeBrackets,
+  closeBracketsKeymap,
+} from "@codemirror/autocomplete";
 
 interface EditorProps {
   value: string;
   onChange: (value: string) => void;
   onRun?: () => void;
+  language?: string;
   readOnly?: boolean;
 }
 
-export function Editor({ value, onChange, onRun, readOnly = false }: EditorProps) {
+export function Editor({
+  value,
+  onChange,
+  onRun,
+  language = "cpp",
+  readOnly = false,
+}: EditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
+  const languageConfRef = useRef(new Compartment());
 
   // Keep callback refs updated without re-triggering effect
   const onChangeRef = useRef(onChange);
@@ -28,6 +60,10 @@ export function Editor({ value, onChange, onRun, readOnly = false }: EditorProps
     onChangeRef.current = onChange;
     onRunRef.current = onRun;
   });
+
+  const getLanguageExtension = (lang: string) => {
+    return lang === "python" ? python() : cpp();
+  };
 
   useEffect(() => {
     if (!editorRef.current) return;
@@ -74,7 +110,7 @@ export function Editor({ value, onChange, onRun, readOnly = false }: EditorProps
           indentWithTab,
         ]),
         runKeymap,
-        cpp(),
+        languageConfRef.current.of(getLanguageExtension(language)),
         oneDark,
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
@@ -97,6 +133,16 @@ export function Editor({ value, onChange, onRun, readOnly = false }: EditorProps
     };
   }, []); // Run once on mount
 
+  // Update language when prop changes
+  useEffect(() => {
+    const view = viewRef.current;
+    if (view) {
+      view.dispatch({
+        effects: languageConfRef.current.reconfigure(getLanguageExtension(language)),
+      });
+    }
+  }, [language]);
+
   // Update doc if external value changes (e.g. project switch)
   useEffect(() => {
     const view = viewRef.current;
@@ -114,7 +160,7 @@ export function Editor({ value, onChange, onRun, readOnly = false }: EditorProps
     <div
       ref={editorRef}
       className="w-full h-full min-h-0 border border-zinc-800 rounded bg-[#0b0d13] overflow-hidden focus-within:border-zinc-700"
-      aria-label="C++ Code Editor"
+      aria-label="Code Editor"
       role="region"
     />
   );

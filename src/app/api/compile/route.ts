@@ -50,54 +50,58 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const compiler = body.compiler || "gcc-head";
-    const stdOption = body.options ? `-std=${body.options}` : "-std=c++20";
+    const compiler = body.compiler || (body.language === "python" ? "cpython-3.12.7" : "gcc-head");
+    const isPython = body.language === "python" || compiler.startsWith("cpython") || compiler.startsWith("pypy");
 
-    // Build raw compiler flags array
-    const rawFlags: string[] = [stdOption];
-
-    // Optimization level
-    if (body.settings?.optimization) {
-      rawFlags.push(body.settings.optimization);
-    } else {
-      rawFlags.push("-O2");
-    }
-
-    // Warnings
-    if (body.settings?.warnings && body.settings.warnings.length > 0) {
-      body.settings.warnings.forEach((w) => rawFlags.push(`-${w}`));
-    } else {
-      rawFlags.push("-Wall");
-    }
-
-    // Sanitizers
-    if (body.settings?.sanitizers && body.settings.sanitizers.length > 0) {
-      body.settings.sanitizers.forEach((s) => rawFlags.push(`-fsanitize=${s}`));
-    }
-
-    // Custom flags (strip dangerous or invalid input)
-    if (body.settings?.customFlags) {
-      const customs = body.settings.customFlags
-        .split(/\s+/)
-        .map((f) => f.trim())
-        .filter((f) => f.length > 0 && f.startsWith("-"));
-      rawFlags.push(...customs);
-    }
-
-    const startTime = Date.now();
-
-    // Call Wandbox API
     const wandboxPayload: Record<string, string> = {
       code: body.code,
       compiler: compiler,
       stdin: body.stdin || "",
-      options: "warning",
-      "compiler-option-raw": rawFlags.join("\n"),
     };
 
-    if (body.args && body.args.trim().length > 0) {
-      wandboxPayload["runtime-option-raw"] = body.args.trim();
+    if (isPython) {
+      // Python runtime options or simple execution
+      if (body.args && body.args.trim().length > 0) {
+        wandboxPayload["runtime-option-raw"] = body.args.trim();
+      }
+    } else {
+      // C++ compile options
+      const stdOption = body.options ? `-std=${body.options}` : "-std=c++20";
+      const rawFlags: string[] = [stdOption];
+
+      if (body.settings?.optimization) {
+        rawFlags.push(body.settings.optimization);
+      } else {
+        rawFlags.push("-O2");
+      }
+
+      if (body.settings?.warnings && body.settings.warnings.length > 0) {
+        body.settings.warnings.forEach((w) => rawFlags.push(`-${w}`));
+      } else {
+        rawFlags.push("-Wall");
+      }
+
+      if (body.settings?.sanitizers && body.settings.sanitizers.length > 0) {
+        body.settings.sanitizers.forEach((s) => rawFlags.push(`-fsanitize=${s}`));
+      }
+
+      if (body.settings?.customFlags) {
+        const customs = body.settings.customFlags
+          .split(/\s+/)
+          .map((f) => f.trim())
+          .filter((f) => f.length > 0 && f.startsWith("-"));
+        rawFlags.push(...customs);
+      }
+
+      wandboxPayload["options"] = "warning";
+      wandboxPayload["compiler-option-raw"] = rawFlags.join("\n");
+
+      if (body.args && body.args.trim().length > 0) {
+        wandboxPayload["runtime-option-raw"] = body.args.trim();
+      }
     }
+
+    const startTime = Date.now();
 
     const response = await fetch(WANDBOX_API, {
       method: "POST",

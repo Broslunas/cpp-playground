@@ -1,5 +1,5 @@
-import { Project, CompilerSettings } from "@/types";
-import { DEFAULT_CODE } from "./compiler";
+import { Project, CompilerSettings, SupportedLanguage } from "@/types";
+import { getLanguage, LANGUAGES } from "./languages";
 
 const STORAGE_KEY = "cpp-playground-projects";
 const ACTIVE_PROJECT_KEY = "cpp-playground-active-id";
@@ -13,7 +13,12 @@ export function getProjects(): Project[] {
       saveProjects([initial]);
       return [initial];
     }
-    return JSON.parse(data);
+    const parsed: Project[] = JSON.parse(data);
+    // Ensure all projects have language field
+    return parsed.map((p) => ({
+      ...p,
+      language: p.language || "cpp",
+    }));
   } catch {
     return [];
   }
@@ -40,18 +45,22 @@ export function setActiveProjectId(id: string): void {
 
 export function createProject(
   name = "Untitled Project",
-  code: string = DEFAULT_CODE,
-  standard: string = "c++20",
+  code?: string,
+  standard?: string,
   stdin: string = "",
-  settings?: CompilerSettings
+  settings?: CompilerSettings,
+  language: SupportedLanguage = "cpp"
 ): Project {
+  const langDef = getLanguage(language);
+
   return {
     id: crypto.randomUUID(),
     name,
-    code,
+    language,
+    code: code !== undefined ? code : langDef.defaultCode,
     stdin,
-    compiler: "gcc-head",
-    options: standard,
+    compiler: langDef.defaultCompiler,
+    options: standard || langDef.defaultStandard,
     settings,
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -62,12 +71,12 @@ function createInitialProject(): Project {
   return {
     id: "default-hello-world",
     name: "Hello World",
-    code: DEFAULT_CODE,
+    language: "cpp",
+    code: LANGUAGES.cpp.defaultCode,
     stdin: "World",
-    compiler: "gcc-head",
-    options: "c++20",
+    compiler: LANGUAGES.cpp.defaultCompiler,
+    options: LANGUAGES.cpp.defaultStandard,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
 }
-

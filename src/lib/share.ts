@@ -1,6 +1,7 @@
-import { CompilerSettings } from "@/types";
+import { CompilerSettings, SupportedLanguage } from "@/types";
 
 export interface ShareableState {
+  language?: SupportedLanguage;
   code: string;
   stdin?: string;
   compiler?: string;

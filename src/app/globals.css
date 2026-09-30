@@ -11,6 +11,25 @@
   --accent-cyan: #00d4ff;
 }
 
+/* Linux Terminal Cursors */
+:root {
+  --cursor-default: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='26' viewBox='0 0 22 26'%3E%3Cpath d='M2 1 L2 20 L6 16 L10 24 L14 22 L10 14 L17 14 Z' fill='%2300ff88' stroke='%2305140b' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E") 2 1, default;
+  --cursor-pointer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='22' viewBox='0 0 28 22'%3E%3Crect x='1' y='1' width='26' height='20' rx='3' fill='%23090a0f' stroke='%2300ff88' stroke-width='1.5'/%3E%3Ctext x='4' y='15' font-family='monospace' font-size='12' font-weight='900' fill='%2300ff88'%3E%3E_%3C/text%3E%3C/svg%3E") 2 2, pointer;
+  --cursor-text: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='24' viewBox='0 0 14 24'%3E%3Crect x='2' y='2' width='10' height='20' rx='1' fill='%2300ff88' fill-opacity='0.8' stroke='%2300ff88' stroke-width='1'/%3E%3Cline x1='3' y1='7' x2='11' y2='7' stroke='%23090a0f' stroke-width='1' stroke-opacity='0.4'/%3E%3Cline x1='3' y1='12' x2='11' y2='12' stroke='%23090a0f' stroke-width='1' stroke-opacity='0.4'/%3E%3Cline x1='3' y1='17' x2='11' y2='17' stroke='%23090a0f' stroke-width='1' stroke-opacity='0.4'/%3E%3C/svg%3E") 7 12, text;
+}
+
+html, body, * {
+  cursor: var(--cursor-default);
+}
+
+a, button, [role="button"], input[type="submit"], input[type="button"], select, summary, .cursor-pointer {
+  cursor: var(--cursor-pointer) !important;
+}
+
+input[type="text"], input[type="search"], textarea, pre, code, .cm-content, .cursor-text {
+  cursor: var(--cursor-text) !important;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
@@ -72,4 +91,23 @@ body {
 
 .cm-activeLine {
   background-color: #121620 !important;
+}
+
+/* Linux terminal solid block caret for CodeMirror */
+.cm-cursor, .cm-dropCursor {
+  border-left: 8.5px solid #00ff88 !important;
+  opacity: 0.85;
+}
+
+.cm-focused .cm-cursor {
+  animation: cm-terminal-blink 1s steps(1) infinite;
+}
+
+@keyframes cm-terminal-blink {
+  0%, 49% {
+    opacity: 0.85;
+  }
+  50%, 100% {
+    opacity: 0;
+  }
 }

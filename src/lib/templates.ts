@@ -1,9 +1,11 @@
 import { CodeTemplate } from "@/types";
 
 export const CODE_TEMPLATES: CodeTemplate[] = [
+  // C++ TEMPLATES
   {
     id: "hello-world",
     title: "Hola Mundo & I/O Básico",
+    language: "cpp",
     category: "basics",
     description: "Plantilla inicial para entrada y salida estándar en C++.",
     standard: "c++20",
@@ -26,6 +28,7 @@ int main() {
   {
     id: "cpp20-ranges",
     title: "C++20: Ranges & Views",
+    language: "cpp",
     category: "cpp20",
     description: "Filtrado, transformación y encadenamiento funcional con std::views.",
     standard: "c++20",
@@ -54,6 +57,7 @@ int main() {
   {
     id: "cpp20-concepts",
     title: "C++20: Concepts & Constraints",
+    language: "cpp",
     category: "cpp20",
     description: "Restricciones de tipos en tiempo de compilación para metaprogramación segura.",
     standard: "c++20",
@@ -84,6 +88,7 @@ int main() {
   {
     id: "cpp23-print",
     title: "C++23: std::print & Formato",
+    language: "cpp",
     category: "cpp23",
     description: "Uso de std::print y std::println nativo de C++23 con sintaxis pythonica.",
     standard: "c++23",
@@ -110,6 +115,7 @@ int main() {
   {
     id: "cpp23-expected",
     title: "C++23: std::expected (Manejo de Errores)",
+    language: "cpp",
     category: "cpp23",
     description: "Manejo funcional de resultados y errores sin excepciones pesadas.",
     standard: "c++23",
@@ -150,6 +156,7 @@ int main() {
   {
     id: "dsa-segment-tree",
     title: "DSA: Segment Tree (Árbol de Segmentos)",
+    language: "cpp",
     category: "dsa",
     description: "Estructura para consultas de suma en rangos y actualizaciones puntuales en O(log N).",
     standard: "c++20",
@@ -216,6 +223,7 @@ int main() {
   {
     id: "dsa-dsu",
     title: "DSA: Disjoint Set Union (DSU / Kruskal)",
+    language: "cpp",
     category: "dsa",
     description: "Conjuntos disjuntos con unión por rango y compresión de caminos en casi O(1).",
     standard: "c++20",
@@ -267,6 +275,7 @@ int main() {
   {
     id: "testing-asserts",
     title: "Testing: Micro-Framework de Pruebas",
+    language: "cpp",
     category: "testing",
     description: "Mini framework de assertions sin dependencias externas para test-driven development.",
     standard: "c++20",
@@ -308,6 +317,213 @@ int main() {
 
     return 0;
 }
+`,
+  },
+
+  // PYTHON TEMPLATES
+  {
+    id: "python-hello",
+    title: "Python: Hola Mundo & I/O",
+    language: "python",
+    category: "basics",
+    description: "Entrada/salida estándar, f-strings e introspección de versión en Python 3.",
+    standard: "3.12",
+    code: `import sys
+
+def main():
+    print("¡Hola desde Python Playground! 🐍")
+    print(f"Versión de Python en ejecución: {sys.version.split()[0]}")
+
+    # Lectura de stdin si se proporciona
+    entrada = sys.stdin.readline().strip()
+    if entrada:
+        print(f"Mensaje recibido por stdin: '{entrada}'")
+    else:
+        print("Tip: Puedes ingresar texto en el panel Stdin abajo a la izquierda.")
+
+if __name__ == "__main__":
+    main()
+`,
+    stdin: "Mundo Python",
+  },
+  {
+    id: "python-comprehensions",
+    title: "Python: Comprehensions & Generadores",
+    language: "python",
+    category: "python-features",
+    description: "Comprensión de listas, diccionarios y generadores con evaluación diferida (yield).",
+    standard: "3.12",
+    code: `def fibonacci_gen(limit: int):
+    """Generador eficiente de serie de Fibonacci en memoria O(1)."""
+    a, b = 0, 1
+    count = 0
+    while count < limit:
+        yield a
+        a, b = b, a + b
+        count += 1
+
+def main():
+    # 1. List comprehension con filtrado y transformación
+    numeros = list(range(1, 16))
+    pares_cuadrados = [x**2 for x in numeros if x % 2 == 0]
+    print(f"Pares al cuadrado: {pares_cuadrados}")
+
+    # 2. Dict comprehension
+    cuadrados_dict = {f"num_{x}": x**2 for x in range(1, 6)}
+    print(f"Diccionario mapeado: {cuadrados_dict}")
+
+    # 3. Consumo de generador diferido
+    print("Primeros 10 de Fibonacci:")
+    for idx, num in enumerate(fibonacci_gen(10), 1):
+        print(f"  F_{idx} = {num}")
+
+if __name__ == "__main__":
+    main()
+`,
+  },
+  {
+    id: "python-decorators",
+    title: "Python: Decoradores & LRU Cache",
+    language: "python",
+    category: "python-advanced",
+    description: "Decorador de medición de tiempo con functools.wraps y memorización con lru_cache.",
+    standard: "3.12",
+    code: `import time
+from functools import wraps, lru_cache
+
+def timeit(func):
+    """Decorador para medir tiempo de ejecución de una función."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        duration = (time.perf_counter() - start) * 1000
+        print(f"[{func.__name__}] tomó {duration:.4f} ms")
+        return result
+    return wrapper
+
+@lru_cache(maxsize=128)
+def fib_memo(n: int) -> int:
+    if n <= 1:
+        return n
+    return fib_memo(n - 1) + fib_memo(n - 2)
+
+@timeit
+def calcular():
+    print("Calculando Fibonacci(35) con lru_cache...")
+    return fib_memo(35)
+
+def main():
+    res = calcular()
+    print(f"Resultado: {res}")
+    print(f"Info de caché: {fib_memo.cache_info()}")
+
+if __name__ == "__main__":
+    main()
+`,
+  },
+  {
+    id: "python-pattern-matching",
+    title: "Python 3.10+: Match / Case & Dataclasses",
+    language: "python",
+    category: "python-features",
+    description: "Structural Pattern Matching moderno junto con dataclasses fuertemente tipadas.",
+    standard: "3.12",
+    code: `from dataclasses import dataclass
+from typing import Union
+
+@dataclass
+class Circulo:
+    radio: float
+
+@dataclass
+class Rectangulo:
+    ancho: float
+    alto: float
+
+@dataclass
+class Triangulo:
+    base: float
+    altura: float
+
+Figura = Union[Circulo, Rectangulo, Triangulo]
+
+def calcular_area(figura: Figura) -> float:
+    # Pattern Matching estructural (Python 3.10+)
+    match figura:
+        case Circulo(radio=r) if r > 0:
+            import math
+            return math.pi * (r ** 2)
+        case Rectangulo(ancho=w, alto=h):
+            return w * h
+        case Triangulo(base=b, altura=h):
+            return 0.5 * b * h
+        case _:
+            raise ValueError(f"Figura desconocida o inválida: {figura}")
+
+def main():
+    figuras: list[Figura] = [
+        Circulo(radio=5.0),
+        Rectangulo(ancho=4.0, alto=6.0),
+        Triangulo(base=3.0, altura=8.0),
+    ]
+
+    for f in figuras:
+        area = calcular_area(f)
+        print(f"Figura: {f.__class__.__name__:<11} => Área: {area:.2f}")
+
+if __name__ == "__main__":
+    main()
+`,
+  },
+  {
+    id: "python-dsa-bfs",
+    title: "Python DSA: BFS / Camino Más Corto",
+    language: "python",
+    category: "dsa",
+    description: "Búsqueda en anchura con collections.deque para hallar distancias mínimas en grafos.",
+    standard: "3.12",
+    code: `from collections import deque
+
+def bfs_camino_corto(grafo: dict[str, list[str]], inicio: str, destino: str) -> list[str] | None:
+    if inicio == destino:
+        return [inicio]
+
+    cola = deque([[inicio]])
+    visitados = {inicio}
+
+    while cola:
+        camino = cola.popleft()
+        nodo_actual = camino[-1]
+
+        for vecino in grafo.get(nodo_actual, []):
+            if vecino not in visitados:
+                visitados.add(vecino)
+                nuevo_camino = camino + [vecino]
+                if vecino == destino:
+                    return nuevo_camino
+                cola.append(nuevo_camino)
+
+    return None
+
+def main():
+    red = {
+        "A": ["B", "C"],
+        "B": ["A", "D", "E"],
+        "C": ["A", "F"],
+        "D": ["B"],
+        "E": ["B", "F", "G"],
+        "F": ["C", "E", "G"],
+        "G": ["E", "F"],
+    }
+
+    inicio, fin = "A", "G"
+    camino = bfs_camino_corto(red, inicio, fin)
+    print(f"Red de nodos: {list(red.keys())}")
+    print(f"Camino más corto de '{inicio}' a '{fin}': {' -> '.join(camino) if camino else 'Inalcanzable'}")
+
+if __name__ == "__main__":
+    main()
 `,
   },
 ];

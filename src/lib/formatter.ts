@@ -1,8 +1,28 @@
 /**
- * Lightweight native C++ source code formatter.
- * Adjusts indentation based on block scope ({ }), strips trailing whitespace,
- * and handles access specifiers (public:, private:) and preprocessor directives (#).
+ * Lightweight native source code formatters.
  */
+
+export function formatPythonCode(source: string): string {
+  const lines = source.split("\n");
+  const formatted: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    // Convert tabs to 4 spaces, trim trailing spaces
+    const line = lines[i].replace(/\t/g, "    ").trimEnd();
+
+    if (!line.trim()) {
+      if (formatted.length === 0 || formatted[formatted.length - 1] !== "") {
+        formatted.push("");
+      }
+      continue;
+    }
+
+    formatted.push(line);
+  }
+
+  return formatted.join("\n") + "\n";
+}
+
 export function formatCppCode(source: string, indentSize: number = 4): string {
   const lines = source.split("\n");
   const indentChar = " ".repeat(indentSize);
@@ -15,7 +35,6 @@ export function formatCppCode(source: string, indentSize: number = 4): string {
 
     // Preserve empty lines
     if (!trimmed) {
-      // Avoid more than 2 consecutive blank lines
       if (
         formattedLines.length === 0 ||
         formattedLines[formattedLines.length - 1] !== ""
@@ -60,11 +79,17 @@ export function formatCppCode(source: string, indentSize: number = 4): string {
       const net = opensInLine - closesInLine;
       depth = Math.max(0, depth + net);
     } else {
-      // It started with closing, but might contain more opens
       const netAfterFirst = opensInLine - (closesInLine - 1);
       depth = Math.max(0, depth + netAfterFirst);
     }
   }
 
   return formattedLines.join("\n") + "\n";
+}
+
+export function formatCode(source: string, language: string = "cpp"): string {
+  if (language === "python") {
+    return formatPythonCode(source);
+  }
+  return formatCppCode(source);
 }

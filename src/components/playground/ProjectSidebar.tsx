@@ -60,7 +60,8 @@ export function ProjectSidebar({
     const element = document.createElement("a");
     const file = new Blob([project.code], { type: "text/plain" });
     element.href = URL.createObjectURL(file);
-    element.download = `${project.name.toLowerCase().replace(/\s+/g, "_")}.cc`;
+    const ext = project.language === "python" ? ".py" : ".cc";
+    element.download = `${project.name.toLowerCase().replace(/\s+/g, "_")}${ext}`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
@@ -149,13 +150,16 @@ export function ProjectSidebar({
                   </form>
                 ) : (
                   <>
-                    <div className="flex items-center gap-2 truncate">
+                    <div className="flex items-center gap-1.5 truncate">
                       <FileCode
                         className={`w-3.5 h-3.5 shrink-0 ${
                           isActive ? "text-neon-green" : "text-zinc-500"
                         }`}
                       />
                       <span className="truncate">{project.name}</span>
+                      <span className="text-[9px] px-1 py-0.2 rounded bg-zinc-950 border border-zinc-800 text-zinc-400 shrink-0 font-mono">
+                        {project.language === "python" ? "PY" : "C++"}
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

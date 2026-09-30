@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Toolbar } from "@/components/playground/Toolbar";
 import { Editor } from "@/components/playground/Editor";
 import { StdinPanel } from "@/components/playground/StdinPanel";
@@ -25,17 +26,22 @@ import { formatCode } from "@/lib/formatter";
 import { getLanguage, LANGUAGES } from "@/lib/languages";
 import { Project, CompileResponse, CompilerSettings, CodeTemplate, SupportedLanguage } from "@/types";
 
-export default function PlaygroundPage() {
+interface PlaygroundWorkspaceProps {
+  initialLanguage?: SupportedLanguage;
+}
+
+export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorkspaceProps) {
+  const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectId, setActiveId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Active project state
-  const [language, setLanguage] = useState<SupportedLanguage>("cpp");
+  const [language, setLanguage] = useState<SupportedLanguage>(initialLanguage);
   const [code, setCode] = useState("");
   const [stdin, setStdin] = useState("");
-  const [compiler, setCompiler] = useState("gcc-head");
-  const [standard, setStandard] = useState("c++20");
+  const [compiler, setCompiler] = useState(getLanguage(initialLanguage).defaultCompiler);
+  const [standard, setStandard] = useState(getLanguage(initialLanguage).defaultStandard);
   const [compilerSettings, setCompilerSettings] = useState<CompilerSettings>(
     DEFAULT_COMPILER_SETTINGS
   );
@@ -80,6 +86,17 @@ export default function PlaygroundPage() {
     setTimeout(() => setSaveToast(false), 2000);
   };
 
+  // Sync state if initialLanguage prop changes
+  useEffect(() => {
+    if (initialLanguage && initialLanguage !== language) {
+      const langDef = getLanguage(initialLanguage);
+      setLanguage(initialLanguage);
+      setCompiler(langDef.defaultCompiler);
+      setStandard(langDef.defaultStandard);
+      setCode(langDef.defaultCode);
+    }
+  }, [initialLanguage]);
+
   // Initialize: check URL hash first (for shared links), fallback to localStorage
   useEffect(() => {
     const loadedProjects = getProjects();
@@ -89,11 +106,12 @@ export default function PlaygroundPage() {
     if (typeof window !== "undefined" && window.location.hash) {
       const shared = decodeShareableState(window.location.hash);
       if (shared) {
-        const sharedLang: SupportedLanguage = shared.language || "cpp";
+        const sharedLang: SupportedLanguage = shared.language || initialLanguage;
+        const langDef = getLanguage(sharedLang);
         const sharedProject = createProject(
           "Código Compartido",
           shared.code,
-          shared.standard || (sharedLang === "python" ? "3.12" : "c++20"),
+          shared.standard || langDef.defaultStandard,
           shared.stdin || "",
           shared.settings || DEFAULT_COMPILER_SETTINGS,
           sharedLang
@@ -109,7 +127,7 @@ export default function PlaygroundPage() {
         setCode(sharedProject.code);
         setStdin(sharedProject.stdin);
         setCompiler(sharedProject.compiler);
-        setStandard(sharedProject.options || (sharedLang === "python" ? "3.12" : "c++20"));
+        setStandard(sharedProject.options || langDef.defaultStandard);
         setCompilerSettings(sharedProject.settings || DEFAULT_COMPILER_SETTINGS);
         setProjectName(sharedProject.name);
         showNotification("Enlace compartido cargado ✓");
@@ -118,21 +136,44 @@ export default function PlaygroundPage() {
     }
 
     const savedActiveId = getActiveProjectId();
+    // Prioritize project of matching language, or fallback to saved active
     const active =
-      loadedProjects.find((p) => p.id === savedActiveId) || loadedProjects[0];
+      loadedProjects.find((p) => p.id === savedActiveId) ||
+      loadedProjects.find((p) => (p.language || "cpp") === initialLanguage) ||
+      loadedProjects[0];
 
     if (active) {
-      const lang = active.language || "cpp";
+      const lang = active.language || initialLanguage;
+      const langDef = getLanguage(lang);
       setActiveId(active.id);
       setLanguage(lang);
       setCode(active.code);
       setStdin(active.stdin);
-      setCompiler(active.compiler);
-      setStandard(active.options || (lang === "python" ? "3.12" : "c++20"));
+      setCompiler(active.compiler || langDef.defaultCompiler);
+      setStandard(active.options || langDef.defaultStandard);
       setCompilerSettings(active.settings || DEFAULT_COMPILER_SETTINGS);
       setProjectName(active.name);
+    } else {
+      const langDef = getLanguage(initialLanguage);
+      const newProj = createProject(
+        `Proyecto ${langDef.name}`,
+        langDef.defaultCode,
+        langDef.defaultStandard,
+        "",
+        DEFAULT_COMPILER_SETTINGS,
+        initialLanguage
+      );
+      setProjects([newProj]);
+      saveProjects([newProj]);
+      setActiveId(newProj.id);
+      setActiveProjectId(newProj.id);
+      setLanguage(initialLanguage);
+      setCode(newProj.code);
+      setCompiler(newProj.compiler);
+      setStandard(newProj.options);
+      setProjectName(newProj.name);
     }
-  }, []);
+  }, [initialLanguage]);
 
   // Save current project state
   const saveCurrentProject = useCallback(() => {
@@ -188,36 +229,30 @@ export default function PlaygroundPage() {
       setCode(target.code);
       setStdin(target.stdin);
       setCompiler(target.compiler);
-      setStandard(target.options || (targetLang === "python" ? "3.12" : "c++20"));
+      setStandard(target.options || getLanguage(targetLang).defaultStandard);
       setCompilerSettings(target.settings || DEFAULT_COMPILER_SETTINGS);
       setProjectName(target.name);
       setOutput(null);
+
+      // If project has a different language than current URL, navigate to its URL
+      if (targetLang !== initialLanguage) {
+        router.push(`/${targetLang}/playground`);
+      }
     }
   };
 
-  // Language change from toolbar
+  // Language change from toolbar -> navigates to /[language]/playground
   const handleLanguageChange = (newLang: SupportedLanguage) => {
     if (newLang === language) return;
-    const newLangDef = getLanguage(newLang);
-    const prevLangDef = getLanguage(language);
-
-    setLanguage(newLang);
-    setCompiler(newLangDef.defaultCompiler);
-    setStandard(newLangDef.defaultStandard);
-
-    // If current code is empty or is the default code of the previous language, swap to new default
-    if (!code.trim() || code.trim() === prevLangDef.defaultCode.trim()) {
-      setCode(newLangDef.defaultCode);
-    }
-
-    showNotification(`Lenguaje cambiado a ${newLangDef.name}`);
+    saveCurrentProject();
+    router.push(`/${newLang}/playground`);
   };
 
-  // Create Project
+  // Create Project in current language
   const handleCreateProject = () => {
     const langDef = getLanguage(language);
     const newProj = createProject(
-      `Proyecto ${projects.length + 1}`,
+      `Proyecto ${langDef.name} ${projects.length + 1}`,
       langDef.defaultCode,
       langDef.defaultStandard,
       "",
@@ -276,6 +311,10 @@ export default function PlaygroundPage() {
     saveProjects(updated);
     handleSelectProject(newProj.id);
     showNotification(`Plantilla "${template.title}" cargada`);
+
+    if (templateLang !== initialLanguage) {
+      router.push(`/${templateLang}/playground`);
+    }
   };
 
   // Code Formatter

@@ -19,13 +19,15 @@ import {
   Minimize2,
   Check,
 } from "lucide-react";
-import { AVAILABLE_COMPILERS } from "@/lib/compiler";
-import { CompilerSettings } from "@/types";
+import { SUPPORTED_LANGUAGES_LIST, getLanguage } from "@/lib/languages";
+import { CompilerSettings, SupportedLanguage } from "@/types";
 
 interface ToolbarProps {
   onRun: () => void;
   onSave: () => void;
   isRunning: boolean;
+  language: SupportedLanguage;
+  onLanguageChange: (lang: SupportedLanguage) => void;
   compiler: string;
   onCompilerChange: (compiler: string) => void;
   standard: string;
@@ -48,6 +50,8 @@ export function Toolbar({
   onRun,
   onSave,
   isRunning,
+  language,
+  onLanguageChange,
   compiler,
   onCompilerChange,
   standard,
@@ -67,8 +71,10 @@ export function Toolbar({
 }: ToolbarProps) {
   const [copiedShare, setCopiedShare] = useState(false);
 
+  const langDef = getLanguage(language);
+  const availableCompilers = langDef.compilers;
   const currentCompiler =
-    AVAILABLE_COMPILERS.find((c) => c.id === compiler) || AVAILABLE_COMPILERS[0];
+    availableCompilers.find((c) => c.id === compiler) || availableCompilers[0];
 
   const handleShareClick = () => {
     onShare();
@@ -77,9 +83,10 @@ export function Toolbar({
   };
 
   const hasSpecialFlags =
-    compilerSettings.sanitizers.length > 0 ||
-    compilerSettings.optimization !== "-O2" ||
-    compilerSettings.customFlags.trim().length > 0;
+    langDef.hasCompilerSettings &&
+    (compilerSettings.sanitizers.length > 0 ||
+      compilerSettings.optimization !== "-O2" ||
+      compilerSettings.customFlags.trim().length > 0);
 
   return (
     <header className="h-14 border-b border-zinc-800 bg-[#090a0f] px-3 sm:px-4 flex items-center justify-between gap-3 select-none font-mono text-xs">
@@ -134,27 +141,29 @@ export function Toolbar({
           <button
             onClick={onFormatCode}
             className="p-1.5 rounded text-zinc-400 hover:text-amber-400 hover:bg-zinc-800 transition-colors"
-            title="Formatear código C++ (Ctrl+Shift+F)"
-            aria-label="Formatear código C++"
+            title={`Formatear código ${langDef.name} (Ctrl+Shift+F)`}
+            aria-label={`Formatear código ${langDef.name}`}
           >
             <Sparkles className="w-3.5 h-3.5" />
           </button>
 
-          <button
-            onClick={onOpenSettings}
-            className={`relative p-1.5 rounded transition-colors ${
-              hasSpecialFlags
-                ? "text-neon-green hover:bg-zinc-800"
-                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-            }`}
-            title="Opciones del compilador y sanitizers (Ctrl+B)"
-            aria-label="Opciones del compilador"
-          >
-            <Sliders className="w-3.5 h-3.5" />
-            {hasSpecialFlags && (
-              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-neon-green ring-2 ring-black" />
-            )}
-          </button>
+          {langDef.hasCompilerSettings && (
+            <button
+              onClick={onOpenSettings}
+              className={`relative p-1.5 rounded transition-colors ${
+                hasSpecialFlags
+                  ? "text-neon-green hover:bg-zinc-800"
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+              }`}
+              title="Opciones del compilador y sanitizers (Ctrl+B)"
+              aria-label="Opciones del compilador"
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              {hasSpecialFlags && (
+                <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-neon-green ring-2 ring-black" />
+              )}
+            </button>
+          )}
 
           <button
             onClick={handleShareClick}
@@ -172,8 +181,8 @@ export function Toolbar({
           <button
             onClick={onExport}
             className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
-            title="Exportar archivo (.cc)"
-            aria-label="Exportar archivo de código (.cc)"
+            title={`Exportar archivo (${langDef.extension})`}
+            aria-label={`Exportar archivo (${langDef.extension})`}
           >
             <Download className="w-3.5 h-3.5" />
           </button>
@@ -181,10 +190,30 @@ export function Toolbar({
 
         <div className="h-4 w-[1px] bg-zinc-800 hidden sm:block" />
 
-        {/* Compiler Dropdown */}
+        {/* Language Selector */}
+        <div className="flex items-center">
+          <label htmlFor="language-select" className="sr-only">
+            Lenguaje
+          </label>
+          <select
+            id="language-select"
+            value={language}
+            onChange={(e) => onLanguageChange(e.target.value as SupportedLanguage)}
+            disabled={isRunning}
+            className="bg-zinc-900 border border-zinc-700 text-neon-green font-semibold text-xs font-mono rounded px-2 py-1.5 focus:outline-none focus:border-neon-green disabled:opacity-50"
+          >
+            {SUPPORTED_LANGUAGES_LIST.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Compiler / Interpreter Dropdown */}
         <div className="flex items-center">
           <label htmlFor="compiler-select" className="sr-only">
-            Compilador
+            Compilador / Intérprete
           </label>
           <select
             id="compiler-select"
@@ -193,7 +222,7 @@ export function Toolbar({
             disabled={isRunning}
             className="bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs font-mono rounded px-2 py-1.5 focus:outline-none focus:border-neon-green disabled:opacity-50"
           >
-            {AVAILABLE_COMPILERS.map((c) => (
+            {availableCompilers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
@@ -201,25 +230,27 @@ export function Toolbar({
           </select>
         </div>
 
-        {/* C++ Standard Dropdown */}
-        <div className="hidden sm:flex items-center">
-          <label htmlFor="standard-select" className="sr-only">
-            Estándar C++
-          </label>
-          <select
-            id="standard-select"
-            value={standard}
-            onChange={(e) => onStandardChange(e.target.value)}
-            disabled={isRunning}
-            className="bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs font-mono rounded px-2 py-1.5 focus:outline-none focus:border-neon-green disabled:opacity-50"
-          >
-            {currentCompiler.standards.map((std) => (
-              <option key={std} value={std}>
-                {std.toUpperCase()}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Version / Standard Dropdown */}
+        {currentCompiler?.standards && currentCompiler.standards.length > 0 && (
+          <div className="hidden sm:flex items-center">
+            <label htmlFor="standard-select" className="sr-only">
+              Estándar / Versión
+            </label>
+            <select
+              id="standard-select"
+              value={standard}
+              onChange={(e) => onStandardChange(e.target.value)}
+              disabled={isRunning}
+              className="bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs font-mono rounded px-2 py-1.5 focus:outline-none focus:border-neon-green disabled:opacity-50"
+            >
+              {currentCompiler.standards.map((std) => (
+                <option key={std} value={std}>
+                  {std.toUpperCase()}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="h-4 w-[1px] bg-zinc-800 hidden sm:block" />
 
@@ -240,7 +271,7 @@ export function Toolbar({
           onClick={onRun}
           disabled={isRunning}
           className="px-3.5 py-1.5 rounded bg-neon-green text-black font-semibold text-xs flex items-center gap-1.5 hover:bg-[#00e67a] active:bg-[#00cc6c] transition-all shadow-[0_0_15px_rgba(0,255,136,0.3)] hover:shadow-[0_0_20px_rgba(0,255,136,0.5)] focus:outline-none focus:ring-2 focus:ring-neon-green disabled:opacity-50 shrink-0"
-          aria-label={isRunning ? "Compilando..." : "Ejecutar (Ctrl+Enter)"}
+          aria-label={isRunning ? "Ejecutando..." : "Ejecutar (Ctrl+Enter)"}
           aria-busy={isRunning}
         >
           {isRunning ? (
@@ -259,24 +290,34 @@ export function Toolbar({
           )}
         </button>
 
-        {/* Zen Mode */}
-        <button
-          onClick={onToggleZenMode}
-          className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors hidden sm:block"
-          title={isZenMode ? "Salir de Modo Zen" : "Modo Zen (Pantalla Completa)"}
-          aria-label={isZenMode ? "Salir de Modo Zen" : "Modo Zen"}
-        >
-          {isZenMode ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-        </button>
+        <div className="h-4 w-[1px] bg-zinc-800 hidden md:block" />
 
-        {/* Keyboard Shortcuts Help */}
+        {/* Shortcuts Help */}
         <button
           onClick={onOpenShortcuts}
-          className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+          className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors hidden md:block"
           title="Atajos de teclado (?)"
           aria-label="Atajos de teclado"
         >
           <HelpCircle className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Zen Mode Toggle */}
+        <button
+          onClick={onToggleZenMode}
+          className={`p-1.5 rounded transition-colors hidden md:block ${
+            isZenMode
+              ? "bg-neon-green text-black hover:bg-[#00e67a]"
+              : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+          }`}
+          title={isZenMode ? "Salir de Modo Zen" : "Modo Zen"}
+          aria-label={isZenMode ? "Salir de Modo Zen" : "Modo Zen"}
+        >
+          {isZenMode ? (
+            <Minimize2 className="w-3.5 h-3.5" />
+          ) : (
+            <Maximize2 className="w-3.5 h-3.5" />
+          )}
         </button>
       </div>
     </header>

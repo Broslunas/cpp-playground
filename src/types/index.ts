@@ -5,9 +5,23 @@ export interface CompilerSettings {
   customFlags: string;
 }
 
+export type SupportedLanguage = "cpp" | "python";
+
+export interface LanguageDefinition {
+  id: SupportedLanguage;
+  name: string;
+  extension: string;
+  defaultCode: string;
+  defaultCompiler: string;
+  defaultStandard: string;
+  compilers: CompilerOption[];
+  hasCompilerSettings?: boolean;
+}
+
 export interface Project {
   id: string;
   name: string;
+  language?: SupportedLanguage;
   code: string;
   stdin: string;
   compiler: string;
@@ -18,6 +32,7 @@ export interface Project {
 }
 
 export interface CompileRequest {
+  language?: SupportedLanguage;
   code: string;
   stdin?: string;
   compiler?: string;
@@ -46,7 +61,8 @@ export interface CompilerOption {
 export interface CodeTemplate {
   id: string;
   title: string;
-  category: "basics" | "cpp20" | "cpp23" | "dsa" | "testing";
+  language?: SupportedLanguage;
+  category: "basics" | "cpp20" | "cpp23" | "dsa" | "testing" | "python-features" | "python-advanced";
   description: string;
   standard: string;
   code: string;
