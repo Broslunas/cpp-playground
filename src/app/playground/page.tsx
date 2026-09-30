@@ -56,13 +56,6 @@ export default function PlaygroundPage() {
   const [editorHeight, setEditorHeight] = useState(60);
   const [stdinWidth, setStdinWidth] = useState(30);
 
-  const sidebarWidthRef = useRef(sidebarWidth);
-  sidebarWidthRef.current = sidebarWidth;
-  const editorHeightRef = useRef(editorHeight);
-  editorHeightRef.current = editorHeight;
-  const stdinWidthRef = useRef(stdinWidth);
-  stdinWidthRef.current = stdinWidth;
-
   const workspaceRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -404,13 +397,13 @@ export default function PlaygroundPage() {
                   const rect = container.getBoundingClientRect();
                   const newWidth = Math.max(160, Math.min(500, e.clientX - rect.left));
                   setSidebarWidth(newWidth);
+                  try {
+                    localStorage.setItem("cpp_sidebar_width", String(newWidth));
+                  } catch {}
                 }}
                 onPointerUp={(e) => {
                   try {
                     e.currentTarget.releasePointerCapture(e.pointerId);
-                  } catch {}
-                  try {
-                    localStorage.setItem("cpp_sidebar_width", String(sidebarWidthRef.current));
                   } catch {}
                 }}
               >
@@ -467,13 +460,13 @@ export default function PlaygroundPage() {
               if (rect.height <= 0) return;
               const percent = Math.max(15, Math.min(85, ((e.clientY - rect.top) / rect.height) * 100));
               setEditorHeight(percent);
+              try {
+                localStorage.setItem("cpp_editor_height", String(percent));
+              } catch {}
             }}
             onPointerUp={(e) => {
               try {
                 e.currentTarget.releasePointerCapture(e.pointerId);
-              } catch {}
-              try {
-                localStorage.setItem("cpp_editor_height", String(editorHeightRef.current));
               } catch {}
             }}
           >
@@ -515,13 +508,13 @@ export default function PlaygroundPage() {
                 if (rect.width <= 0) return;
                 const percent = Math.max(15, Math.min(85, ((e.clientX - rect.left) / rect.width) * 100));
                 setStdinWidth(percent);
+                try {
+                  localStorage.setItem("cpp_stdin_width", String(percent));
+                } catch {}
               }}
               onPointerUp={(e) => {
                 try {
                   e.currentTarget.releasePointerCapture(e.pointerId);
-                } catch {}
-                try {
-                  localStorage.setItem("cpp_stdin_width", String(stdinWidthRef.current));
                 } catch {}
               }}
             >
