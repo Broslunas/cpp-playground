@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#080a11" />
+      <stop offset="50%" stop-color="#05070a" />
+      <stop offset="100%" stop-color="#020305" />
+    </linearGradient>
+
+    <!-- Border Neon Gradient -->
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ff88" />
+      <stop offset="50%" stop-color="#00d4ff" />
+      <stop offset="100%" stop-color="#00ff88" />
+    </linearGradient>
+
+    <!-- Moon & Glow Gradient -->
+    <linearGradient id="moonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ff88" />
+      <stop offset="60%" stop-color="#00e5ff" />
+      <stop offset="100%" stop-color="#00b4d8" />
+    </linearGradient>
+
+    <!-- Code Accent Gradient -->
+    <linearGradient id="codeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#00ff88" />
+    </linearGradient>
+
+    <!-- Subtle Glow Filter -->
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="24" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Base container with rounded corners -->
+  <rect x="20" y="20" width="472" height="472" rx="108" fill="url(#bgGrad)" stroke="url(#borderGrad)" stroke-width="12" />
+
+  <!-- Ambient inner light -->
+  <circle cx="210" cy="220" r="160" fill="#00ff88" opacity="0.08" filter="url(#softGlow)" />
+  <circle cx="340" cy="300" r="140" fill="#00d4ff" opacity="0.06" filter="url(#softGlow)" />
+
+  <!-- Grid accent lines (cyberpunk / playground feel) -->
+  <line x1="80" y1="20" x2="80" y2="492" stroke="#00ff88" stroke-opacity="0.06" stroke-width="2" />
+  <line x1="432" y1="20" x2="432" y2="492" stroke="#00ff88" stroke-opacity="0.06" stroke-width="2" />
+  <line x1="20" y1="80" x2="492" y2="80" stroke="#00ff88" stroke-opacity="0.06" stroke-width="2" />
+  <line x1="20" y1="432" x2="492" y2="432" stroke="#00ff88" stroke-opacity="0.06" stroke-width="2" />
+
+  <!-- The "Lunas" Crescent Moon + "B" Monogram + Terminal Bracket -->
+  <g transform="translate(0, 0)">
+    <!-- Crescent Moon (representing Broslunas) -->
+    <path d="M 235 110
+             A 145 145 0 1 0 375 295
+             A 120 120 0 1 1 235 110 Z"
+          fill="url(#moonGrad)"
+          filter="url(#neonGlow)" />
+
+    <!-- Terminal Code Chevron: > -->
+    <path d="M 220 195
+             L 285 256
+             L 220 317"
+          fill="none"
+          stroke="#ffffff"
+          stroke-width="32"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          filter="url(#neonGlow)" />
+
+    <!-- Terminal Underscore / Cursor: _ -->
+    <line x1="290" y1="317" x2="355" y2="317"
+          stroke="#00ff88"
+          stroke-width="32"
+          stroke-linecap="round"
+          filter="url(#neonGlow)" />
+
+    <!-- Mini satellite dots / stars -->
+    <circle cx="360" cy="150" r="9" fill="#00ff88" opacity="0.9" />
+    <circle cx="160" cy="360" r="6" fill="#00d4ff" opacity="0.7" />
+  </g>
+</svg>

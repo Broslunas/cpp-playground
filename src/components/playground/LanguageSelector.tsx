@@ -16,6 +16,7 @@ import {
   FolderOpen,
   CornerDownLeft,
   ChevronRight,
+  ChevronDown,
   Flame,
   Binary,
   ArrowLeft,
@@ -23,6 +24,15 @@ import {
 } from "lucide-react";
 import { SupportedLanguage, Project } from "@/types";
 import { getProjects } from "@/lib/projects";
+
+export const ALL_LANGUAGES: SupportedLanguage[] = [
+  "cpp",
+  "python",
+  "html",
+  "javascript",
+  "typescript",
+  "bash",
+];
 
 interface LanguageProfile {
   id: SupportedLanguage;
@@ -267,14 +277,17 @@ export function LanguageSelector() {
   const [selectedLang, setSelectedLang] = useState<SupportedLanguage>("cpp");
   const [isSimulating, setIsSimulating] = useState(false);
   const [showSimOutput, setShowSimOutput] = useState(true);
-  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
+  const [allProjects, setAllProjects] = useState<Project[]>([]);
+  const [showAllProjects, setShowAllProjects] = useState(false);
+
+  const recentProjects = showAllProjects ? allProjects : allProjects.slice(0, 4);
 
   const activeLangData = useMemo(() => LANGUAGES_DATA[selectedLang], [selectedLang]);
 
   useEffect(() => {
     try {
       const projects = getProjects();
-      setRecentProjects(projects.slice(0, 4));
+      setAllProjects(projects);
     } catch {
       // ignore
     }
@@ -299,17 +312,19 @@ export function LanguageSelector() {
         setSelectedLang("html");
       } else if (key === "4" || key === "j") {
         setSelectedLang("javascript");
+      } else if (key === "5" || key === "t") {
+        setSelectedLang("typescript");
+      } else if (key === "6" || key === "b") {
+        setSelectedLang("bash");
       } else if (key === "arrowleft") {
         setSelectedLang((prev) => {
-          const list: SupportedLanguage[] = ["cpp", "python", "html", "javascript"];
-          const idx = list.indexOf(prev);
-          return list[(idx - 1 + list.length) % list.length];
+          const idx = ALL_LANGUAGES.indexOf(prev);
+          return ALL_LANGUAGES[(idx - 1 + ALL_LANGUAGES.length) % ALL_LANGUAGES.length];
         });
       } else if (key === "arrowright") {
         setSelectedLang((prev) => {
-          const list: SupportedLanguage[] = ["cpp", "python", "html", "javascript"];
-          const idx = list.indexOf(prev);
-          return list[(idx + 1) % list.length];
+          const idx = ALL_LANGUAGES.indexOf(prev);
+          return ALL_LANGUAGES[(idx + 1) % ALL_LANGUAGES.length];
         });
       } else if (key === "enter") {
         router.push(LANGUAGES_DATA[selectedLang].href);
@@ -344,21 +359,24 @@ export function LanguageSelector() {
           <span className="text-zinc-600">/</span>
           <div className="flex items-center gap-1.5 font-semibold text-zinc-200">
             <Terminal className="w-3.5 h-3.5 text-neon-green" />
-            <span>SELECTOR DE ENTORNO</span>
+            <span>BROSLUNAS PLAYGROUND</span>
+            <span className="text-zinc-600">/</span>
+            <span className="text-zinc-400 font-normal">SELECTOR DE ENTORNO</span>
           </div>
         </div>
 
         <div className="flex items-center gap-3 text-[11px] text-zinc-400">
           <div className="hidden sm:flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-zinc-400">4 Runtimes Online</span>
+            <span className="text-zinc-400">{ALL_LANGUAGES.length} Runtimes Online</span>
           </div>
           <div className="hidden md:flex items-center gap-1 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded text-[10px]">
             <span>Atajos:</span>
-            <kbd className="px-1 bg-zinc-800 rounded text-zinc-300 font-bold">1</kbd>
-            <kbd className="px-1 bg-zinc-800 rounded text-zinc-300 font-bold">2</kbd>
-            <kbd className="px-1 bg-zinc-800 rounded text-zinc-300 font-bold">3</kbd>
-            <kbd className="px-1 bg-zinc-800 rounded text-zinc-300 font-bold">4</kbd>
+            {ALL_LANGUAGES.map((_, i) => (
+              <kbd key={i} className="px-1 bg-zinc-800 rounded text-zinc-300 font-bold">
+                {i + 1}
+              </kbd>
+            ))}
             <span>•</span>
             <kbd className="px-1 bg-zinc-800 rounded text-zinc-300 font-bold">Enter</kbd>
           </div>
@@ -372,25 +390,57 @@ export function LanguageSelector() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 text-xs font-semibold text-zinc-300">
               <FolderOpen className="w-3.5 h-3.5 text-neon-cyan" />
-              <span>TUS PROYECTOS RECIENTES</span>
-              {recentProjects.length > 0 && (
+              <span>TUS PROYECTOS</span>
+              {allProjects.length > 0 && (
                 <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-800 text-zinc-400">
-                  {recentProjects.length}
+                  {allProjects.length}
                 </span>
               )}
             </div>
-            <span className="text-[10px] text-zinc-500 hidden sm:inline">
-              Almacenamiento local del navegador
-            </span>
+
+            <div className="flex items-center gap-2">
+              {allProjects.length > 4 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllProjects((prev) => !prev)}
+                  className="text-[11px] font-mono text-neon-green hover:text-white flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-neon-green/30 hover:bg-neon-green/10 transition-colors"
+                >
+                  <span>
+                    {showAllProjects
+                      ? "Ver menos proyectos"
+                      : `Ver más proyectos (${allProjects.length})`}
+                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                      showAllProjects ? "rotate-180 text-neon-green" : "text-neon-green"
+                    }`}
+                  />
+                </button>
+              )}
+              <span className="text-[10px] text-zinc-500 hidden sm:inline">
+                Almacenamiento local del navegador
+              </span>
+            </div>
           </div>
 
           {recentProjects.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {recentProjects.map((p) => {
                 const pLang = p.language || "cpp";
-                const isCpp = pLang === "cpp";
-                const isPy = pLang === "python";
-                const isHtml = pLang === "html";
+                const badgeColor =
+                  pLang === "cpp"
+                    ? "bg-neon-green/10 text-neon-green border-neon-green/20"
+                    : pLang === "python"
+                    ? "bg-yellow-400/10 text-yellow-400 border-yellow-400/20"
+                    : pLang === "html"
+                    ? "bg-orange-500/10 text-orange-400 border-orange-500/20"
+                    : pLang === "javascript"
+                    ? "bg-sky-400/10 text-sky-400 border-sky-400/20"
+                    : pLang === "typescript"
+                    ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                    : pLang === "bash"
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                    : "bg-zinc-800 text-zinc-400 border-zinc-700";
                 return (
                   <Link
                     key={p.id}
@@ -399,15 +449,7 @@ export function LanguageSelector() {
                   >
                     <div className="flex items-center justify-between gap-1 mb-1">
                       <span
-                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
-                          isCpp
-                            ? "bg-neon-green/10 text-neon-green border border-neon-green/20"
-                            : isPy
-                            ? "bg-yellow-400/10 text-yellow-400 border border-yellow-400/20"
-                            : isHtml
-                            ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
-                            : "bg-sky-400/10 text-sky-400 border border-sky-400/20"
-                        }`}
+                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${badgeColor}`}
                       >
                         {pLang.toUpperCase()}
                       </span>
@@ -462,12 +504,12 @@ export function LanguageSelector() {
               <span>Elige Entorno de Ejecución</span>
             </h2>
             <span className="text-[11px] text-zinc-500">
-              Presiona [1, 2, 3, 4] o haz clic para previsualizar
+              Presiona [1-6] o haz clic para previsualizar
             </span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-            {(["cpp", "python", "html", "javascript"] as SupportedLanguage[]).map((langId) => {
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+            {ALL_LANGUAGES.map((langId) => {
               const lang = LANGUAGES_DATA[langId];
               const isSelected = selectedLang === langId;
 
@@ -475,7 +517,7 @@ export function LanguageSelector() {
                 <div
                   key={langId}
                   onClick={() => setSelectedLang(langId)}
-                  className={`group relative rounded-xl border transition-all duration-200 p-3 sm:p-3.5 flex flex-col justify-between cursor-pointer ${
+                  className={`group relative rounded-xl border transition-all duration-200 p-3 sm:p-3 flex flex-col justify-between cursor-pointer ${
                     isSelected
                       ? `${lang.accentBorder} bg-gradient-to-b ${lang.bannerBg} bg-[#0e111a] shadow-[0_0_20px_${lang.glowColor}] ring-1 ring-white/10 scale-[1.01]`
                       : "border-zinc-800 bg-[#090c12]/90 hover:border-zinc-700 hover:bg-[#0c1017]"
@@ -493,7 +535,11 @@ export function LanguageSelector() {
                           ? "Py"
                           : langId === "html"
                           ? "Web"
-                          : "JS"}
+                          : langId === "javascript"
+                          ? "JS"
+                          : langId === "typescript"
+                          ? "TS"
+                          : "SH"}
                       </div>
                       <div className="flex items-center gap-1">
                         <span
@@ -616,7 +662,11 @@ export function LanguageSelector() {
                     ? "main.py"
                     : selectedLang === "html"
                     ? "index.html"
-                    : "index.js"}
+                    : selectedLang === "javascript"
+                    ? "index.js"
+                    : selectedLang === "typescript"
+                    ? "index.ts"
+                    : "script.sh"}
                 </span>
               </div>
               <pre className="text-[11px] text-zinc-300 leading-snug overflow-x-auto p-2.5 bg-black/60 rounded-md border border-zinc-800/70 max-h-[140px]">
@@ -722,7 +772,7 @@ export function LanguageSelector() {
 
       {/* Footer */}
       <footer className="border-t border-zinc-800/80 bg-[#06080d] px-4 py-2 text-center text-[10px] text-zinc-600">
-        Playground Multi-Lenguaje • C++, Python, HTML/Web, JavaScript
+        Playground Multi-Lenguaje • C++, Python, HTML/Web, JavaScript, TypeScript, Linux Bash
       </footer>
     </div>
   );

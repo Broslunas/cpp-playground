@@ -1,0 +1,25 @@
+{
+  "name": "Broslunas Playground",
+  "short_name": "Broslunas",
+  "description": "Playground moderno e interactivo para compilar y ejecutar C++, Python, JavaScript, TypeScript, Bash y HTML en tiempo real.",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "theme_color": "#00ff88",
+  "background_color": "#090a0f",
+  "display": "standalone"
+}

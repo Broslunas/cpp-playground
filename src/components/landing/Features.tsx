@@ -6,91 +6,112 @@ import {
   Eye,
   Sliders,
   Gauge,
-  Lock,
-  Layers,
+  Sparkles,
+  LayoutGrid,
+  Shield,
+  Share2,
 } from "lucide-react";
 
 const features = [
   {
     icon: Code2,
-    title: "Editor Moderno con Resaltado",
+    title: "Editor Profesional CodeMirror 6",
     description:
-      "Basado en CodeMirror 6 con resaltado sintáctico completo para C++, números de línea, autocompletado y soporte para atajos de teclado.",
+      "Resaltado sintáctico de alto contraste, indentación inteligente, números de línea, zen mode y atajos de teclado completos.",
     accent: "green",
   },
   {
     icon: Terminal,
-    title: "Soporte Completo para I/O",
+    title: "Soporte Completo para I/O y Stdin",
     description:
-      "Envía datos por stdin a tus programas con std::cin y visualiza stdout y stderr separados con colores semánticos y códigos de retorno.",
+      "Envía entradas por stdin a tus programas (std::cin, input(), readline) y visualiza stdout y stderr con códigos de salida y tiempos exactos.",
+    accent: "cyan",
+  },
+  {
+    icon: Sliders,
+    title: "GCC 14, Clang & Sanitizers",
+    description:
+      "Compiladores modernos con soporte para C++11 hasta C++23, niveles de optimización (-O0 a -O3) y Address/Undefined Sanitizers (ASan/UBSan).",
+    accent: "green",
+  },
+  {
+    icon: LayoutGrid,
+    title: "Layouts Flexibles y Personalizables",
+    description:
+      "Elige entre disposiciones horizontales, verticales, modo Zen libre de distracciones o diseña tu propia cuadrícula de trabajo.",
     accent: "cyan",
   },
   {
     icon: Save,
-    title: "Persistencia Local",
+    title: "Persistencia 100% Local en Navegador",
     description:
-      "Todos tus proyectos y snippets se guardan automáticamente en tu navegador usando localStorage. Sin necesidad de registrarte.",
+      "Tus proyectos y archivos se guardan automáticamente en LocalStorage sin necesidad de registros ni recopilación de datos.",
     accent: "green",
   },
   {
-    icon: Sliders,
-    title: "Múltiples Compiladores",
+    icon: Share2,
+    title: "Compartir y Exportar al Instante",
     description:
-      "Elige entre las versiones más recientes de GCC y Clang, con soporte desde C++11 hasta C++23 y opciones de optimización -O2.",
+      "Genera enlaces directos con tu código embebido o descarga tus fuentes en archivos .cpp, .py, .ts o proyectos listos para compilar.",
     accent: "cyan",
   },
   {
     icon: Eye,
-    title: "100% Accesible (WCAG 2.1 AA)",
+    title: "Accesibilidad Total (WCAG 2.1 AA)",
     description:
-      "Diseñado con soporte completo para navegación con teclado, lectores de pantalla (aria-live), enlaces de salto y contrastes óptimos.",
+      "Navegación completa por teclado, lectores de pantalla con regiones aria-live, contrastes verificados y soporte para SkipLink.",
     accent: "green",
   },
   {
     icon: Gauge,
-    title: "Protección con Rate Limits",
+    title: "Protección Robusta con Rate Limiting",
     description:
-      "Sistema de limitación de tasa por IP en el servidor que protege contra sobrecargas y garantiza disponibilidad para todos los usuarios.",
+      "Aislamiento en sandbox seguro en la nube con control de concurrencia y límites por IP para garantizar disponibilidad constante.",
     accent: "cyan",
   },
 ];
 
 export function Features() {
   return (
-    <section id="caracteristicas" className="py-20 max-w-6xl mx-auto px-4 sm:px-6">
+    <section id="capacidades" className="py-20 max-w-6xl mx-auto px-4 sm:px-6">
       <div className="text-center mb-16">
         <h2 className="text-xs font-mono uppercase tracking-widest text-neon-green mb-3">
-          Capacidades del Sistema
+          Potencia y Flexibilidad
         </h2>
         <p className="text-3xl sm:text-4xl font-bold font-mono text-white">
-          Todo lo que necesitas para programar en C++
+          Todo lo que necesitas en Broslunas Playground
+        </p>
+        <p className="text-zinc-400 text-sm max-w-2xl mx-auto mt-3 font-sans">
+          Diseñado para desarrolladores, estudiantes y creadores que buscan velocidad sin fricción.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {features.map((feature, idx) => {
           const Icon = feature.icon;
           const isGreen = feature.accent === "green";
           return (
             <div
               key={idx}
-              className="p-6 rounded-xl border border-zinc-800/80 bg-zinc-950/60 hover:border-zinc-700 transition-all hover:-translate-y-1 group"
+              className="p-5 rounded-xl border border-zinc-800/80 bg-zinc-950/60 hover:border-zinc-700 transition-all hover:-translate-y-1 group flex flex-col justify-between"
             >
-              <div
-                className={`w-12 h-12 rounded-lg flex items-center justify-center mb-5 border ${
-                  isGreen
-                    ? "border-neon-green/30 bg-neon-green/10 text-neon-green group-hover:shadow-[0_0_15px_rgba(0,255,136,0.3)]"
-                    : "border-neon-cyan/30 bg-neon-cyan/10 text-neon-cyan group-hover:shadow-[0_0_15px_rgba(0,212,255,0.3)]"
-                } transition-all`}
-              >
-                <Icon className="w-6 h-6" />
+              <div>
+                <div
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 border ${
+                    isGreen
+                      ? "border-neon-green/30 bg-neon-green/10 text-neon-green group-hover:shadow-[0_0_15px_rgba(0,255,136,0.3)]"
+                      : "border-neon-cyan/30 bg-neon-cyan/10 text-neon-cyan group-hover:shadow-[0_0_15px_rgba(0,212,255,0.3)]"
+                  } transition-all`}
+                >
+                  <Icon className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-semibold font-mono text-zinc-100 mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-xs text-zinc-400 leading-relaxed font-sans">
+                  {feature.description}
+                </p>
               </div>
-              <h3 className="text-lg font-semibold font-mono text-zinc-100 mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-sm text-zinc-400 leading-relaxed">
-                {feature.description}
-              </p>
             </div>
           );
         })}
