@@ -113,7 +113,7 @@ export function Editor({ value, onChange, onRun, readOnly = false }: EditorProps
   return (
     <div
       ref={editorRef}
-      className="w-full h-full min-h-[300px] border border-zinc-800 rounded bg-[#0b0d13] overflow-hidden focus-within:border-zinc-700"
+      className="w-full h-full min-h-0 border border-zinc-800 rounded bg-[#0b0d13] overflow-hidden focus-within:border-zinc-700"
       aria-label="C++ Code Editor"
       role="region"
     />

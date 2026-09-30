@@ -51,6 +51,34 @@ export default function PlaygroundPage() {
   const [saveToast, setSaveToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("Guardado localmente ✓");
 
+  // Resizing state & persistence
+  const [sidebarWidth, setSidebarWidth] = useState(260);
+  const [editorHeight, setEditorHeight] = useState(60);
+  const [stdinWidth, setStdinWidth] = useState(30);
+
+  const sidebarWidthRef = useRef(sidebarWidth);
+  sidebarWidthRef.current = sidebarWidth;
+  const editorHeightRef = useRef(editorHeight);
+  editorHeightRef.current = editorHeight;
+  const stdinWidthRef = useRef(stdinWidth);
+  stdinWidthRef.current = stdinWidth;
+
+  const workspaceRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const sw = localStorage.getItem("cpp_sidebar_width");
+      if (sw) setSidebarWidth(Math.max(160, Math.min(500, Number(sw))));
+      const eh = localStorage.getItem("cpp_editor_height");
+      if (eh) setEditorHeight(Math.max(15, Math.min(85, Number(eh))));
+      const siw = localStorage.getItem("cpp_stdin_width");
+      if (siw) setStdinWidth(Math.max(15, Math.min(85, Number(siw))));
+    } catch {}
+  }, []);
+
   const showNotification = (msg: string) => {
     setToastMessage(msg);
     setSaveToast(true);
@@ -343,25 +371,60 @@ export default function PlaygroundPage() {
       )}
 
       {/* Main Workspace Body */}
-      <div className="flex flex-1 overflow-hidden relative">
+      <div ref={workspaceRef} className="flex flex-1 overflow-hidden relative">
         {/* Projects Sidebar */}
         {!isZenMode && (
-          <ProjectSidebar
-            projects={projects}
-            activeProjectId={activeProjectId}
-            onSelectProject={handleSelectProject}
-            onCreateProject={handleCreateProject}
-            onDeleteProject={handleDeleteProject}
-            onRenameProject={handleRenameProject}
-            isOpen={isSidebarOpen}
-            onClose={() => setIsSidebarOpen(false)}
-          />
+          <>
+            <ProjectSidebar
+              projects={projects}
+              activeProjectId={activeProjectId}
+              onSelectProject={handleSelectProject}
+              onCreateProject={handleCreateProject}
+              onDeleteProject={handleDeleteProject}
+              onRenameProject={handleRenameProject}
+              isOpen={isSidebarOpen}
+              onClose={() => setIsSidebarOpen(false)}
+              width={sidebarWidth}
+            />
+
+            {/* Sidebar Resizer */}
+            {isSidebarOpen && (
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Redimensionar barra lateral"
+                className="w-1.5 hover:w-1.5 relative z-20 cursor-col-resize group shrink-0 flex items-center justify-center touch-none select-none -mx-[1px]"
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                }}
+                onPointerMove={(e) => {
+                  if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+                  const container = workspaceRef.current;
+                  if (!container) return;
+                  const rect = container.getBoundingClientRect();
+                  const newWidth = Math.max(160, Math.min(500, e.clientX - rect.left));
+                  setSidebarWidth(newWidth);
+                }}
+                onPointerUp={(e) => {
+                  try {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                  } catch {}
+                  try {
+                    localStorage.setItem("cpp_sidebar_width", String(sidebarWidthRef.current));
+                  } catch {}
+                }}
+              >
+                <div className="w-[2px] h-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
+              </div>
+            )}
+          </>
         )}
 
         {/* Central Workspace (Editor + Bottom I/O Panels) */}
         <main
+          ref={mainRef}
           id="main-content"
-          className="flex-1 flex flex-col p-2 sm:p-3 gap-2 overflow-hidden relative"
+          className="flex-1 flex flex-col p-2 sm:p-3 overflow-hidden relative min-w-0"
           role="main"
         >
           {/* Zen mode floating toggle */}
@@ -374,8 +437,11 @@ export default function PlaygroundPage() {
             </button>
           )}
 
-          {/* Top Half: CodeMirror Editor */}
-          <div className="flex-1 min-h-[45%] h-full">
+          {/* Top: CodeMirror Editor */}
+          <div
+            style={{ height: `calc(${editorHeight}% - 4px)` }}
+            className="w-full min-h-0 overflow-hidden"
+          >
             <Editor
               value={code}
               onChange={setCode}
@@ -384,10 +450,47 @@ export default function PlaygroundPage() {
             />
           </div>
 
-          {/* Bottom Half: Stdin & Output Panels */}
-          <div className="h-[40%] min-h-[180px] grid grid-cols-1 md:grid-cols-3 gap-2">
-            {/* Left 1 col: Stdin Input */}
-            <div className="h-full">
+          {/* Horizontal Resizer between Editor and Bottom Panels */}
+          <div
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="Redimensionar editor y consola"
+            className="h-2 hover:h-2 relative z-10 cursor-row-resize group shrink-0 flex items-center justify-center touch-none select-none -my-0.5"
+            onPointerDown={(e) => {
+              e.currentTarget.setPointerCapture(e.pointerId);
+            }}
+            onPointerMove={(e) => {
+              if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+              const main = mainRef.current;
+              if (!main) return;
+              const rect = main.getBoundingClientRect();
+              if (rect.height <= 0) return;
+              const percent = Math.max(15, Math.min(85, ((e.clientY - rect.top) / rect.height) * 100));
+              setEditorHeight(percent);
+            }}
+            onPointerUp={(e) => {
+              try {
+                e.currentTarget.releasePointerCapture(e.pointerId);
+              } catch {}
+              try {
+                localStorage.setItem("cpp_editor_height", String(editorHeightRef.current));
+              } catch {}
+            }}
+          >
+            <div className="h-[2px] w-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
+          </div>
+
+          {/* Bottom: Stdin & Output Panels */}
+          <div
+            ref={bottomRef}
+            style={{ height: `calc(${100 - editorHeight}% - 4px)` }}
+            className="w-full min-h-0 flex flex-row overflow-hidden"
+          >
+            {/* Left: Stdin Input */}
+            <div
+              style={{ width: `calc(${stdinWidth}% - 4px)` }}
+              className="h-full min-w-0 overflow-hidden"
+            >
               <StdinPanel
                 value={stdin}
                 onChange={setStdin}
@@ -395,8 +498,41 @@ export default function PlaygroundPage() {
               />
             </div>
 
-            {/* Right 2 cols: Output Panel */}
-            <div className="md:col-span-2 h-full">
+            {/* Vertical Resizer between Stdin and Output */}
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Redimensionar entrada y salida"
+              className="w-2 hover:w-2 relative z-10 cursor-col-resize group shrink-0 flex items-center justify-center touch-none select-none -mx-0.5"
+              onPointerDown={(e) => {
+                e.currentTarget.setPointerCapture(e.pointerId);
+              }}
+              onPointerMove={(e) => {
+                if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+                const bottom = bottomRef.current;
+                if (!bottom) return;
+                const rect = bottom.getBoundingClientRect();
+                if (rect.width <= 0) return;
+                const percent = Math.max(15, Math.min(85, ((e.clientX - rect.left) / rect.width) * 100));
+                setStdinWidth(percent);
+              }}
+              onPointerUp={(e) => {
+                try {
+                  e.currentTarget.releasePointerCapture(e.pointerId);
+                } catch {}
+                try {
+                  localStorage.setItem("cpp_stdin_width", String(stdinWidthRef.current));
+                } catch {}
+              }}
+            >
+              <div className="w-[2px] h-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
+            </div>
+
+            {/* Right: Output Panel */}
+            <div
+              style={{ width: `calc(${100 - stdinWidth}% - 4px)` }}
+              className="h-full min-w-0 overflow-hidden flex-1"
+            >
               <OutputPanel
                 result={output}
                 isRunning={isRunning}

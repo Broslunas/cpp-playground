@@ -22,6 +22,7 @@ interface ProjectSidebarProps {
   onRenameProject: (id: string, newName: string) => void;
   isOpen: boolean;
   onClose: () => void;
+  width?: number;
 }
 
 export function ProjectSidebar({
@@ -33,6 +34,7 @@ export function ProjectSidebar({
   onRenameProject,
   isOpen,
   onClose,
+  width = 260,
 }: ProjectSidebarProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -66,11 +68,12 @@ export function ProjectSidebar({
 
   return (
     <aside
-      className="w-72 bg-[#0a0d13] border-r border-zinc-800 flex flex-col h-full z-20 shrink-0"
+      style={{ width: `${width}px` }}
+      className="bg-[#0a0d13] border-r border-zinc-800 flex flex-col h-full z-20 shrink-0 select-none"
       aria-label="Local Projects Management"
     >
       {/* Header */}
-      <div className="p-3 border-b border-zinc-800 flex items-center justify-between">
+      <div className="p-3 border-b border-zinc-800 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 text-xs font-mono font-semibold text-zinc-300">
           <FolderOpen className="w-4 h-4 text-neon-green" />
           <span>LOCAL PROJECTS</span>
@@ -87,7 +90,7 @@ export function ProjectSidebar({
       </div>
 
       {/* Projects List */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+      <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1">
         {projects.length === 0 ? (
           <div className="p-4 text-center text-xs font-mono text-zinc-600">
             No projects found. Create one!

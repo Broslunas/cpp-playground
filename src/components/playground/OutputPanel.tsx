@@ -77,7 +77,7 @@ export function OutputPanel({ result, isRunning, onClear }: OutputPanelProps) {
       aria-label="Resultados de Ejecución"
     >
       {/* Header with tabs and actions */}
-      <div className="px-2 py-1.5 bg-[#090a0f] border-b border-zinc-800 flex flex-wrap items-center justify-between gap-2">
+      <div className="px-2 py-1.5 bg-[#090a0f] border-b border-zinc-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
         {/* Tabs */}
         <div className="flex items-center gap-1" role="tablist">
           <button
@@ -196,7 +196,7 @@ export function OutputPanel({ result, isRunning, onClear }: OutputPanelProps) {
 
       {/* Output Content Area */}
       <div
-        className="flex-1 p-3 font-mono text-xs overflow-auto bg-[#08090d]"
+        className="flex-1 min-h-0 p-3 font-mono text-xs overflow-auto bg-[#08090d]"
         aria-live="polite"
         aria-atomic="true"
       >
