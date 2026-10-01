@@ -35,6 +35,7 @@ interface InteractiveTerminalProps {
   initialStdin?: string;
   onStdinChange?: (newStdin: string) => void;
   runTrigger?: number;
+  onRunningChange?: (running: boolean) => void;
 }
 
 export function InteractiveTerminal({
@@ -49,6 +50,7 @@ export function InteractiveTerminal({
   initialStdin = "",
   onStdinChange,
   runTrigger,
+  onRunningChange,
 }: InteractiveTerminalProps) {
   const [entries, setEntries] = useState<TerminalEntry[]>([]);
   const [interactiveInputs, setInteractiveInputs] = useState<string[]>(() => {
@@ -63,6 +65,10 @@ export function InteractiveTerminal({
   const [isRunning, setIsRunning] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    onRunningChange?.(isRunning);
+  }, [isRunning, onRunningChange]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -340,12 +346,12 @@ export function InteractiveTerminal({
             onClick={handleStart}
             disabled={isRunning}
             className="flex items-center gap-1 px-2 py-1 rounded bg-neon-green text-black hover:bg-[#00e67a] active:bg-[#00cc6c] transition-colors text-xs font-semibold shadow-sm disabled:opacity-50"
-            title="Iniciar o reiniciar ejecución en consola"
+            title="Ejecutar o reiniciar en consola interactiva (Ctrl+Enter)"
           >
             {entries.length === 0 ? (
               <>
                 <Play className="w-3 h-3 fill-black" />
-                <span>Iniciar</span>
+                <span>Ejecutar</span>
               </>
             ) : (
               <>

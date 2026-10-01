@@ -102,8 +102,8 @@ namespace __interactive_helper {
 }
 static inline int __interactive_check_scanf(int r) {
   if (r == EOF) {
-    fprintf(stderr, "\n__INTERACTIVE_WAITING_INPUT__\n");
-    exit(0);
+    std::cerr << std::endl << "__INTERACTIVE_WAITING_INPUT__" << std::endl;
+    std::exit(0);
   }
   return r;
 }
@@ -117,14 +117,18 @@ static inline int __interactive_check_scanf(int r) {
 #include <stdlib.h>
 static inline int __interactive_check_scanf(int r) {
   if (r == EOF) {
-    fprintf(stderr, "\n__INTERACTIVE_WAITING_INPUT__\n");
+    fputc(10, stderr);
+    fputs("__INTERACTIVE_WAITING_INPUT__", stderr);
+    fputc(10, stderr);
     exit(0);
   }
   return r;
 }
 static inline int __interactive_check_getchar(int c) {
   if (c == EOF) {
-    fprintf(stderr, "\n__INTERACTIVE_WAITING_INPUT__\n");
+    fputc(10, stderr);
+    fputs("__INTERACTIVE_WAITING_INPUT__", stderr);
+    fputc(10, stderr);
     exit(0);
   }
   return c;

@@ -966,6 +966,7 @@ export function PlaygroundWorkspace({
       initialStdin={stdin}
       onStdinChange={setStdin}
       runTrigger={interactiveRunTrigger}
+      onRunningChange={setIsRunning}
     />
   );
 
