@@ -3,26 +3,6 @@ import { getLanguage, LANGUAGES } from "./languages";
 
 const STORAGE_KEY = "cpp-playground-projects";
 const ACTIVE_PROJECT_KEY = "cpp-playground-active-id";
-const INITIALIZED_LANGS_KEY = "playground-initialized-langs";
-
-function getInitializedLanguages(): Set<string> {
-  if (typeof window === "undefined") return new Set();
-  try {
-    const data = localStorage.getItem(INITIALIZED_LANGS_KEY);
-    return data ? new Set(JSON.parse(data)) : new Set();
-  } catch {
-    return new Set();
-  }
-}
-
-function markLanguageInitialized(lang: string): void {
-  if (typeof window === "undefined") return;
-  try {
-    const set = getInitializedLanguages();
-    set.add(lang);
-    localStorage.setItem(INITIALIZED_LANGS_KEY, JSON.stringify(Array.from(set)));
-  } catch {}
-}
 
 export function getRawLocalProjects(): Project[] {
   if (typeof window === "undefined") return [];
@@ -51,18 +31,15 @@ export function getProjects(): Project[] {
   if (typeof window === "undefined") return [];
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) {
-      const initial = createInitialProjectForLanguage("cpp");
-      markLanguageInitialized("cpp");
-      saveProjects([initial]);
-      return [initial];
-    }
+    if (!data) return [];
     const parsed: Project[] = JSON.parse(data);
     // Ensure all projects have language field
-    return parsed.map((p) => ({
-      ...p,
-      language: p.language || "cpp",
-    }));
+    return Array.isArray(parsed)
+      ? parsed.map((p) => ({
+          ...p,
+          language: p.language || "cpp",
+        }))
+      : [];
   } catch {
     return [];
   }
@@ -80,19 +57,7 @@ export function saveProjects(projects: Project[]): void {
 export function getProjectsByLanguage(lang: SupportedLanguage): Project[] {
   if (typeof window === "undefined") return [];
   const all = getProjects();
-  const filtered = all.filter((p) => (p.language || "cpp") === lang);
-
-  const initialized = getInitializedLanguages();
-  if (!initialized.has(lang)) {
-    markLanguageInitialized(lang);
-    if (filtered.length === 0) {
-      const initial = createInitialProjectForLanguage(lang);
-      saveProjects([...all, initial]);
-      return [initial];
-    }
-  }
-
-  return filtered;
+  return all.filter((p) => (p.language || "cpp") === lang);
 }
 
 export function saveLanguageProjects(lang: SupportedLanguage, langProjects: Project[]): void {

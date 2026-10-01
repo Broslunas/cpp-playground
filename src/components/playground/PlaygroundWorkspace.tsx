@@ -24,7 +24,6 @@ import {
   getActiveProjectId,
   setActiveProjectId,
   createProject,
-  createInitialProjectForLanguage,
   getRawLocalProjects,
   clearAllLocalStorage,
 } from "@/lib/projects";
@@ -312,13 +311,7 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
         const cloudProjs = await fetchCloudProjects();
         if (!mounted) return;
 
-        let langProjects = cloudProjs.filter((p) => (p.language || "cpp") === currentLang);
-
-        if (langProjects.length === 0) {
-          const initial = createInitialProjectForLanguage(currentLang);
-          const saved = await saveProjectToCloud(initial);
-          langProjects = [saved || initial];
-        }
+        const langProjects = cloudProjs.filter((p) => (p.language || "cpp") === currentLang);
 
         setProjects(langProjects);
         const active = langProjects[0];
@@ -331,6 +324,12 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
           setStandard(active.options || langDef.defaultStandard);
           setCompilerSettings(active.settings || DEFAULT_COMPILER_SETTINGS);
           setProjectName(active.name);
+        } else {
+          setActiveId(null);
+          setCode("");
+          setStdin("");
+          setProjectName("Sin proyectos");
+          setOutput(null);
         }
         setSyncStatus("synced");
         if (localProjects.length > 0) {
