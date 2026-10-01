@@ -670,25 +670,39 @@ export function LanguageSelector() {
                   </div>
 
                   {/* Launch button */}
-                  <Link
-                    href={lang.href}
-                    className={`w-full py-1.5 px-2.5 rounded-md font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
-                      isSelected
-                        ? "text-black shadow-sm font-semibold"
-                        : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 hover:text-white border border-zinc-700"
-                    }`}
-                    style={
-                      isSelected
-                        ? {
-                            backgroundColor: lang.accentColor,
-                          }
-                        : {}
-                    }
-                  >
-                    <Play className="w-3 h-3 fill-current" />
-                    <span>Abrir {lang.name}</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </Link>
+                  <div className="flex flex-col gap-1.5">
+                    <Link
+                      href={lang.href}
+                      className={`w-full py-1.5 px-2.5 rounded-md font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                        isSelected
+                          ? "text-black shadow-sm font-semibold"
+                          : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 hover:text-white border border-zinc-700"
+                      }`}
+                      style={
+                        isSelected
+                          ? {
+                              backgroundColor: lang.accentColor,
+                            }
+                          : {}
+                      }
+                    >
+                      <Play className="w-3 h-3 fill-current" />
+                      <span>Abrir {lang.name}</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+
+                    {langId === "cpp" && (
+                      <Link
+                        href="/cpp/primeros-pasos"
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full py-1 px-2 rounded-md text-[10px] font-semibold text-neon-green bg-neon-green/10 hover:bg-neon-green/20 border border-neon-green/30 flex items-center justify-center gap-1 transition-colors"
+                        title="Ejercicios guiados paso a paso para C++"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        <span>Primeros pasos</span>
+                      </Link>
+                    )}
+                  </div>
                 </div>
               );
             })}

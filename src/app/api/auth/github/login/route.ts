@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isGithubOAuthConfigured } from "@/lib/auth";
+import { isGithubOAuthConfigured, sanitizeReturnTo } from "@/lib/auth";
 
 export async function GET(request: Request) {
   if (!isGithubOAuthConfigured()) {
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
   const clientId = process.env.GITHUB_CLIENT_ID!;
   const { searchParams } = new URL(request.url);
-  const returnTo = searchParams.get("returnTo") || "/playground";
+  const returnTo = sanitizeReturnTo(searchParams.get("returnTo"));
 
   const state = crypto.randomUUID();
   const githubAuthUrl = new URL("https://github.com/login/oauth/authorize");

@@ -21,7 +21,14 @@ import {
   Edit2,
 } from "lucide-react";
 import { SUPPORTED_LANGUAGES_LIST, getLanguage } from "@/lib/languages";
-import { CompilerSettings, SupportedLanguage, PlaygroundLayout, CloudSyncState, AuthUser } from "@/types";
+import {
+  CompilerSettings,
+  SupportedLanguage,
+  PlaygroundLayout,
+  CloudSyncState,
+  AuthUser,
+  CppExercise,
+} from "@/types";
 import { LayoutSelector } from "@/components/playground/LayoutSelector";
 import { CloudSyncStatus } from "@/components/playground/CloudSyncStatus";
 import { UserMenu } from "@/components/auth/UserMenu";
@@ -62,6 +69,11 @@ interface ToolbarProps {
   onBidirectionalSync?: () => void;
   authUser?: AuthUser | null;
   onUserChange?: (user: AuthUser | null) => void;
+  exercise?: CppExercise | null;
+  onRunTests?: () => void;
+  isTesting?: boolean;
+  onToggleExerciseDetails?: () => void;
+  isExerciseDetailsOpen?: boolean;
 }
 
 export function Toolbar({
@@ -100,6 +112,11 @@ export function Toolbar({
   onBidirectionalSync,
   authUser,
   onUserChange,
+  exercise,
+  onRunTests,
+  isTesting = false,
+  onToggleExerciseDetails,
+  isExerciseDetailsOpen = false,
 }: ToolbarProps) {
   const [copiedShare, setCopiedShare] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -230,6 +247,22 @@ export function Toolbar({
             onBidirectionalSync={onBidirectionalSync}
             isLoggedIn={Boolean(authUser)}
           />
+
+          {exercise && (
+            <button
+              type="button"
+              onClick={onToggleExerciseDetails}
+              className={`px-2 py-0.5 rounded text-[11px] font-bold flex items-center gap-1.5 border transition-colors ${
+                isExerciseDetailsOpen
+                  ? "bg-neon-green/20 text-neon-green border-neon-green/40"
+                  : "bg-zinc-800 text-zinc-300 hover:text-white border-zinc-700"
+              }`}
+              title="Ver enunciado y pistas del ejercicio"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-neon-green" />
+              <span className="hidden sm:inline">Enunciado</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -385,6 +418,29 @@ export function Toolbar({
         >
           <Save className="w-3.5 h-3.5" />
         </button>
+
+        {/* Comprobar Ejercicio Button */}
+        {exercise && onRunTests && (
+          <button
+            type="button"
+            onClick={onRunTests}
+            disabled={isRunning || isTesting || !hasActiveProject}
+            className="px-3.5 py-1.5 rounded bg-cyan-400 text-black font-semibold text-xs flex items-center gap-1.5 hover:bg-cyan-300 transition-all shadow-[0_0_15px_rgba(34,211,238,0.3)] focus:outline-none shrink-0 disabled:opacity-40"
+            title="Comprobar todos los casos de prueba del ejercicio"
+          >
+            {isTesting ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Comprobando...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Comprobar</span>
+              </>
+            )}
+          </button>
+        )}
 
         {/* Run Button (Primary CTA) */}
         <button

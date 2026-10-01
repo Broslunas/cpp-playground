@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Maximize2, Minimize2, FileCode, Plus, BookOpen } from "lucide-react";
 import { Toolbar } from "@/components/playground/Toolbar";
@@ -42,6 +42,8 @@ import {
   PanelId,
   AuthUser,
   CloudSyncState,
+  ExerciseTestResult,
+  CppExercise,
 } from "@/types";
 import {
   fetchAuthStatus,
@@ -52,12 +54,21 @@ import {
   pullProjectsFromCloud,
   syncBidirectional,
 } from "@/lib/cloud-projects";
+import { CPP_EXERCISES } from "@/lib/cpp-exercises";
+import { completeExercise } from "@/lib/exercise-progress";
+import { openOrGetExerciseProject } from "@/lib/exercise-projects";
+import { ExerciseDetailsPanel } from "@/components/exercises/ExerciseDetailsPanel";
+import { ExerciseCompletionModal } from "@/components/exercises/ExerciseCompletionModal";
 
 interface PlaygroundWorkspaceProps {
   initialLanguage?: SupportedLanguage;
+  initialProjectId?: string;
 }
 
-export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorkspaceProps) {
+export function PlaygroundWorkspace({
+  initialLanguage = "cpp",
+  initialProjectId,
+}: PlaygroundWorkspaceProps) {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectId, setActiveId] = useState<string | null>(null);
@@ -85,6 +96,27 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
   const [output, setOutput] = useState<CompileResponse | null>(null);
   const [saveToast, setSaveToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("Guardado localmente ✓");
+
+  // Exercise integration state
+  const activeProject = projects.find((p) => p.id === activeProjectId);
+  const activeExerciseNumber = activeProject?.exerciseNumber ?? (() => {
+    const match = activeProject?.name.match(/^Ejercicio\s+(\d+):/i);
+    return match ? parseInt(match[1], 10) : undefined;
+  })();
+  const activeExercise = activeExerciseNumber
+    ? CPP_EXERCISES.find((e) => e.number === activeExerciseNumber) || null
+    : null;
+
+  const [testResults, setTestResults] = useState<ExerciseTestResult[]>([]);
+  const [isTesting, setIsTesting] = useState(false);
+  const [isExerciseDetailsOpen, setIsExerciseDetailsOpen] = useState(true);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [isLoadingNextExercise, setIsLoadingNextExercise] = useState(false);
+
+  const nextExercise = useMemo(() => {
+    if (!activeExercise) return null;
+    return CPP_EXERCISES.find((e) => e.number === activeExercise.number + 1) || null;
+  }, [activeExercise]);
 
   // User & Cloud Sync State
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
@@ -314,7 +346,9 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
         const langProjects = cloudProjs.filter((p) => (p.language || "cpp") === currentLang);
 
         setProjects(langProjects);
-        const active = langProjects[0];
+        const active =
+          (initialProjectId ? langProjects.find((p) => p.id === initialProjectId) : undefined) ||
+          langProjects[0];
         if (active) {
           const langDef = getLanguage(currentLang);
           setActiveId(active.id);
@@ -341,7 +375,7 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
         const langProjects = getProjectsByLanguage(currentLang);
         setProjects(langProjects);
 
-        const savedActiveId = getActiveProjectId(currentLang);
+        const savedActiveId = initialProjectId || getActiveProjectId(currentLang);
         const active =
           langProjects.find((p) => p.id === savedActiveId) || langProjects[0];
 
@@ -371,7 +405,7 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
     return () => {
       mounted = false;
     };
-  }, [initialLanguage, router]);
+  }, [initialLanguage, initialProjectId, router]);
 
   // Save current project state for current language
   const saveCurrentProject = useCallback(() => {
@@ -467,6 +501,11 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
       setCompilerSettings(target.settings || DEFAULT_COMPILER_SETTINGS);
       setProjectName(target.name);
       setOutput(null);
+      setTestResults([]);
+      setShowCompletionModal(false);
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", `/${language}/playground/${target.id}`);
+      }
     }
   };
 
@@ -799,6 +838,98 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
     }
   };
 
+  // Automated Test Runner for Exercises
+  const handleRunTests = async () => {
+    if (!activeExercise || isTesting || isRunning) return;
+    setIsTesting(true);
+    const results: ExerciseTestResult[] = [];
+    let allPassed = true;
+
+    for (const testCase of activeExercise.testCases) {
+      try {
+        const response = await fetch("/api/compile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            language: "cpp",
+            code,
+            stdin: testCase.stdin,
+            compiler,
+            options: standard,
+            settings: compilerSettings,
+          }),
+        });
+
+        const data: CompileResponse = await response.json();
+        const actual = data.stdout || "";
+        const normalize = (s: string) => s.replace(/\r\n/g, "\n").trimEnd() + "\n";
+        const passed =
+          data.exitCode === 0 && normalize(actual) === normalize(testCase.expectedOutput);
+
+        results.push({
+          testCase,
+          actualOutput: actual,
+          passed,
+          error: data.stderr || (data.exitCode !== 0 ? data.compilerOutput : undefined),
+        });
+
+        if (!passed) allPassed = false;
+        if (data.exitCode !== 0) break;
+      } catch (err: unknown) {
+        const error = err as Error;
+        results.push({
+          testCase,
+          actualOutput: "",
+          passed: false,
+          error: error.message || "Error en la petición de compilación.",
+        });
+        allPassed = false;
+        break;
+      }
+    }
+
+    setTestResults(results);
+
+    if (allPassed && results.length === activeExercise.testCases.length) {
+      completeExercise(activeExercise.number);
+      showNotification(`¡Ejercicio ${activeExercise.number} superado con éxito! 🎉`);
+      setShowCompletionModal(true);
+    } else {
+      const passedCount = results.filter((r) => r.passed).length;
+      showNotification(`Pruebas: ${passedCount}/${activeExercise.testCases.length} superadas`);
+    }
+
+    setIsTesting(false);
+  };
+
+  const handleGoToNextExercise = async () => {
+    if (!nextExercise || isLoadingNextExercise) return;
+    setIsLoadingNextExercise(true);
+    try {
+      const nextId = await openOrGetExerciseProject(nextExercise);
+      if (nextId) {
+        setShowCompletionModal(false);
+        router.push(`/cpp/playground/${nextId}`);
+      }
+    } catch (err) {
+      console.error("Error al abrir siguiente ejercicio:", err);
+    } finally {
+      setIsLoadingNextExercise(false);
+    }
+  };
+
+  const handleLoadSolution = useCallback(() => {
+    if (!activeExercise) return;
+    if (
+      code.trim() &&
+      !window.confirm("¿Sustituir el código actual por la solución de referencia?")
+    ) {
+      return;
+    }
+    setCode(activeExercise.solution);
+    showNotification("Solución de referencia cargada en el editor ✓");
+  }, [code, activeExercise]);
+
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -876,7 +1007,7 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
         onChange={setCode}
         onRun={handleRun}
         language={language}
-        readOnly={isRunning}
+        readOnly={isRunning || isTesting}
       />
       <button
         type="button"
@@ -898,7 +1029,7 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
     <StdinPanel
       value={stdin}
       onChange={setStdin}
-      disabled={isRunning || !activeProjectId}
+      disabled={isRunning || isTesting || !activeProjectId}
       onMaximize={() => setMaximizedPanel(maximizedPanel === "stdin" ? null : "stdin")}
       isMaximized={maximizedPanel === "stdin"}
     />
@@ -907,12 +1038,15 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
   const outputPanel = (
     <OutputPanel
       result={output}
-      isRunning={isRunning}
+      isRunning={isRunning || isTesting}
       onClear={() => setOutput(null)}
       language={language}
       code={code}
       onMaximize={() => setMaximizedPanel(maximizedPanel === "output" ? null : "output")}
       isMaximized={maximizedPanel === "output"}
+      testResults={activeExercise ? testResults : undefined}
+      solution={activeExercise?.solution}
+      onLoadSolution={handleLoadSolution}
     />
   );
 
@@ -965,6 +1099,11 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
           onBidirectionalSync={handleBidirectionalSync}
           authUser={authUser}
           onUserChange={setAuthUser}
+          exercise={activeExercise}
+          onRunTests={handleRunTests}
+          isTesting={isTesting}
+          onToggleExerciseDetails={() => setIsExerciseDetailsOpen((prev) => !prev)}
+          isExerciseDetailsOpen={isExerciseDetailsOpen}
         />
       )}
 
@@ -1021,6 +1160,17 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
               </div>
             )}
           </>
+        )}
+
+        {/* Exercise Details Side Panel */}
+        {!isZenMode && activeExercise && isExerciseDetailsOpen && (
+          <aside className="w-80 shrink-0 border-r border-zinc-800 bg-[#0c0e14] flex flex-col min-h-0 z-10 p-2">
+            <ExerciseDetailsPanel
+              exercise={activeExercise}
+              results={testResults}
+              onClose={() => setIsExerciseDetailsOpen(false)}
+            />
+          </aside>
         )}
 
         {/* Central Workspace */}
@@ -1910,6 +2060,16 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
         onSave={handleSaveCustomLayout}
         isHtml={isWebPreview}
       />
+
+      {showCompletionModal && activeExercise && (
+        <ExerciseCompletionModal
+          exercise={activeExercise}
+          nextExercise={nextExercise}
+          onNextExercise={handleGoToNextExercise}
+          onClose={() => setShowCompletionModal(false)}
+          isLoadingNext={isLoadingNextExercise}
+        />
+      )}
 
       {/* Toast Notification */}
       {saveToast && (

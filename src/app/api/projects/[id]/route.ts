@@ -52,6 +52,11 @@ export async function GET(request: Request, { params }: RouteParams) {
         updatedAt: doc.updatedAt,
         syncedAt: doc.syncedAt,
         isCloud: true,
+        visibility: doc.visibility || "private",
+        publicCode: doc.publicCode ?? false,
+        featured: doc.featured ?? false,
+        collectionIds: doc.collectionIds || [],
+        exerciseNumber: doc.exerciseNumber,
       },
     });
   } catch (error) {
@@ -73,7 +78,19 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
   try {
     const body = await request.json();
-    const { name, language, code, stdin, compiler, options, settings } = body;
+    const {
+      name,
+      language,
+      code,
+      stdin,
+      compiler,
+      options,
+      settings,
+      visibility,
+      publicCode,
+      featured,
+      collectionIds,
+    } = body;
 
     const r2Key = `projects/${user.id}/${id}.txt`;
 
@@ -100,6 +117,12 @@ export async function PUT(request: Request, { params }: RouteParams) {
     if (compiler !== undefined) updateDoc.compiler = compiler;
     if (options !== undefined) updateDoc.options = options;
     if (settings !== undefined) updateDoc.settings = settings;
+    if (visibility !== undefined && ["public", "unlisted", "private"].includes(visibility)) {
+      updateDoc.visibility = visibility;
+    }
+    if (publicCode !== undefined) updateDoc.publicCode = Boolean(publicCode);
+    if (featured !== undefined) updateDoc.featured = Boolean(featured);
+    if (Array.isArray(collectionIds)) updateDoc.collectionIds = collectionIds;
 
     await db.collection("projects").updateOne(
       { userId: user.id, projectId: id },

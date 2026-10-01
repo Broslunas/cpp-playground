@@ -84,23 +84,32 @@ export async function GET(request: Request) {
     let userId = githubId;
 
     // 4. Save / Upsert in MongoDB
+    let hasTotpEnabled = false;
     if (isMongoConfigured()) {
       try {
         const db = await getDb();
         const users = db.collection("users");
         const now = new Date();
+        const existing = await users.findOne({ githubId });
+        hasTotpEnabled = Boolean(existing?.totpEnabled);
+
         const result = await users.findOneAndUpdate(
           { githubId },
           {
             $set: {
               username: ghUser.login,
-              name: ghUser.name || ghUser.login,
-              avatarUrl: ghUser.avatar_url,
-              email: email || null,
+              name: existing?.name || ghUser.name || ghUser.login,
+              avatarUrl: existing?.avatarUrl || ghUser.avatar_url,
+              email: email || existing?.email || null,
               updatedAt: now,
             },
             $setOnInsert: {
               createdAt: now,
+              profileVisibility: "public",
+              showActivity: true,
+              availableForCollaboration: true,
+              totpEnabled: false,
+              passkeys: [],
             },
           },
           { upsert: true, returnDocument: "after" }
@@ -112,6 +121,25 @@ export async function GET(request: Request) {
       } catch (dbError) {
         console.error("Error al persistir usuario en MongoDB:", dbError);
       }
+    }
+
+    // Si tiene 2FA / TOTP activo, se crea una sesión de desafío pendiente y se redirige a /login/verificar
+    if (hasTotpEnabled) {
+      const { createPending2FAToken, PENDING_2FA_COOKIE_NAME } = await import("@/lib/auth");
+      const pendingToken = await createPending2FAToken(userId, ghUser.login);
+      const response = NextResponse.redirect(
+        `${appUrl}/login/verificar?returnTo=${encodeURIComponent(returnTo)}`
+      );
+      response.cookies.set(PENDING_2FA_COOKIE_NAME, pendingToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 10,
+        path: "/",
+      });
+      response.cookies.delete("oauth_state");
+      response.cookies.delete("oauth_return_to");
+      return response;
     }
 
     const authUser: AuthUser = {

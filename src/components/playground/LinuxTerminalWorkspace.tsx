@@ -1802,7 +1802,7 @@ Change: 2026-09-30 21:00:00.000000000 +0000`,
                 onClick={() => setIsTopOpen(false)}
                 className="px-2 py-0.5 bg-red-900/40 text-red-300 border border-red-700/50 rounded hover:bg-red-800"
               >
-                Presiona 'q' o clic aquí para salir
+                Presiona &apos;q&apos; o clic aquí para salir
               </button>
             </div>
             <p className="text-zinc-400">

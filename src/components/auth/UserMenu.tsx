@@ -2,7 +2,16 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { LogIn, LogOut, Cloud, Database, HardDrive, User, ChevronDown } from "lucide-react";
+import Link from "next/link";
+import {
+  LogIn,
+  LogOut,
+  User,
+  Settings,
+  Globe,
+  ChevronDown,
+  Sparkles,
+} from "lucide-react";
 import { AuthUser } from "@/types";
 import { fetchAuthStatus } from "@/lib/cloud-projects";
 
@@ -15,11 +24,6 @@ export function UserMenu({ onUserChange, compact = false }: UserMenuProps) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
-  const [configured, setConfigured] = useState({
-    github: false,
-    mongodb: false,
-    r2: false,
-  });
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,7 +31,6 @@ export function UserMenu({ onUserChange, compact = false }: UserMenuProps) {
     fetchAuthStatus().then((res) => {
       if (!mounted) return;
       setUser(res.user);
-      setConfigured(res.configured);
       setLoading(false);
       if (onUserChange) onUserChange(res.user);
     });
@@ -63,16 +66,14 @@ export function UserMenu({ onUserChange, compact = false }: UserMenuProps) {
 
   if (!user) {
     return (
-      <a
-        href="/api/auth/github/login"
+      <Link
+        href="/login"
         className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 hover:border-neon-green/50 text-zinc-200 hover:text-white font-mono text-xs transition-all shadow-sm group"
-        title="Inicia sesión con GitHub para sincronizar tu código en la nube (MongoDB + R2)"
+        title="Iniciar sesión con Passkey o GitHub"
       >
-        <svg className="w-4 h-4 fill-current transition-transform group-hover:scale-110" viewBox="0 0 24 24">
-          <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-        </svg>
-        <span>{compact ? "Login" : "Conectar GitHub"}</span>
-      </a>
+        <LogIn className="w-3.5 h-3.5 text-neon-green transition-transform group-hover:scale-110" />
+        <span>{compact ? "Entrar" : "Iniciar sesión"}</span>
+      </Link>
     );
   }
 
@@ -81,6 +82,9 @@ export function UserMenu({ onUserChange, compact = false }: UserMenuProps) {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 p-1 pl-2 pr-2.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-600 transition-all font-mono text-xs text-zinc-200"
+        aria-expanded={isOpen}
+        aria-haspopup="true"
+        aria-label="Menú de usuario"
       >
         <div className="relative">
           {user.avatarUrl ? (
@@ -100,26 +104,30 @@ export function UserMenu({ onUserChange, compact = false }: UserMenuProps) {
           <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-neon-green ring-1 ring-zinc-950" />
         </div>
         <span className="font-semibold text-zinc-200 max-w-[110px] truncate">
-          {user.username}
+          {user.name || user.username}
         </span>
-        <ChevronDown className="w-3 h-3 text-zinc-400" />
+        <ChevronDown
+          className={`w-3 h-3 text-zinc-400 transition-transform ${
+            isOpen ? "rotate-180 text-neon-green" : ""
+          }`}
+        />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 rounded-xl bg-zinc-950 border border-zinc-800 shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-100 font-mono text-xs">
-          {/* User info */}
-          <div className="flex items-center gap-3 pb-3 border-b border-zinc-800/80">
+        <div className="absolute right-0 mt-2 w-64 rounded-xl bg-zinc-950 border border-zinc-800 shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-100 font-mono text-xs">
+          {/* Cabecera del usuario */}
+          <div className="flex items-center gap-3 p-2.5 border-b border-zinc-800/80 mb-1">
             {user.avatarUrl ? (
               <Image
                 src={user.avatarUrl}
                 alt={user.username}
                 width={36}
                 height={36}
-                className="w-9 h-9 rounded-full border border-neon-green/40"
+                className="w-9 h-9 rounded-full border border-neon-green/40 object-cover shrink-0"
                 unoptimized
               />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center shrink-0">
                 <User className="w-4 h-4 text-zinc-300" />
               </div>
             )}
@@ -132,35 +140,44 @@ export function UserMenu({ onUserChange, compact = false }: UserMenuProps) {
             </div>
           </div>
 
-          {/* Cloud sync stats / status */}
-          <div className="py-2.5 space-y-1.5 border-b border-zinc-800/80 text-[11px]">
-            <div className="text-zinc-400 font-semibold mb-1 flex items-center gap-1.5">
-              <Cloud className="w-3.5 h-3.5 text-neon-green" />
-              <span>Servicios Conectados</span>
-            </div>
-            <div className="flex items-center justify-between text-zinc-300">
-              <span className="flex items-center gap-1.5">
-                <Database className="w-3 h-3 text-emerald-400" /> MongoDB
-              </span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded ${configured.mongodb ? "bg-emerald-950/80 text-emerald-400 border border-emerald-800/60" : "bg-zinc-800 text-zinc-400"}`}>
-                {configured.mongodb ? "Conectado" : "Pendiente URI"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-zinc-300">
-              <span className="flex items-center gap-1.5">
-                <HardDrive className="w-3 h-3 text-cyan-400" /> Cloudflare R2
-              </span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded ${configured.r2 ? "bg-cyan-950/80 text-cyan-400 border border-cyan-800/60" : "bg-zinc-800 text-zinc-400"}`}>
-                {configured.r2 ? "Conectado" : "Pendiente R2"}
-              </span>
-            </div>
+          {/* Enlaces de navegación */}
+          <div className="py-1 space-y-0.5">
+            <Link
+              href="/perfil"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-zinc-300 hover:text-white hover:bg-zinc-900 transition-colors"
+            >
+              <User className="w-3.5 h-3.5 text-neon-green" />
+              <span>Mi Perfil</span>
+            </Link>
+
+            <Link
+              href={`/u/${encodeURIComponent(user.username)}`}
+              onClick={() => setIsOpen(false)}
+              className="flex items-center justify-between px-2.5 py-2 rounded-lg text-zinc-300 hover:text-white hover:bg-zinc-900 transition-colors"
+            >
+              <div className="flex items-center gap-2.5">
+                <Globe className="w-3.5 h-3.5 text-neon-cyan" />
+                <span>Perfil público</span>
+              </div>
+              <span className="text-[10px] text-zinc-500">/u/{user.username}</span>
+            </Link>
+
+            <Link
+              href="/configuracion"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-zinc-300 hover:text-white hover:bg-zinc-900 transition-colors"
+            >
+              <Settings className="w-3.5 h-3.5 text-amber-400" />
+              <span>Configuración</span>
+            </Link>
           </div>
 
-          {/* Actions */}
-          <div className="pt-2">
+          {/* Cerrar sesión */}
+          <div className="pt-1 mt-1 border-t border-zinc-800/80">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 transition-colors"
+              className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 transition-colors"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Cerrar sesión</span>

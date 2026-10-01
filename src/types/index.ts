@@ -37,6 +37,8 @@ export interface LanguageDefinition {
   isWebPreview?: boolean;
 }
 
+export type ProjectVisibility = "private" | "unlisted" | "public";
+
 export interface Project {
   id: string;
   name: string;
@@ -50,15 +52,88 @@ export interface Project {
   updatedAt: number;
   syncedAt?: number;
   isCloud?: boolean;
+  visibility?: ProjectVisibility;
+  publicCode?: boolean; // Solo si true expone el código a visitantes en perfiles públicos
+  featured?: boolean;
+  collectionIds?: string[];
+  exerciseNumber?: number;
+}
+
+export type ProfileVisibility = "public" | "unlisted" | "private";
+
+export interface UserPreferences {
+  theme: "dark" | "black";
+  editorTheme: "one-dark" | "dracula" | "nord";
+  fontSize: number;
+  tabSize: 2 | 4;
+  showLineNumbers: boolean;
+  autoSave: boolean;
+  emailNotifications: boolean;
+  productUpdates: boolean;
+}
+
+export interface WebAuthnCredential {
+  id: string;
+  publicKey: string; // base64url
+  counter: number;
+  transports?: string[];
+  createdAt: number;
+  name: string;
+}
+
+export interface UserSecurityConfig {
+  totpEnabled: boolean;
+  totpSecretEncrypted?: string;
+  recoveryCodesRemaining: number;
+  passkeysCount: number;
+  activeSessionsCount: number;
 }
 
 export interface AuthUser {
   id: string;
-  githubId: string;
+  githubId?: string;
   username: string;
   name: string;
   avatarUrl: string;
   email?: string;
+  bio?: string;
+  website?: string;
+  availableForCollaboration?: boolean;
+  profileVisibility?: ProfileVisibility;
+  showActivity?: boolean;
+  featuredProjectIds?: string[];
+  collections?: { id: string; name: string }[];
+  preferences?: UserPreferences;
+  security?: UserSecurityConfig;
+}
+
+export interface PublicUserProfile {
+  username: string;
+  name: string;
+  avatarUrl: string;
+  bio?: string;
+  website?: string;
+  availableForCollaboration: boolean;
+  profileVisibility: ProfileVisibility;
+  showActivity: boolean;
+  featuredProjects: PublicProjectCard[];
+  collections: { id: string; name: string; projectCount: number }[];
+  stats: {
+    publicProjectsCount: number;
+    joinedAt: number;
+  };
+}
+
+export interface PublicProjectCard {
+  id: string;
+  name: string;
+  language: SupportedLanguage;
+  compiler: string;
+  options: string;
+  updatedAt: number;
+  publicCode: boolean;
+  code?: string; // Solo presente si publicCode === true
+  stdin?: string;
 }
 
 export type CloudSyncState = "idle" | "saving" | "synced" | "error" | "offline";
@@ -109,5 +184,27 @@ export interface CodeTemplate {
   standard: string;
   code: string;
   stdin?: string;
+}
+
+export interface ExerciseTestCase {
+  label?: string;
+  stdin: string;
+  expectedOutput: string;
+}
+
+export interface CppExercise {
+  number: number;
+  title: string;
+  description: string;
+  hints: string[];
+  solution: string;
+  testCases: ExerciseTestCase[];
+}
+
+export interface ExerciseTestResult {
+  testCase: ExerciseTestCase;
+  actualOutput: string;
+  passed: boolean;
+  error?: string;
 }
 

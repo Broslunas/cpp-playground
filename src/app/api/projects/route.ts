@@ -55,6 +55,11 @@ export async function GET() {
           updatedAt: doc.updatedAt || Date.now(),
           syncedAt: doc.syncedAt || Date.now(),
           isCloud: true,
+          visibility: doc.visibility || "private",
+          publicCode: doc.publicCode ?? false,
+          featured: doc.featured ?? false,
+          collectionIds: doc.collectionIds || [],
+          exerciseNumber: doc.exerciseNumber,
         };
       })
     );
@@ -96,6 +101,11 @@ export async function POST(request: Request) {
       settings,
       createdAt = Date.now(),
       updatedAt = Date.now(),
+      visibility = "private",
+      publicCode = false,
+      featured = false,
+      collectionIds = [],
+      exerciseNumber,
     } = body;
 
     if (!id || !name) {
@@ -137,6 +147,11 @@ export async function POST(request: Request) {
           r2Key,
           updatedAt,
           syncedAt: now,
+          visibility: ["public", "unlisted", "private"].includes(visibility) ? visibility : "private",
+          publicCode: Boolean(publicCode),
+          featured: Boolean(featured),
+          collectionIds: Array.isArray(collectionIds) ? collectionIds : [],
+          exerciseNumber: typeof exerciseNumber === "number" ? exerciseNumber : undefined,
         },
         $setOnInsert: {
           createdAt,
@@ -160,6 +175,11 @@ export async function POST(request: Request) {
         updatedAt,
         syncedAt: now,
         isCloud: true,
+        visibility,
+        publicCode: Boolean(publicCode),
+        featured: Boolean(featured),
+        collectionIds,
+        exerciseNumber,
       },
     });
   } catch (error) {
