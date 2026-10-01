@@ -6,6 +6,7 @@ import { AccountLayoutShell } from "@/components/account/AccountLayoutShell";
 import { AuthUser } from "@/types";
 import { fetchAuthStatus } from "@/lib/cloud-projects";
 import { startRegistration } from "@simplewebauthn/browser";
+import { QrCode } from "@/components/ui/QrCode";
 import {
   Settings,
   Shield,
@@ -562,13 +563,33 @@ export default function SettingsPage() {
                       </div>
                     ) : (
                       <form onSubmit={handleConfirm2FA} className="space-y-4 p-4 rounded-xl bg-black/60 border border-zinc-800">
-                        <div className="font-bold text-white">1. Clave manual para tu App:</div>
-                        <div className="p-2.5 rounded bg-zinc-950 border border-zinc-800 font-mono text-neon-green select-all tracking-wider text-center">
-                          {setup2FAData.secret}
+                        <div className="font-bold text-white">1. Escanea el código QR con tu aplicación:</div>
+                        <div className="flex flex-col items-center justify-center p-4 bg-zinc-950/70 border border-zinc-800 rounded-xl gap-3">
+                          <QrCode value={setup2FAData.otpauthUrl} size={192} />
+                          <p className="text-[11px] text-zinc-400 font-sans text-center max-w-xs">
+                            Usa Google Authenticator, Microsoft Authenticator, 1Password o Authy.
+                          </p>
+                          <a
+                            href={setup2FAData.otpauthUrl}
+                            className="text-[11px] text-neon-green hover:underline sm:hidden"
+                          >
+                            Abrir directamente en tu app
+                          </a>
                         </div>
-                        <p className="text-[10px] text-zinc-500">
-                          Introduce este secreto en tu aplicación de autenticación TOTP.
-                        </p>
+
+                        <details className="text-[11px] text-zinc-500 group">
+                          <summary className="cursor-pointer hover:text-zinc-300 font-sans transition-colors select-none">
+                            ¿No puedes escanear? Configuración manual
+                          </summary>
+                          <div className="mt-2 space-y-1">
+                            <div className="p-2.5 rounded bg-zinc-950 border border-zinc-800 font-mono text-neon-green select-all tracking-wider text-center text-xs">
+                              {setup2FAData.secret}
+                            </div>
+                            <p className="text-[10px] text-zinc-500">
+                              Introduce esta clave secreta manualmente si tu cámara no está disponible.
+                            </p>
+                          </div>
+                        </details>
 
                         <div className="font-bold text-white pt-2">2. Introduce el código de 6 dígitos:</div>
                         <input

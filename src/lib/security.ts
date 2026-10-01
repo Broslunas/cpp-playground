@@ -79,7 +79,7 @@ export function verifyAndConsumeRecoveryCode(inputCode: string, savedHashedCodes
 /**
  * TOTP RFC 6238 en puro Node stdlib (sin dependencias externas pesadas).
  */
-export function generateBase32Secret(length = 20): string {
+export function generateBase32Secret(length = 32): string {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
   const bytes = randomBytes(length);
   let secret = "";
@@ -140,6 +140,8 @@ export function verifyTotpToken(token: string, secretBase32: string, windowSteps
   return false;
 }
 
-export function buildOtpAuthUri(username: string, secretBase32: string, issuer = "Broslunas Playground"): string {
-  return `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(username)}?secret=${secretBase32}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
+export function buildOtpAuthUri(account: string, secretBase32: string, issuer = "Broslunas Playground"): string {
+  const cleanIssuer = issuer.trim();
+  const cleanAccount = account.trim();
+  return `otpauth://totp/${encodeURIComponent(cleanIssuer)}:${encodeURIComponent(cleanAccount)}?secret=${secretBase32}&issuer=${encodeURIComponent(cleanIssuer)}&algorithm=SHA1&digits=6&period=30`;
 }

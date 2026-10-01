@@ -41,9 +41,10 @@ export async function GET() {
       });
     }
 
-    // Generar nuevo secreto provisional para configuración
-    const secret = generateBase32Secret(20);
-    const otpauthUrl = buildOtpAuthUri(user.username, secret);
+    // Generar nuevo secreto provisional para configuración (32 caracteres / 160 bits RFC 6238)
+    const secret = generateBase32Secret(32);
+    const accountIdentifier = String(doc?.email || user.email || user.username);
+    const otpauthUrl = buildOtpAuthUri(accountIdentifier, secret, "Broslunas Playground");
 
     return NextResponse.json({
       enabled: false,
