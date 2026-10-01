@@ -62,6 +62,8 @@ export async function POST(req: NextRequest) {
     }
 
     let defaultCompiler = "gcc-head";
+    if (body.language === "c") defaultCompiler = "gcc-head-c";
+    if (body.language === "csharp") defaultCompiler = "dotnetcore-head";
     if (body.language === "python") defaultCompiler = "cpython-3.12.7";
     if (body.language === "javascript") defaultCompiler = "nodejs-20.17.0";
     if (body.language === "typescript") defaultCompiler = "typescript-5.6.2";
@@ -70,6 +72,8 @@ export async function POST(req: NextRequest) {
     const compiler = body.compiler || defaultCompiler;
     const isPython = body.language === "python" || compiler.startsWith("cpython") || compiler.startsWith("pypy");
     const isBash = body.language === "bash" || compiler === "bash";
+    const isCsharp = body.language === "csharp" || compiler.startsWith("dotnet") || compiler.startsWith("mono");
+    const isC = body.language === "c" || compiler.endsWith("-c");
     const isNodeOrTs =
       body.language === "javascript" ||
       body.language === "typescript" ||
@@ -82,14 +86,15 @@ export async function POST(req: NextRequest) {
       stdin: body.stdin || "",
     };
 
-    if (isPython || isNodeOrTs || isBash) {
-      // Scripting / interpreted runtime options
+    if (isPython || isNodeOrTs || isBash || isCsharp) {
+      // Scripting / interpreted / managed runtime options
       if (body.args && body.args.trim().length > 0) {
         wandboxPayload["runtime-option-raw"] = body.args.trim();
       }
     } else {
-      // C++ compile options
-      const stdOption = body.options ? `-std=${body.options}` : "-std=c++20";
+      // C / C++ compile options
+      const defaultStd = isC ? "-std=c17" : "-std=c++20";
+      const stdOption = body.options ? `-std=${body.options}` : defaultStd;
       const rawFlags: string[] = [stdOption];
 
       if (body.settings?.optimization) {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server";
 import { getDb, isMongoConfigured } from "@/lib/mongodb";
 import { getWebAuthnRpConfig } from "@/lib/webauthn";
-import { createSessionToken, createPending2FAToken, COOKIE_NAME, PENDING_2FA_COOKIE_NAME, AuthUser } from "@/lib/auth";
+import { createSessionToken, COOKIE_NAME, AuthUser } from "@/lib/auth";
 import { cookies } from "next/headers";
 
 const WEBAUTHN_AUTH_CHALLENGE = "webauthn_auth_challenge";
@@ -103,24 +103,8 @@ export async function POST(request: Request) {
 
     cookieStore.delete(WEBAUTHN_AUTH_CHALLENGE);
 
+    // Passkeys son MFA por diseño (posesión + biometría/PIN); omitir 2FA/TOTP
     const userId = userDoc._id.toString();
-
-    // Comprobar si tiene 2FA / TOTP activo
-    if (userDoc.totpEnabled) {
-      const pendingToken = await createPending2FAToken(userId, userDoc.username);
-      const res = NextResponse.json({
-        requires2FA: true,
-        redirect: "/login/verificar",
-      });
-      res.cookies.set(PENDING_2FA_COOKIE_NAME, pendingToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 10,
-        path: "/",
-      });
-      return res;
-    }
 
     const authUser: AuthUser = {
       id: userId,

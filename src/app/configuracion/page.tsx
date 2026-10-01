@@ -623,7 +623,7 @@ export default function SettingsPage() {
                 ) : (
                   <form onSubmit={handleDisable2FA} className="space-y-3">
                     <p className="text-zinc-400 font-sans">
-                      El segundo factor está activo en cada inicio de sesión con GitHub o Passkey.
+                      El segundo factor está activo al iniciar sesión con GitHub (las Passkeys ya son multifactor y no lo requieren).
                     </p>
                     <div className="flex items-center gap-2">
                       <input

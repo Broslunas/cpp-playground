@@ -18,7 +18,6 @@ import {
   Minimize2,
 } from "lucide-react";
 import { CompileResponse, SupportedLanguage } from "@/types";
-import { ExerciseSolutionPanel } from "@/components/exercises/ExerciseSolutionPanel";
 
 interface OutputPanelProps {
   result: CompileResponse | null;
@@ -28,11 +27,9 @@ interface OutputPanelProps {
   code?: string;
   onMaximize?: () => void;
   isMaximized?: boolean;
-  solution?: string;
-  onLoadSolution?: () => void;
 }
 
-type TabType = "preview" | "stdout" | "stderr" | "compiler" | "solution";
+type TabType = "preview" | "stdout" | "stderr" | "compiler";
 
 export function OutputPanel({
   result,
@@ -42,8 +39,6 @@ export function OutputPanel({
   code = "",
   onMaximize,
   isMaximized = false,
-  solution,
-  onLoadSolution,
 }: OutputPanelProps) {
   const isHtml = language === "html";
   const [activeTab, setActiveTab] = useState<TabType>(() => (isHtml ? "preview" : "stdout"));
@@ -272,24 +267,6 @@ export function OutputPanel({
                 <span className="hidden sm:inline">Compilador</span>
                 {hasCompilerOut && <span className="w-2 h-2 rounded-full bg-amber-500" />}
               </button>
-
-              {solution !== undefined && (
-                <button
-                  role="tab"
-                  aria-selected={activeTab === "solution"}
-                  aria-controls="panel-solution"
-                  id="tab-solution"
-                  onClick={() => setActiveTab("solution")}
-                  className={`px-2 sm:px-2.5 py-1 rounded text-xs font-mono flex items-center gap-1.5 transition-colors ${
-                    activeTab === "solution"
-                      ? "bg-zinc-800 text-cyan-400 font-semibold"
-                      : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
-                  }`}
-                >
-                  <FileCode className="w-3.5 h-3.5" />
-                  <span>Solución</span>
-                </button>
-              )}
             </>
           )}
         </div>
@@ -497,18 +474,6 @@ export function OutputPanel({
                 (Compilación exitosa sin advertencias ni logs)
               </span>
             )}
-          </div>
-        )}
-
-        {/* Solution Tab */}
-        {!isHtml && activeTab === "solution" && solution !== undefined && (
-          <div
-            id="panel-solution"
-            role="tabpanel"
-            aria-labelledby="tab-solution"
-            className="h-full"
-          >
-            <ExerciseSolutionPanel solution={solution} onLoad={onLoadSolution || (() => {})} />
           </div>
         )}
       </div>

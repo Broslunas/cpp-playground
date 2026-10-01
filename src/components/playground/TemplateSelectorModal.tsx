@@ -70,6 +70,8 @@ export function TemplateSelectorModal({
           {[
             { id: "all", label: "Todas las plantillas" },
             { id: "cpp", label: "C++" },
+            { id: "c", label: "C ⚙️" },
+            { id: "csharp", label: "C# 🎯" },
             { id: "python", label: "Python 🐍" },
             { id: "html", label: "HTML/CSS/JS 🌐" },
             { id: "javascript", label: "JavaScript (Node) ⚡" },

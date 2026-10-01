@@ -68,11 +68,13 @@ export function UserMenu({ onUserChange, compact = false }: UserMenuProps) {
     return (
       <Link
         href="/login"
-        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 hover:border-neon-green/50 text-zinc-200 hover:text-white font-mono text-xs transition-all shadow-sm group"
+        className="inline-flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 hover:border-neon-green/50 text-zinc-200 hover:text-white font-mono text-xs transition-all shadow-sm group shrink-0"
         title="Iniciar sesión con Passkey o GitHub"
       >
-        <LogIn className="w-3.5 h-3.5 text-neon-green transition-transform group-hover:scale-110" />
-        <span>{compact ? "Entrar" : "Iniciar sesión"}</span>
+        <LogIn className="w-3.5 h-3.5 text-neon-green transition-transform group-hover:scale-110 shrink-0" />
+        <span className={compact ? "hidden min-[480px]:inline" : ""}>
+          {compact ? "Entrar" : "Iniciar sesión"}
+        </span>
       </Link>
     );
   }
@@ -81,12 +83,12 @@ export function UserMenu({ onUserChange, compact = false }: UserMenuProps) {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 p-1 pl-2 pr-2.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-600 transition-all font-mono text-xs text-zinc-200"
+        className="flex items-center gap-1.5 sm:gap-2 p-1 pl-1.5 sm:pl-2 pr-1.5 sm:pr-2.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-600 transition-all font-mono text-xs text-zinc-200 shrink-0"
         aria-expanded={isOpen}
         aria-haspopup="true"
         aria-label="Menú de usuario"
       >
-        <div className="relative">
+        <div className="relative shrink-0">
           {user.avatarUrl ? (
             <Image
               src={user.avatarUrl}
@@ -103,11 +105,15 @@ export function UserMenu({ onUserChange, compact = false }: UserMenuProps) {
           )}
           <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-neon-green ring-1 ring-zinc-950" />
         </div>
-        <span className="font-semibold text-zinc-200 max-w-[110px] truncate">
+        <span
+          className={`font-semibold text-zinc-200 max-w-[110px] truncate ${
+            compact ? "hidden min-[480px]:inline" : ""
+          }`}
+        >
           {user.name || user.username}
         </span>
         <ChevronDown
-          className={`w-3 h-3 text-zinc-400 transition-transform ${
+          className={`w-3 h-3 text-zinc-400 transition-transform shrink-0 ${
             isOpen ? "rotate-180 text-neon-green" : ""
           }`}
         />

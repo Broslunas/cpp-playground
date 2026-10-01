@@ -5,7 +5,7 @@ export interface CompilerSettings {
   customFlags: string;
 }
 
-export type SupportedLanguage = "cpp" | "python" | "html" | "javascript" | "typescript" | "bash";
+export type SupportedLanguage = "cpp" | "c" | "csharp" | "python" | "html" | "javascript" | "typescript" | "bash";
 
 export type PlaygroundLayout = "standard" | "two-column" | "columns" | "vertical" | "custom";
 
@@ -56,7 +56,6 @@ export interface Project {
   publicCode?: boolean; // Solo si true expone el código a visitantes en perfiles públicos
   featured?: boolean;
   collectionIds?: string[];
-  exerciseNumber?: number;
 }
 
 export type ProfileVisibility = "public" | "unlisted" | "private";
@@ -197,21 +196,6 @@ export interface CodeTemplate {
   standard: string;
   code: string;
   stdin?: string;
-}
-
-export interface ExerciseTestCase {
-  label?: string;
-  stdin: string;
-  expectedOutput: string;
-}
-
-export interface CppExercise {
-  number: number;
-  title: string;
-  description: string;
-  hints: string[];
-  solution: string;
-  testCases: ExerciseTestCase[];
 }
 
 

@@ -56,7 +56,6 @@ export async function GET(request: Request, { params }: RouteParams) {
         publicCode: doc.publicCode ?? false,
         featured: doc.featured ?? false,
         collectionIds: doc.collectionIds || [],
-        exerciseNumber: doc.exerciseNumber,
       },
     });
   } catch (error) {

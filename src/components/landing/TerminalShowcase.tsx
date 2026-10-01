@@ -46,6 +46,56 @@ int main() {
     execTime: "0.082s",
   },
   {
+    id: "c",
+    name: "C17",
+    langTag: "main.c",
+    compiler: "gcc -std=c17 -O2 -Wall",
+    href: "/c/playground",
+    badgeColor: "text-cyan-400 border-cyan-400/30 bg-cyan-400/10",
+    code: `#include <stdio.h>
+
+int main(void) {
+    int nums[] = {1, 2, 3, 4, 5, 6};
+    int len = sizeof(nums) / sizeof(nums[0]);
+
+    for (int i = 0; i < len; i++) {
+        if (nums[i] % 2 == 0) {
+            printf("» Broslunas C17 Par: %d\\n", nums[i]);
+        }
+    }
+    return 0;
+}`,
+    stdout: [
+      "» Broslunas C17 Par: 2",
+      "» Broslunas C17 Par: 4",
+      "» Broslunas C17 Par: 6",
+    ],
+    execTime: "0.012s",
+  },
+  {
+    id: "csharp",
+    name: "C#",
+    langTag: "Program.cs",
+    compiler: "dotnet run -c Release",
+    href: "/csharp/playground",
+    badgeColor: "text-purple-400 border-purple-400/30 bg-purple-400/10",
+    code: `using System;
+using System.Linq;
+
+var nums = new[] { 1, 2, 3, 4, 5, 6 };
+var evens = nums.Where(n => n % 2 == 0);
+
+foreach (var n in evens) {
+    Console.WriteLine($"» Broslunas C# Par: {n}");
+}`,
+    stdout: [
+      "» Broslunas C# Par: 2",
+      "» Broslunas C# Par: 4",
+      "» Broslunas C# Par: 6",
+    ],
+    execTime: "0.048s",
+  },
+  {
     id: "python",
     name: "Python",
     langTag: "script.py",

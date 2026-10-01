@@ -4,11 +4,13 @@ import { getLanguage } from "./languages";
 export function downloadSourceFile(filename: string, code: string, language: SupportedLanguage = "cpp") {
   const langDef = getLanguage(language);
   const ext = langDef.extension;
-  const baseName = filename.replace(/\.(cpp|cc|cxx|c\+\+|c|h|hpp|py|html|htm|js|mjs|ts|mts|tsx|sh|bash)$/i, "");
+  const baseName = filename.replace(/\.(cpp|cc|cxx|c\+\+|c|cs|h|hpp|py|html|htm|js|mjs|ts|mts|tsx|sh|bash)$/i, "");
   const cleanName = `${baseName}${ext}`;
 
   const mimeMap: Record<SupportedLanguage, string> = {
     cpp: "text/x-c++src;charset=utf-8",
+    c: "text/x-csrc;charset=utf-8",
+    csharp: "text/x-csharp;charset=utf-8",
     python: "text/x-python;charset=utf-8",
     html: "text/html;charset=utf-8",
     javascript: "text/javascript;charset=utf-8",

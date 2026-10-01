@@ -9,7 +9,6 @@ import {
   Cpu,
   Zap,
   Code2,
-  Sparkles,
   ArrowRight,
   CheckCircle2,
   Clock,
@@ -30,6 +29,8 @@ import { UserMenu } from "@/components/auth/UserMenu";
 
 export const ALL_LANGUAGES: SupportedLanguage[] = [
   "cpp",
+  "c",
+  "csharp",
   "python",
   "html",
   "javascript",
@@ -98,6 +99,79 @@ int main() {
       { title: "Algoritmos DSA", desc: "Vectores y ordenación" },
     ],
   },
+  c: {
+    id: "c",
+    name: "C",
+    badge: "Bajo Nivel",
+    version: "C17 / C23 • GCC",
+    shortDesc: "Gestión directa de memoria, punteros, structs y rendimiento nativo sin runtime.",
+    accentColor: "#06b6d4",
+    accentBorder: "border-[#06b6d4]/40 hover:border-[#06b6d4]",
+    glowColor: "rgba(6, 182, 212, 0.2)",
+    gradientText: "from-[#06b6d4] via-[#38bdf8] to-[#60a5fa]",
+    iconBg: "bg-[#06b6d4]/10 text-[#06b6d4] border-[#06b6d4]/30",
+    bannerBg: "from-[#06b6d4]/10 to-transparent",
+    keyNumber: "2",
+    keyLetter: "C",
+    href: "/c/playground",
+    engine: "GCC 14 / Clang 19",
+    sampleCode: `#include <stdio.h>
+
+int main(void) {
+    int nums[] = {10, 20, 30, 40};
+    int n = sizeof(nums) / sizeof(nums[0]);
+    printf("» C17 Nativo listo\\n");
+    for (int i = 0; i < n; i++) {
+        if (nums[i] > 15) printf("  Item: %d\\n", nums[i]);
+    }
+    return 0;
+}`,
+    sampleOutput: {
+      stdout: ["» C17 Nativo listo", "  Item: 20", "  Item: 30", "  Item: 40"],
+      execTime: "0.010s",
+    },
+    templates: [
+      { title: "Hola Mundo & I/O", desc: "printf y fgets" },
+      { title: "Punteros & Malloc", desc: "Memoria dinámica heap" },
+      { title: "Estructuras Struct", desc: "Registros y referencias" },
+    ],
+  },
+  csharp: {
+    id: "csharp",
+    name: "C#",
+    badge: ".NET 8 / 9",
+    version: "C# 12 • .NET Core",
+    shortDesc: "Top-level statements, LINQ, tipado fuerte, pattern matching y GC moderno.",
+    accentColor: "#a855f7",
+    accentBorder: "border-[#a855f7]/40 hover:border-[#a855f7]",
+    glowColor: "rgba(168, 85, 247, 0.2)",
+    gradientText: "from-[#a855f7] via-[#c084fc] to-[#e879f9]",
+    iconBg: "bg-[#a855f7]/10 text-[#a855f7] border-[#a855f7]/30",
+    bannerBg: "from-[#a855f7]/10 to-transparent",
+    keyNumber: "3",
+    keyLetter: "S",
+    href: "/csharp/playground",
+    engine: ".NET SDK 8+ (Wandbox)",
+    sampleCode: `using System;
+using System.Linq;
+
+var nums = new[] { 10, 20, 30, 40 };
+var filtrados = nums.Where(x => x > 15);
+
+Console.WriteLine("» C# .NET listo: " + Environment.Version);
+foreach (var n in filtrados) {
+    Console.WriteLine($"  Item: {n}");
+}`,
+    sampleOutput: {
+      stdout: ["» C# .NET listo: 8.0.0", "  Item: 20", "  Item: 30", "  Item: 40"],
+      execTime: "0.045s",
+    },
+    templates: [
+      { title: "Top-Level Statements", desc: "Sintaxis moderna C#" },
+      { title: "LINQ & Collections", desc: "Operaciones funcionales" },
+      { title: "Records & Matching", desc: "Modelos inmutables" },
+    ],
+  },
   python: {
     id: "python",
     name: "Python",
@@ -110,7 +184,7 @@ int main() {
     gradientText: "from-[#facc15] via-[#fbbf24] to-[#38bdf8]",
     iconBg: "bg-[#facc15]/10 text-[#facc15] border-[#facc15]/30",
     bannerBg: "from-[#facc15]/10 to-transparent",
-    keyNumber: "2",
+    keyNumber: "4",
     keyLetter: "P",
     href: "/python/playground",
     engine: "CPython 3.12.7",
@@ -146,7 +220,7 @@ if __name__ == "__main__":
     gradientText: "from-[#ff5722] via-[#f97316] to-[#facc15]",
     iconBg: "bg-[#ff5722]/10 text-[#ff5722] border-[#ff5722]/30",
     bannerBg: "from-[#ff5722]/10 to-transparent",
-    keyNumber: "3",
+    keyNumber: "5",
     keyLetter: "H",
     href: "/html/playground",
     engine: "Navegador Nativo",
@@ -181,7 +255,7 @@ if __name__ == "__main__":
     gradientText: "from-[#38bdf8] via-[#818cf8] to-[#c084fc]",
     iconBg: "bg-[#38bdf8]/10 text-[#38bdf8] border-[#38bdf8]/30",
     bannerBg: "from-[#38bdf8]/10 to-transparent",
-    keyNumber: "4",
+    keyNumber: "6",
     keyLetter: "J",
     href: "/javascript/playground",
     engine: "Node.js 20.17.0 LTS",
@@ -214,7 +288,7 @@ main();`,
     gradientText: "from-[#3178c6] via-[#60a5fa] to-[#93c5fd]",
     iconBg: "bg-[#3178c6]/10 text-[#3178c6] border-[#3178c6]/30",
     bannerBg: "from-[#3178c6]/10 to-transparent",
-    keyNumber: "5",
+    keyNumber: "7",
     keyLetter: "T",
     href: "/typescript/playground",
     engine: "TypeScript 5.6.2",
@@ -244,11 +318,11 @@ console.log(\`» TS 5.6 cargado: \${u.nombre} [\${u.rol}]\`);`,
     shortDesc: "Shell interactivo en contenedor Linux con comandos coreutils (grep, awk, sed, pipes y subshells).",
     accentColor: "#10b981",
     accentBorder: "border-[#10b981]/40 hover:border-[#10b981]",
-    glowColor: "rgba(16, 185, 129, 0.2)",
+    glowColor: "rgba(168, 85, 247, 0.2)",
     gradientText: "from-[#10b981] via-[#34d399] to-[#6ee7b7]",
     iconBg: "bg-[#10b981]/10 text-[#10b981] border-[#10b981]/30",
     bannerBg: "from-[#10b981]/10 to-transparent",
-    keyNumber: "6",
+    keyNumber: "8",
     keyLetter: "B",
     href: "/bash/playground",
     engine: "GNU Bash 5.2 (Ubuntu)",
@@ -325,17 +399,21 @@ export function LanguageSelector() {
       }
 
       const key = e.key.toLowerCase();
-      if (key === "1" || key === "c") {
+      if (key === "1") {
         setSelectedLang("cpp");
-      } else if (key === "2" || key === "p") {
+      } else if (key === "2") {
+        setSelectedLang("c");
+      } else if (key === "3") {
+        setSelectedLang("csharp");
+      } else if (key === "4" || key === "p") {
         setSelectedLang("python");
-      } else if (key === "3" || key === "h") {
+      } else if (key === "5" || key === "h") {
         setSelectedLang("html");
-      } else if (key === "4" || key === "j") {
+      } else if (key === "6" || key === "j") {
         setSelectedLang("javascript");
-      } else if (key === "5" || key === "t") {
+      } else if (key === "7" || key === "t") {
         setSelectedLang("typescript");
-      } else if (key === "6" || key === "b") {
+      } else if (key === "8" || key === "b") {
         setSelectedLang("bash");
       } else if (key === "arrowleft") {
         setSelectedLang((prev) => {
@@ -519,6 +597,10 @@ export function LanguageSelector() {
                 const badgeColor =
                   pLang === "cpp"
                     ? "bg-neon-green/10 text-neon-green border-neon-green/20"
+                    : pLang === "c"
+                    ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
+                    : pLang === "csharp"
+                    ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
                     : pLang === "python"
                     ? "bg-yellow-400/10 text-yellow-400 border-yellow-400/20"
                     : pLang === "html"
@@ -593,11 +675,11 @@ export function LanguageSelector() {
               <span>Elige Entorno de Ejecución</span>
             </h2>
             <span className="text-[11px] text-zinc-500">
-              Presiona [1-6] o haz clic para previsualizar
+              Presiona [1-8] o haz clic para previsualizar
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-2.5">
             {ALL_LANGUAGES.map((langId) => {
               const lang = LANGUAGES_DATA[langId];
               const isSelected = selectedLang === langId;
@@ -620,6 +702,10 @@ export function LanguageSelector() {
                       >
                         {langId === "cpp"
                           ? "C++"
+                          : langId === "c"
+                          ? "C"
+                          : langId === "csharp"
+                          ? "C#"
                           : langId === "python"
                           ? "Py"
                           : langId === "html"
@@ -690,18 +776,6 @@ export function LanguageSelector() {
                       <span>Abrir {lang.name}</span>
                       <ArrowRight className="w-3 h-3" />
                     </Link>
-
-                    {langId === "cpp" && (
-                      <Link
-                        href="/cpp/primeros-pasos"
-                        onClick={(e) => e.stopPropagation()}
-                        className="w-full py-1 px-2 rounded-md text-[10px] font-semibold text-neon-green bg-neon-green/10 hover:bg-neon-green/20 border border-neon-green/30 flex items-center justify-center gap-1 transition-colors"
-                        title="Ejercicios guiados paso a paso para C++"
-                      >
-                        <Sparkles className="w-3 h-3" />
-                        <span>Primeros pasos</span>
-                      </Link>
-                    )}
                   </div>
                 </div>
               );
@@ -761,6 +835,10 @@ export function LanguageSelector() {
                 <span>
                   {selectedLang === "cpp"
                     ? "main.cc"
+                    : selectedLang === "c"
+                    ? "main.c"
+                    : selectedLang === "csharp"
+                    ? "Program.cs"
                     : selectedLang === "python"
                     ? "main.py"
                     : selectedLang === "html"

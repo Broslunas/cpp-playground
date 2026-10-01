@@ -59,7 +59,6 @@ export async function GET() {
           publicCode: doc.publicCode ?? false,
           featured: doc.featured ?? false,
           collectionIds: doc.collectionIds || [],
-          exerciseNumber: doc.exerciseNumber,
         };
       })
     );
@@ -105,7 +104,6 @@ export async function POST(request: Request) {
       publicCode = false,
       featured = false,
       collectionIds = [],
-      exerciseNumber,
     } = body;
 
     if (!id || !name) {
@@ -151,7 +149,6 @@ export async function POST(request: Request) {
           publicCode: Boolean(publicCode),
           featured: Boolean(featured),
           collectionIds: Array.isArray(collectionIds) ? collectionIds : [],
-          exerciseNumber: typeof exerciseNumber === "number" ? exerciseNumber : undefined,
         },
         $setOnInsert: {
           createdAt,
@@ -179,7 +176,6 @@ export async function POST(request: Request) {
         publicCode: Boolean(publicCode),
         featured: Boolean(featured),
         collectionIds,
-        exerciseNumber,
       },
     });
   } catch (error) {

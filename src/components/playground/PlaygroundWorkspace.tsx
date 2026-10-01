@@ -42,7 +42,6 @@ import {
   PanelId,
   AuthUser,
   CloudSyncState,
-  CppExercise,
 } from "@/types";
 import {
   fetchAuthStatus,
@@ -53,9 +52,6 @@ import {
   pullProjectsFromCloud,
   syncBidirectional,
 } from "@/lib/cloud-projects";
-import { CPP_EXERCISES } from "@/lib/cpp-exercises";
-import { openOrGetExerciseProject } from "@/lib/exercise-projects";
-import { ExerciseDetailsPanel } from "@/components/exercises/ExerciseDetailsPanel";
 
 interface PlaygroundWorkspaceProps {
   initialLanguage?: SupportedLanguage;
@@ -93,18 +89,6 @@ export function PlaygroundWorkspace({
   const [output, setOutput] = useState<CompileResponse | null>(null);
   const [saveToast, setSaveToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("Guardado localmente ✓");
-
-  // Exercise integration state
-  const activeProject = projects.find((p) => p.id === activeProjectId);
-  const activeExerciseNumber = activeProject?.exerciseNumber ?? (() => {
-    const match = activeProject?.name.match(/^Ejercicio\s+(\d+):/i);
-    return match ? parseInt(match[1], 10) : undefined;
-  })();
-  const activeExercise = activeExerciseNumber
-    ? CPP_EXERCISES.find((e) => e.number === activeExerciseNumber) || null
-    : null;
-
-  const [isExerciseDetailsOpen, setIsExerciseDetailsOpen] = useState(true);
 
   // User & Cloud Sync State
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
@@ -824,18 +808,6 @@ export function PlaygroundWorkspace({
     }
   };
 
-  const handleLoadSolution = useCallback(() => {
-    if (!activeExercise) return;
-    if (
-      code.trim() &&
-      !window.confirm("¿Sustituir el código actual por la solución de referencia?")
-    ) {
-      return;
-    }
-    setCode(activeExercise.solution);
-    showNotification("Solución de referencia cargada en el editor ✓");
-  }, [code, activeExercise]);
-
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -950,8 +922,6 @@ export function PlaygroundWorkspace({
       code={code}
       onMaximize={() => setMaximizedPanel(maximizedPanel === "output" ? null : "output")}
       isMaximized={maximizedPanel === "output"}
-      solution={activeExercise?.solution}
-      onLoadSolution={handleLoadSolution}
     />
   );
 
@@ -1004,9 +974,6 @@ export function PlaygroundWorkspace({
           onBidirectionalSync={handleBidirectionalSync}
           authUser={authUser}
           onUserChange={setAuthUser}
-          exercise={activeExercise}
-          onToggleExerciseDetails={() => setIsExerciseDetailsOpen((prev) => !prev)}
-          isExerciseDetailsOpen={isExerciseDetailsOpen}
         />
       )}
 
@@ -1063,16 +1030,6 @@ export function PlaygroundWorkspace({
               </div>
             )}
           </>
-        )}
-
-        {/* Exercise Details Side Panel */}
-        {!isZenMode && activeExercise && isExerciseDetailsOpen && (
-          <aside className="w-80 shrink-0 border-r border-zinc-800 bg-[#0c0e14] flex flex-col min-h-0 z-10 p-2">
-            <ExerciseDetailsPanel
-              exercise={activeExercise}
-              onClose={() => setIsExerciseDetailsOpen(false)}
-            />
-          </aside>
         )}
 
         {/* Central Workspace */}

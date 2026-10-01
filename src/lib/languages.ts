@@ -191,6 +191,45 @@ int main() {
 }
 `;
 
+export const C_DEFAULT_CODE = `#include <stdio.h>
+#include <stdlib.h>
+
+int main(void) {
+    printf("¡Hola desde C Playground!\\n");
+    printf("Compilador: GCC / Clang C17\\n");
+
+    // Lectura de stdin opcional
+    char buffer[128];
+    if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
+        printf("Leído de stdin: %s", buffer);
+    } else {
+        printf("Matemática en C: 7 * 6 = %d\\n", 7 * 6);
+    }
+
+    return 0;
+}
+`;
+
+export const CSHARP_DEFAULT_CODE = `using System;
+using System.Collections.Generic;
+using System.Linq;
+
+// C# 12 / .NET Playground
+Console.WriteLine("¡Hola desde C# Playground!");
+Console.WriteLine($"Runtime .NET: {Environment.Version}");
+
+var numbers = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8 };
+var evens = numbers.Where(n => n % 2 == 0).Select(n => n * n);
+
+Console.WriteLine("Pares al cuadrado: " + string.Join(", ", evens));
+
+string? line = Console.ReadLine();
+if (!string.IsNullOrEmpty(line))
+{
+    Console.WriteLine($"Leído de stdin: {line}");
+}
+`;
+
 export const BASH_DEFAULT_CODE = `#!/usr/bin/env bash
 # Terminal Linux & Bash Scripting Playground
 set -euo pipefail
@@ -302,6 +341,52 @@ export const LANGUAGES: Record<SupportedLanguage, LanguageDefinition> = {
         name: "Clang 17.0.1",
         version: "17.0.1",
         standards: ["c++23", "c++20", "c++17", "c++14", "c++11"],
+      },
+    ],
+  },
+  c: {
+    id: "c",
+    name: "C",
+    extension: ".c",
+    defaultCode: C_DEFAULT_CODE,
+    defaultCompiler: "gcc-head-c",
+    defaultStandard: "c17",
+    hasCompilerSettings: true,
+    compilers: [
+      {
+        id: "gcc-head-c",
+        name: "GCC (HEAD / Latest)",
+        version: "14+",
+        standards: ["c23", "c17", "c11", "c99"],
+      },
+      {
+        id: "clang-head-c",
+        name: "Clang (HEAD / Latest)",
+        version: "19+",
+        standards: ["c23", "c17", "c11", "c99"],
+      },
+    ],
+  },
+  csharp: {
+    id: "csharp",
+    name: "C#",
+    extension: ".cs",
+    defaultCode: CSHARP_DEFAULT_CODE,
+    defaultCompiler: "dotnetcore-head",
+    defaultStandard: ".NET 8+",
+    hasCompilerSettings: false,
+    compilers: [
+      {
+        id: "dotnetcore-head",
+        name: ".NET Core (HEAD / Latest)",
+        version: "8.0+",
+        standards: [".NET 8", ".NET 9", "C# 12"],
+      },
+      {
+        id: "mono-head",
+        name: "Mono (HEAD / Latest)",
+        version: "6+",
+        standards: ["Mono C#"],
       },
     ],
   },

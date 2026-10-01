@@ -117,7 +117,7 @@ function LoginForm() {
           🔒 <strong>Cero contraseñas:</strong> No almacenamos contraseñas de usuarios.
         </p>
         <p>
-          ¿Tienes 2FA activo? Se te solicitará el código de 6 dígitos o de recuperación en el siguiente paso.
+          ¿Tienes 2FA activo? Se te solicitará al acceder con GitHub. Con Passkey accedes directamente.
         </p>
       </div>
     </div>

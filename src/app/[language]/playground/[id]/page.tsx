@@ -15,7 +15,11 @@ interface PageProps {
 export default function LanguagePlaygroundProjectPage({ params }: PageProps) {
   const { language, id } = use(params);
   const validLang: SupportedLanguage =
-    language === "python"
+    language === "c"
+      ? "c"
+      : language === "csharp" || language === "cs"
+      ? "csharp"
+      : language === "python"
       ? "python"
       : language === "html" || language === "web"
       ? "html"
