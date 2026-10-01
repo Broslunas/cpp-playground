@@ -486,19 +486,20 @@ export function ProjectSidebar({
       <div className="p-2 border-b border-zinc-800/80 bg-zinc-950/40 space-y-1.5 shrink-0">
         <div className="flex items-center gap-1.5">
           {/* Input Buscador */}
-          <div className="relative flex-1">
-            <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2 top-1/2 -translate-y-1/2" />
+          <div className="relative flex-1 flex items-center">
+            <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2 pointer-events-none z-10" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar proyecto o carpeta..."
-              className="w-full pl-7 pr-6 py-1 bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none font-mono"
+              style={{ paddingLeft: "26px", paddingRight: searchQuery ? "24px" : "8px" }}
+              className="w-full py-1 bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none font-mono"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-zinc-500 hover:text-zinc-300"
+                className="absolute right-1.5 p-0.5 text-zinc-500 hover:text-zinc-300 z-10"
                 aria-label="Limpiar búsqueda"
               >
                 <X className="w-3 h-3" />
