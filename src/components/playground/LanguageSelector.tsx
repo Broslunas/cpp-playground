@@ -30,12 +30,12 @@ import { UserMenu } from "@/components/auth/UserMenu";
 export const ALL_LANGUAGES: SupportedLanguage[] = [
   "cpp",
   "c",
-  "csharp",
   "python",
   "html",
   "javascript",
   "typescript",
   "bash",
+  "sql",
 ];
 
 interface LanguageProfile {
@@ -136,12 +136,12 @@ int main(void) {
       { title: "Estructuras Struct", desc: "Registros y referencias" },
     ],
   },
-  csharp: {
-    id: "csharp",
-    name: "C#",
-    badge: ".NET 8 / 9",
-    version: "C# 12 • .NET Core",
-    shortDesc: "Top-level statements, LINQ, tipado fuerte, pattern matching y GC moderno.",
+  sql: {
+    id: "sql",
+    name: "SQL",
+    badge: "SQLite 3.45",
+    version: "SQLite • SQL92",
+    shortDesc: "Consultas DDL/DML, transacciones, joins y agregaciones en base de datos embebida.",
     accentColor: "#a855f7",
     accentBorder: "border-[#a855f7]/40 hover:border-[#a855f7]",
     glowColor: "rgba(168, 85, 247, 0.2)",
@@ -150,26 +150,20 @@ int main(void) {
     bannerBg: "from-[#a855f7]/10 to-transparent",
     keyNumber: "3",
     keyLetter: "S",
-    href: "/csharp/playground",
-    engine: ".NET SDK 8+ (Wandbox)",
-    sampleCode: `using System;
-using System.Linq;
+    href: "/sql/playground",
+    engine: "SQLite 3.45.0",
+    sampleCode: `CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT);
+INSERT INTO users VALUES (1, 'Ada'), (2, 'Alan');
 
-var nums = new[] { 10, 20, 30, 40 };
-var filtrados = nums.Where(x => x > 15);
-
-Console.WriteLine("» C# .NET listo: " + Environment.Version);
-foreach (var n in filtrados) {
-    Console.WriteLine($"  Item: {n}");
-}`,
+SELECT * FROM users WHERE id > 1;`,
     sampleOutput: {
-      stdout: ["» C# .NET listo: 8.0.0", "  Item: 20", "  Item: 30", "  Item: 40"],
-      execTime: "0.045s",
+      stdout: ["2|Alan"],
+      execTime: "0.008s",
     },
     templates: [
-      { title: "Top-Level Statements", desc: "Sintaxis moderna C#" },
-      { title: "LINQ & Collections", desc: "Operaciones funcionales" },
-      { title: "Records & Matching", desc: "Modelos inmutables" },
+      { title: "CREATE & INSERT", desc: "Datos de inicio" },
+      { title: "SELECT & WHERE", desc: "Consultas básicas" },
+      { title: "Joins & Aggregates", desc: "Agregaciones GROUP BY" },
     ],
   },
   python: {
@@ -403,18 +397,18 @@ export function LanguageSelector() {
         setSelectedLang("cpp");
       } else if (key === "2") {
         setSelectedLang("c");
-      } else if (key === "3") {
-        setSelectedLang("csharp");
-      } else if (key === "4" || key === "p") {
+      } else if (key === "3" || key === "p") {
         setSelectedLang("python");
-      } else if (key === "5" || key === "h") {
+      } else if (key === "4" || key === "h") {
         setSelectedLang("html");
-      } else if (key === "6" || key === "j") {
+      } else if (key === "5" || key === "j") {
         setSelectedLang("javascript");
-      } else if (key === "7" || key === "t") {
+      } else if (key === "6" || key === "t") {
         setSelectedLang("typescript");
-      } else if (key === "8" || key === "b") {
+      } else if (key === "7" || key === "b") {
         setSelectedLang("bash");
+      } else if (key === "8" || key === "s") {
+        setSelectedLang("sql");
       } else if (key === "arrowleft") {
         setSelectedLang((prev) => {
           const idx = ALL_LANGUAGES.indexOf(prev);
@@ -581,7 +575,7 @@ export function LanguageSelector() {
                 </button>
               )}
               <span className="text-[10px] text-zinc-500 hidden sm:inline">
-                {isLoggedIn ? "Sincronizado en la nube (MongoDB + R2)" : "Almacenamiento local del navegador"}
+                {isLoggedIn ? "Sincronizado en la nube" : "Almacenamiento local del navegador"}
               </span>
             </div>
           </div>
@@ -595,8 +589,6 @@ export function LanguageSelector() {
                     ? "bg-neon-green/10 text-neon-green border-neon-green/20"
                     : pLang === "c"
                     ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
-                    : pLang === "csharp"
-                    ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
                     : pLang === "python"
                     ? "bg-yellow-400/10 text-yellow-400 border-yellow-400/20"
                     : pLang === "html"
@@ -607,6 +599,8 @@ export function LanguageSelector() {
                     ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
                     : pLang === "bash"
                     ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                    : pLang === "sql"
+                    ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
                     : "bg-zinc-800 text-zinc-400 border-zinc-700";
                 return (
                   <Link
@@ -700,8 +694,6 @@ export function LanguageSelector() {
                           ? "C++"
                           : langId === "c"
                           ? "C"
-                          : langId === "csharp"
-                          ? "C#"
                           : langId === "python"
                           ? "Py"
                           : langId === "html"
@@ -710,7 +702,9 @@ export function LanguageSelector() {
                           ? "JS"
                           : langId === "typescript"
                           ? "TS"
-                          : "SH"}
+                          : langId === "bash"
+                          ? "SH"
+                          : "DB"}
                       </div>
                       <div className="flex items-center gap-1">
                         <span
@@ -833,8 +827,6 @@ export function LanguageSelector() {
                     ? "main.cc"
                     : selectedLang === "c"
                     ? "main.c"
-                    : selectedLang === "csharp"
-                    ? "Program.cs"
                     : selectedLang === "python"
                     ? "main.py"
                     : selectedLang === "html"
@@ -843,7 +835,9 @@ export function LanguageSelector() {
                     ? "index.js"
                     : selectedLang === "typescript"
                     ? "index.ts"
-                    : "script.sh"}
+                    : selectedLang === "bash"
+                    ? "script.sh"
+                    : "queries.sql"}
                 </span>
               </div>
               <pre className="text-[11px] text-zinc-300 leading-snug overflow-x-auto p-2.5 bg-black/60 rounded-md border border-zinc-800/70 max-h-[140px]">

@@ -9,6 +9,7 @@ interface StdinPanelProps {
   disabled?: boolean;
   onMaximize?: () => void;
   isMaximized?: boolean;
+  onSwitchToInteractive?: () => void;
 }
 
 export function StdinPanel({
@@ -17,6 +18,7 @@ export function StdinPanel({
   disabled = false,
   onMaximize,
   isMaximized = false,
+  onSwitchToInteractive,
 }: StdinPanelProps) {
   return (
     <div className="flex flex-col h-full bg-[#0c0e14] border border-zinc-800 rounded overflow-hidden">
@@ -26,8 +28,19 @@ export function StdinPanel({
           <span className="font-semibold text-zinc-200">STANDARD INPUT (stdin)</span>
         </div>
         <div className="flex items-center gap-2">
+          {onSwitchToInteractive && (
+            <button
+              type="button"
+              onClick={onSwitchToInteractive}
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-mono bg-zinc-900 border border-zinc-700/80 text-zinc-300 hover:text-neon-green hover:border-neon-green/60 transition-colors"
+              title="Cambiar a Consola Interactiva (inputs uno a uno)"
+            >
+              <Terminal className="w-3 h-3 text-neon-green" />
+              <span>Consola Normal</span>
+            </button>
+          )}
           <span className="text-[11px] font-mono text-zinc-500 hidden sm:inline">
-            Passed to std::cin
+            Lote (std::cin)
           </span>
           {onMaximize && (
             <button

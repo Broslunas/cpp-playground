@@ -46,7 +46,7 @@ export function CloudSyncStatus({
       <a
         href="/login"
         className="text-zinc-600 hover:text-zinc-400 p-1 rounded transition-colors flex items-center"
-        title="Modo local. Inicia sesión con GitHub para sincronizar en la nube (MongoDB + R2)"
+        title="Modo local. Inicia sesión con GitHub para sincronizar en la nube"
         aria-label="Iniciar sesión para sincronizar en la nube"
       >
         <CloudOff className="w-3.5 h-3.5" />
@@ -113,7 +113,7 @@ export function CloudSyncStatus({
         <div className="absolute left-0 top-full mt-2 w-56 rounded-xl bg-zinc-950 border border-zinc-800 shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-100 font-mono text-xs">
           {/* Header Status */}
           <div className="px-2 py-1.5 border-b border-zinc-850 flex items-center justify-between text-[11px] text-zinc-400">
-            <span className="font-semibold text-zinc-300">Nube (MongoDB + R2)</span>
+            <span className="font-semibold text-zinc-300">Nube</span>
             <div className="flex items-center gap-1.5">
               <span className={`w-1.5 h-1.5 rounded-full ${current.dotColor}`} />
               <span className="text-[10px]">{current.label}</span>
@@ -148,7 +148,7 @@ export function CloudSyncStatus({
               <CloudUpload className="w-3.5 h-3.5 text-cyan-400" />
               <div className="flex flex-col">
                 <span className="font-medium text-white">Push a la nube</span>
-                <span className="text-[10px] text-zinc-500">Guarda en MongoDB + R2</span>
+                <span className="text-[10px] text-zinc-500">Guarda en la nube</span>
               </div>
             </button>
 

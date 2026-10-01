@@ -210,24 +210,50 @@ int main(void) {
 }
 `;
 
-export const CSHARP_DEFAULT_CODE = `using System;
-using System.Collections.Generic;
-using System.Linq;
+export const SQL_DEFAULT_CODE = `-- SQL Playground
+-- SQLite 3 Database
 
-// C# 12 / .NET Playground
-Console.WriteLine("¡Hola desde C# Playground!");
-Console.WriteLine($"Runtime .NET: {Environment.Version}");
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 
-var numbers = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8 };
-var evens = numbers.Where(n => n % 2 == 0).Select(n => n * n);
+CREATE TABLE projects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
 
-Console.WriteLine("Pares al cuadrado: " + string.Join(", ", evens));
+-- Insert sample data
+INSERT INTO users (name, email) VALUES
+  ('Ada Lovelace', 'ada@example.com'),
+  ('Alan Turing', 'alan@example.com'),
+  ('Grace Hopper', 'grace@example.com');
 
-string? line = Console.ReadLine();
-if (!string.IsNullOrEmpty(line))
-{
-    Console.WriteLine($"Leído de stdin: {line}");
-}
+INSERT INTO projects (user_id, title, description) VALUES
+  (1, 'Analytical Engine', 'Early computing concept'),
+  (2, 'Turing Machine', 'Theoretical computation model'),
+  (3, 'COBOL', 'Programming language design');
+
+-- Query examples
+SELECT u.name, COUNT(p.id) as project_count
+FROM users u
+LEFT JOIN projects p ON u.id = p.user_id
+GROUP BY u.id, u.name
+ORDER BY project_count DESC;
+
+-- Show all users
+SELECT * FROM users;
+
+-- Show all projects with user names
+SELECT p.title, p.description, u.name as author
+FROM projects p
+JOIN users u ON p.user_id = u.id;
 `;
 
 export const BASH_DEFAULT_CODE = `#!/usr/bin/env bash
@@ -367,26 +393,20 @@ export const LANGUAGES: Record<SupportedLanguage, LanguageDefinition> = {
       },
     ],
   },
-  csharp: {
-    id: "csharp",
-    name: "C#",
-    extension: ".cs",
-    defaultCode: CSHARP_DEFAULT_CODE,
-    defaultCompiler: "dotnetcore-head",
-    defaultStandard: ".NET 8+",
+  sql: {
+    id: "sql",
+    name: "SQL",
+    extension: ".sql",
+    defaultCode: SQL_DEFAULT_CODE,
+    defaultCompiler: "sqlite-3.45",
+    defaultStandard: "SQL92",
     hasCompilerSettings: false,
     compilers: [
       {
-        id: "dotnetcore-head",
-        name: ".NET Core (HEAD / Latest)",
-        version: "8.0+",
-        standards: [".NET 8", ".NET 9", "C# 12"],
-      },
-      {
-        id: "mono-head",
-        name: "Mono (HEAD / Latest)",
-        version: "6+",
-        standards: ["Mono C#"],
+        id: "sqlite-3.45",
+        name: "SQLite 3.45.0",
+        version: "3.45.0",
+        standards: ["SQL92", "SQL99", "SQL2003"],
       },
     ],
   },

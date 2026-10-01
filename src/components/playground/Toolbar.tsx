@@ -557,17 +557,6 @@ export function Toolbar({
             </select>
           </div>
 
-          {/* Always Visible: Save Button */}
-          <button
-            onClick={onSave}
-            disabled={isRunning || !hasActiveProject}
-            className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800/80 transition-colors focus:outline-none disabled:opacity-40 disabled:hover:text-zinc-400 disabled:hover:bg-transparent shrink-0"
-            title="Guardar Proyecto (Ctrl+S)"
-            aria-label="Guardar Proyecto"
-          >
-            <Save className="w-3.5 h-3.5" />
-          </button>
-
           {/* Always Visible: Run Primary CTA Button */}
           <button
             onClick={onRun}
@@ -969,7 +958,7 @@ export function Toolbar({
               {/* Seccion 6: Sincronizacion en la Nube */}
               <div className="space-y-2 pt-4">
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-1">
-                  Nube (MongoDB + R2)
+                  Sincronización
                 </div>
 
                 <div className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-800/80 space-y-2">

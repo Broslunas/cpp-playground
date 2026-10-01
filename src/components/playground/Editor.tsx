@@ -30,7 +30,7 @@ import {
   StreamLanguage,
 } from "@codemirror/language";
 import { shell } from "@codemirror/legacy-modes/mode/shell";
-import { csharp } from "@codemirror/legacy-modes/mode/clike";
+import { sql } from "@codemirror/lang-sql";
 import {
   autocompletion,
   completionKeymap,
@@ -78,8 +78,8 @@ export function Editor({
         return javascript({ typescript: true });
       case "bash":
         return StreamLanguage.define(shell);
-      case "csharp":
-        return StreamLanguage.define(csharp);
+      case "sql":
+        return sql();
       case "c":
       case "cpp":
       default:

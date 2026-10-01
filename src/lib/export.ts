@@ -10,12 +10,12 @@ export function downloadSourceFile(filename: string, code: string, language: Sup
   const mimeMap: Record<SupportedLanguage, string> = {
     cpp: "text/x-c++src;charset=utf-8",
     c: "text/x-csrc;charset=utf-8",
-    csharp: "text/x-csharp;charset=utf-8",
     python: "text/x-python;charset=utf-8",
     html: "text/html;charset=utf-8",
     javascript: "text/javascript;charset=utf-8",
     typescript: "text/typescript;charset=utf-8",
     bash: "application/x-sh;charset=utf-8",
+    sql: "text/x-sql;charset=utf-8",
   };
   const mimeType = mimeMap[language] || "text/plain;charset=utf-8";
   const blob = new Blob([code], { type: mimeType });

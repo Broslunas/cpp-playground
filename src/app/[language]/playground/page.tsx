@@ -16,8 +16,6 @@ export default function LanguagePlaygroundPage({ params }: PageProps) {
   const validLang: SupportedLanguage =
     language === "c"
       ? "c"
-      : language === "csharp" || language === "cs"
-      ? "csharp"
       : language === "python"
       ? "python"
       : language === "html" || language === "web"
@@ -28,6 +26,8 @@ export default function LanguagePlaygroundPage({ params }: PageProps) {
       ? "typescript"
       : language === "bash" || language === "sh" || language === "linux" || language === "terminal"
       ? "bash"
+      : language === "sql"
+      ? "sql"
       : "cpp";
 
   if (validLang === "bash") {

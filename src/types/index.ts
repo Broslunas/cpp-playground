@@ -5,7 +5,7 @@ export interface CompilerSettings {
   customFlags: string;
 }
 
-export type SupportedLanguage = "cpp" | "c" | "csharp" | "python" | "html" | "javascript" | "typescript" | "bash";
+export type SupportedLanguage = "cpp" | "c" | "python" | "html" | "javascript" | "typescript" | "bash" | "sql";
 
 export type PlaygroundLayout = "standard" | "two-column" | "columns" | "vertical" | "custom";
 
@@ -158,6 +158,7 @@ export interface CompileRequest {
   options?: string;
   settings?: CompilerSettings;
   args?: string;
+  inputMode?: InputMode;
 }
 
 export interface CompileResponse {
@@ -199,3 +200,6 @@ export interface CodeTemplate {
 }
 
 
+
+export type InputMode = "batch" | "interactive";
+export type ConsoleMode = "split" | "interactive";

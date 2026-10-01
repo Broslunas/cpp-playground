@@ -73,27 +73,26 @@ int main(void) {
     execTime: "0.012s",
   },
   {
-    id: "csharp",
-    name: "C#",
-    langTag: "Program.cs",
-    compiler: "dotnet run -c Release",
-    href: "/csharp/playground",
+    id: "sql",
+    name: "SQL",
+    langTag: "queries.sql",
+    compiler: "sqlite3",
+    href: "/sql/playground",
     badgeColor: "text-purple-400 border-purple-400/30 bg-purple-400/10",
-    code: `using System;
-using System.Linq;
+    code: `CREATE TABLE users (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL
+);
 
-var nums = new[] { 1, 2, 3, 4, 5, 6 };
-var evens = nums.Where(n => n % 2 == 0);
+INSERT INTO users VALUES (1, 'Ada'), (2, 'Alan'), (3, 'Grace'), (4, 'John'), (5, 'Marie'), (6, 'Blaise');
 
-foreach (var n in evens) {
-    Console.WriteLine($"» ejecuta.tech C# Par: {n}");
-}`,
+SELECT name FROM users WHERE id % 2 = 0;`,
     stdout: [
-      "» ejecuta.tech C# Par: 2",
-      "» ejecuta.tech C# Par: 4",
-      "» ejecuta.tech C# Par: 6",
+      "Alan",
+      "John",
+      "Blaise",
     ],
-    execTime: "0.048s",
+    execTime: "0.008s",
   },
   {
     id: "python",

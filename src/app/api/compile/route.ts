@@ -61,18 +61,18 @@ export async function POST(req: NextRequest) {
       } as CompileResponse);
     }
 
-    let defaultCompiler = "gcc-head";
-    if (body.language === "c") defaultCompiler = "gcc-head-c";
-    if (body.language === "csharp") defaultCompiler = "dotnetcore-head";
+    let defaultCompiler = "clang-head";
+    if (body.language === "c") defaultCompiler = "clang-head-c";
     if (body.language === "python") defaultCompiler = "cpython-3.12.7";
     if (body.language === "javascript") defaultCompiler = "nodejs-20.17.0";
     if (body.language === "typescript") defaultCompiler = "typescript-5.6.2";
     if (body.language === "bash") defaultCompiler = "bash";
+    if (body.language === "sql") defaultCompiler = "sqlite-3.45";
 
     const compiler = body.compiler || defaultCompiler;
     const isPython = body.language === "python" || compiler.startsWith("cpython") || compiler.startsWith("pypy");
     const isBash = body.language === "bash" || compiler === "bash";
-    const isCsharp = body.language === "csharp" || compiler.startsWith("dotnet") || compiler.startsWith("mono");
+    const isSql = body.language === "sql" || compiler.startsWith("sqlite");
     const isC = body.language === "c" || compiler.endsWith("-c");
     const isNodeOrTs =
       body.language === "javascript" ||
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
       stdin: body.stdin || "",
     };
 
-    if (isPython || isNodeOrTs || isBash || isCsharp) {
+    if (isPython || isNodeOrTs || isBash || isSql) {
       // Scripting / interpreted / managed runtime options
       if (body.args && body.args.trim().length > 0) {
         wandboxPayload["runtime-option-raw"] = body.args.trim();
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
       if (body.settings?.optimization) {
         rawFlags.push(body.settings.optimization);
       } else {
-        rawFlags.push("-O2");
+        rawFlags.push("-O1");
       }
 
       if (body.settings?.warnings && body.settings.warnings.length > 0) {
@@ -109,6 +109,7 @@ export async function POST(req: NextRequest) {
         rawFlags.push("-Wall");
       }
 
+      // ponytail: sanitizers significantly slow compilation; only add if explicitly requested
       if (body.settings?.sanitizers && body.settings.sanitizers.length > 0) {
         body.settings.sanitizers.forEach((s) => rawFlags.push(`-fsanitize=${s}`));
       }
