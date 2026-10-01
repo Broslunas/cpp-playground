@@ -3,6 +3,26 @@ import { getLanguage, LANGUAGES } from "./languages";
 
 const STORAGE_KEY = "cpp-playground-projects";
 const ACTIVE_PROJECT_KEY = "cpp-playground-active-id";
+const INITIALIZED_LANGS_KEY = "playground-initialized-langs";
+
+function getInitializedLanguages(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const data = localStorage.getItem(INITIALIZED_LANGS_KEY);
+    return data ? new Set(JSON.parse(data)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function markLanguageInitialized(lang: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const set = getInitializedLanguages();
+    set.add(lang);
+    localStorage.setItem(INITIALIZED_LANGS_KEY, JSON.stringify(Array.from(set)));
+  } catch {}
+}
 
 export function getProjects(): Project[] {
   if (typeof window === "undefined") return [];
@@ -10,6 +30,7 @@ export function getProjects(): Project[] {
     const data = localStorage.getItem(STORAGE_KEY);
     if (!data) {
       const initial = createInitialProjectForLanguage("cpp");
+      markLanguageInitialized("cpp");
       saveProjects([initial]);
       return [initial];
     }
@@ -37,11 +58,17 @@ export function getProjectsByLanguage(lang: SupportedLanguage): Project[] {
   if (typeof window === "undefined") return [];
   const all = getProjects();
   const filtered = all.filter((p) => (p.language || "cpp") === lang);
-  if (filtered.length === 0) {
-    const initial = createInitialProjectForLanguage(lang);
-    saveProjects([...all, initial]);
-    return [initial];
+
+  const initialized = getInitializedLanguages();
+  if (!initialized.has(lang)) {
+    markLanguageInitialized(lang);
+    if (filtered.length === 0) {
+      const initial = createInitialProjectForLanguage(lang);
+      saveProjects([...all, initial]);
+      return [initial];
+    }
   }
+
   return filtered;
 }
 
@@ -64,8 +91,19 @@ export function getActiveProjectId(lang?: SupportedLanguage): string | null {
   return localStorage.getItem(ACTIVE_PROJECT_KEY);
 }
 
-export function setActiveProjectId(id: string, lang?: SupportedLanguage): void {
+export function setActiveProjectId(id: string | null, lang?: SupportedLanguage): void {
   if (typeof window === "undefined") return;
+  if (!id) {
+    if (lang) {
+      localStorage.removeItem(`${ACTIVE_PROJECT_KEY}-${lang}`);
+      if (lang === "cpp") {
+        localStorage.removeItem(ACTIVE_PROJECT_KEY);
+      }
+    } else {
+      localStorage.removeItem(ACTIVE_PROJECT_KEY);
+    }
+    return;
+  }
   if (lang) {
     localStorage.setItem(`${ACTIVE_PROJECT_KEY}-${lang}`, id);
     if (lang === "cpp") {

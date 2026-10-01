@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { Maximize2, Minimize2, FileCode, Plus, BookOpen } from "lucide-react";
 import { Toolbar } from "@/components/playground/Toolbar";
 import { Editor } from "@/components/playground/Editor";
 import { StdinPanel } from "@/components/playground/StdinPanel";
@@ -280,6 +280,13 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
       setStandard(active.options || langDef.defaultStandard);
       setCompilerSettings(active.settings || DEFAULT_COMPILER_SETTINGS);
       setProjectName(active.name);
+    } else {
+      setActiveId(null);
+      setActiveProjectId(null, currentLang);
+      setCode("");
+      setStdin("");
+      setProjectName("Sin proyectos");
+      setOutput(null);
     }
   }, [initialLanguage, router]);
 
@@ -463,8 +470,12 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
       if (updated.length > 0) {
         handleSelectProject(updated[0].id);
       } else {
-        // If deleted last project, generate a new clean project
-        handleCreateProject();
+        setActiveId(null);
+        setActiveProjectId(null, language);
+        setCode("");
+        setStdin("");
+        setProjectName("Sin proyectos");
+        setOutput(null);
       }
     }
   };
@@ -606,7 +617,7 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
 
   // Code Formatter
   const handleFormatCode = () => {
-    if (!code) return;
+    if (!code || !activeProjectId) return;
     const formatted = formatCode(code, language);
     setCode(formatted);
     showNotification("Código formateado ✓");
@@ -614,6 +625,10 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
 
   // Share via URL hash
   const handleShare = () => {
+    if (!activeProjectId) {
+      showNotification("Crea un proyecto para poder compartir");
+      return;
+    }
     const url = generateShareUrl({
       language,
       code,
@@ -628,6 +643,10 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
 
   // Export Project Files
   const handleExport = () => {
+    if (!activeProjectId) {
+      showNotification("Crea un proyecto para poder exportar");
+      return;
+    }
     downloadSourceFile(projectName, code, language);
     if (language === "cpp") {
       const makefile = generateMakefile(standard, compilerSettings);
@@ -642,6 +661,10 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
   // Run/Compile program
   const handleRun = async () => {
     if (isRunning) return;
+    if (!activeProjectId || projects.length === 0) {
+      showNotification("Crea un proyecto para ejecutar código");
+      return;
+    }
     setIsRunning(true);
     setOutput(null);
 
@@ -731,7 +754,35 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
   const isWebPreview = Boolean(langDef.isWebPreview || language === "html");
   const effectiveShowStdin = !isWebPreview && showStdin;
 
-  const editorPanel = (
+  const editorPanel = projects.length === 0 ? (
+    <div className="relative w-full h-full min-h-0 min-w-0 flex flex-col items-center justify-center bg-[#090a0f] p-6 text-center select-none font-mono">
+      <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4 text-zinc-500 shadow-inner">
+        <FileCode className="w-6 h-6 text-zinc-500" />
+      </div>
+      <h3 className="text-sm font-semibold text-zinc-200 mb-1">
+        Sin proyectos en {langDef.name}
+      </h3>
+      <p className="text-xs text-zinc-500 max-w-sm mb-4">
+        Actualmente no tienes ningún proyecto en este lenguaje.
+      </p>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handleCreateProject}
+          className="px-3.5 py-1.5 rounded bg-neon-green text-black font-semibold text-xs flex items-center gap-1.5 hover:bg-[#00e67a] active:bg-[#00cc6c] transition-all shadow-[0_0_15px_rgba(0,255,136,0.3)] hover:shadow-[0_0_20px_rgba(0,255,136,0.5)]"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>Nuevo Proyecto</span>
+        </button>
+        <button
+          onClick={() => setIsTemplatesOpen(true)}
+          className="px-3.5 py-1.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors text-xs flex items-center gap-1.5"
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          <span>Ver Plantillas</span>
+        </button>
+      </div>
+    </div>
+  ) : (
     <div className="relative w-full h-full min-h-0 min-w-0 group/editor">
       <Editor
         value={code}
@@ -760,7 +811,7 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
     <StdinPanel
       value={stdin}
       onChange={setStdin}
-      disabled={isRunning}
+      disabled={isRunning || !activeProjectId}
       onMaximize={() => setMaximizedPanel(maximizedPanel === "stdin" ? null : "stdin")}
       isMaximized={maximizedPanel === "stdin"}
     />
@@ -802,6 +853,7 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           isSidebarOpen={isSidebarOpen}
           projectName={projectName}
+          hasActiveProject={Boolean(activeProjectId)}
           compilerSettings={compilerSettings}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onOpenTemplates={() => setIsTemplatesOpen(true)}

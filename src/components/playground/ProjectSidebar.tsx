@@ -220,21 +220,19 @@ export function ProjectSidebar({
                       >
                         <Edit2 className="w-3 h-3" />
                       </button>
-                      {projects.length > 1 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (confirm(`¿Eliminar proyecto "${project.name}"?`)) {
-                              onDeleteProject(project.id);
-                            }
-                          }}
-                          className="p-1 text-zinc-400 hover:text-red-400 rounded"
-                          title="Eliminar proyecto"
-                          aria-label={`Eliminar ${project.name}`}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`¿Eliminar proyecto "${project.name}"?`)) {
+                            onDeleteProject(project.id);
+                          }
+                        }}
+                        className="p-1 text-zinc-400 hover:text-red-400 rounded"
+                        title="Eliminar proyecto"
+                        aria-label={`Eliminar ${project.name}`}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
                     </div>
                   </>
                 )}

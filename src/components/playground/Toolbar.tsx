@@ -39,6 +39,7 @@ interface ToolbarProps {
   isSidebarOpen: boolean;
   projectName: string;
   compilerSettings: CompilerSettings;
+  hasActiveProject?: boolean;
   onOpenSettings: () => void;
   onOpenTemplates: () => void;
   onOpenShortcuts: () => void;
@@ -74,6 +75,7 @@ export function Toolbar({
   onToggleSidebar,
   isSidebarOpen,
   projectName,
+  hasActiveProject = true,
   compilerSettings,
   onOpenSettings,
   onOpenTemplates,
@@ -145,9 +147,9 @@ export function Toolbar({
         <div className="h-4 w-[1px] bg-zinc-800 hidden sm:block" />
 
         <div className="flex items-center gap-2 max-w-[150px] sm:max-w-[220px] truncate">
-          <Terminal className="w-3.5 h-3.5 text-neon-green shrink-0" />
-          <span className="font-medium text-zinc-200 truncate">
-            {projectName}
+          <Terminal className={`w-3.5 h-3.5 shrink-0 ${hasActiveProject ? "text-neon-green" : "text-zinc-600"}`} />
+          <span className={`font-medium truncate ${!hasActiveProject ? "text-zinc-500 italic" : "text-zinc-200"}`}>
+            {projectName || "Sin proyectos"}
           </span>
           <CloudSyncStatus
             status={syncStatus}
@@ -174,7 +176,8 @@ export function Toolbar({
 
           <button
             onClick={onFormatCode}
-            className="p-1.5 rounded text-zinc-400 hover:text-amber-400 hover:bg-zinc-800 transition-colors"
+            disabled={!hasActiveProject}
+            className="p-1.5 rounded text-zinc-400 hover:text-amber-400 hover:bg-zinc-800 transition-colors disabled:opacity-40 disabled:hover:text-zinc-400 disabled:hover:bg-transparent"
             title={`Formatear código ${langDef.name} (Ctrl+Shift+F)`}
             aria-label={`Formatear código ${langDef.name}`}
           >
@@ -201,7 +204,8 @@ export function Toolbar({
 
           <button
             onClick={handleShareClick}
-            className="p-1.5 rounded text-zinc-400 hover:text-neon-green hover:bg-zinc-800 transition-colors"
+            disabled={!hasActiveProject}
+            className="p-1.5 rounded text-zinc-400 hover:text-neon-green hover:bg-zinc-800 transition-colors disabled:opacity-40 disabled:hover:text-zinc-400 disabled:hover:bg-transparent"
             title={copiedShare ? "¡Enlace copiado!" : "Compartir enlace"}
             aria-label="Compartir enlace de código"
           >
@@ -214,7 +218,8 @@ export function Toolbar({
 
           <button
             onClick={onExport}
-            className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            disabled={!hasActiveProject}
+            className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-40 disabled:hover:text-zinc-400 disabled:hover:bg-transparent"
             title={`Exportar archivo (${langDef.extension})`}
             aria-label={`Exportar archivo (${langDef.extension})`}
           >
@@ -301,8 +306,8 @@ export function Toolbar({
         {/* Save Button */}
         <button
           onClick={onSave}
-          disabled={isRunning}
-          className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800/80 transition-colors focus:outline-none disabled:opacity-50"
+          disabled={isRunning || !hasActiveProject}
+          className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800/80 transition-colors focus:outline-none disabled:opacity-40 disabled:hover:text-zinc-400 disabled:hover:bg-transparent"
           title="Guardar Proyecto (Ctrl+S)"
           aria-label="Guardar Proyecto"
         >
@@ -312,8 +317,8 @@ export function Toolbar({
         {/* Run Button (Primary CTA) */}
         <button
           onClick={onRun}
-          disabled={isRunning}
-          className="px-3.5 py-1.5 rounded bg-neon-green text-black font-semibold text-xs flex items-center gap-1.5 hover:bg-[#00e67a] active:bg-[#00cc6c] transition-all shadow-[0_0_15px_rgba(0,255,136,0.3)] hover:shadow-[0_0_20px_rgba(0,255,136,0.5)] focus:outline-none focus:ring-2 focus:ring-neon-green disabled:opacity-50 shrink-0"
+          disabled={isRunning || !hasActiveProject}
+          className="px-3.5 py-1.5 rounded bg-neon-green text-black font-semibold text-xs flex items-center gap-1.5 hover:bg-[#00e67a] active:bg-[#00cc6c] transition-all shadow-[0_0_15px_rgba(0,255,136,0.3)] hover:shadow-[0_0_20px_rgba(0,255,136,0.5)] focus:outline-none focus:ring-2 focus:ring-neon-green disabled:opacity-40 disabled:hover:bg-neon-green shrink-0"
           aria-label={isRunning ? "Ejecutando..." : "Ejecutar (Ctrl+Enter)"}
           aria-busy={isRunning}
         >
