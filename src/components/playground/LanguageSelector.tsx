@@ -23,7 +23,8 @@ import {
   Plus,
 } from "lucide-react";
 import { SupportedLanguage, Project } from "@/types";
-import { getProjects } from "@/lib/projects";
+import { getProjects, getRawLocalProjects, clearAllLocalStorage } from "@/lib/projects";
+import { fetchAuthStatus, fetchCloudProjects, pushProjectsToCloud } from "@/lib/cloud-projects";
 
 export const ALL_LANGUAGES: SupportedLanguage[] = [
   "cpp",
@@ -279,18 +280,36 @@ export function LanguageSelector() {
   const [showSimOutput, setShowSimOutput] = useState(true);
   const [allProjects, setAllProjects] = useState<Project[]>([]);
   const [showAllProjects, setShowAllProjects] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const recentProjects = showAllProjects ? allProjects : allProjects.slice(0, 4);
 
   const activeLangData = useMemo(() => LANGUAGES_DATA[selectedLang], [selectedLang]);
 
   useEffect(() => {
-    try {
-      const projects = getProjects();
-      setAllProjects(projects);
-    } catch {
-      // ignore
-    }
+    let mounted = true;
+    fetchAuthStatus().then(async (status) => {
+      if (!mounted) return;
+      if (status.user) {
+        setIsLoggedIn(true);
+        const local = getRawLocalProjects();
+        if (local.length > 0) {
+          await pushProjectsToCloud(local);
+        }
+        clearAllLocalStorage();
+        const cloudProjects = await fetchCloudProjects();
+        if (!mounted) return;
+        setAllProjects(cloudProjects);
+      } else {
+        setIsLoggedIn(false);
+        const projects = getProjects();
+        setAllProjects(projects);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Keyboard navigation
@@ -418,7 +437,7 @@ export function LanguageSelector() {
                 </button>
               )}
               <span className="text-[10px] text-zinc-500 hidden sm:inline">
-                Almacenamiento local del navegador
+                {isLoggedIn ? "Sincronizado en la nube (MongoDB + R2)" : "Almacenamiento local del navegador"}
               </span>
             </div>
           </div>

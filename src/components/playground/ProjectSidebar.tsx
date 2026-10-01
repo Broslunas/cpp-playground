@@ -85,7 +85,7 @@ export function ProjectSidebar({
     <aside
       style={{ width: `${width}px` }}
       className="bg-[#0a0d13] border-r border-zinc-800 flex flex-col h-full z-20 shrink-0 select-none"
-      aria-label="Local Projects Management"
+      aria-label="Projects Management"
     >
       {/* Header */}
       <div className="px-3 py-2.5 border-b border-zinc-800 flex items-center justify-between shrink-0">
@@ -99,8 +99,8 @@ export function ProjectSidebar({
                 <button
                   onClick={onPull}
                   className="p-1 text-zinc-400 hover:text-emerald-400 hover:bg-zinc-800 rounded transition-colors"
-                  title="Pull: descargar proyectos de la nube"
-                  aria-label="Descargar proyectos de la nube"
+                  title="Pull: recargar proyectos de la nube"
+                  aria-label="Recargar proyectos de la nube"
                 >
                   <CloudDownload className="w-3.5 h-3.5" />
                 </button>
@@ -109,8 +109,8 @@ export function ProjectSidebar({
                 <button
                   onClick={onPush}
                   className="p-1 text-zinc-400 hover:text-cyan-400 hover:bg-zinc-800 rounded transition-colors"
-                  title="Push: subir proyectos locales a la nube"
-                  aria-label="Subir proyectos locales a la nube"
+                  title="Push: forzar guardado en la nube"
+                  aria-label="Forzar guardado en la nube"
                 >
                   <CloudUpload className="w-3.5 h-3.5" />
                 </button>

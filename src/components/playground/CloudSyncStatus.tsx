@@ -133,7 +133,7 @@ export function CloudSyncStatus({
               <RefreshCw className="w-3.5 h-3.5 text-neon-green" />
               <div className="flex flex-col">
                 <span className="font-medium text-white">Sincronizar (Auto)</span>
-                <span className="text-[10px] text-zinc-500">Reconcilia local y nube</span>
+                <span className="text-[10px] text-zinc-500">Reconcilia con la nube</span>
               </div>
             </button>
 
@@ -148,7 +148,7 @@ export function CloudSyncStatus({
               <CloudUpload className="w-3.5 h-3.5 text-cyan-400" />
               <div className="flex flex-col">
                 <span className="font-medium text-white">Push a la nube</span>
-                <span className="text-[10px] text-zinc-500">Sube tus archivos locales</span>
+                <span className="text-[10px] text-zinc-500">Guarda en MongoDB + R2</span>
               </div>
             </button>
 
@@ -163,7 +163,7 @@ export function CloudSyncStatus({
               <CloudDownload className="w-3.5 h-3.5 text-emerald-400" />
               <div className="flex flex-col">
                 <span className="font-medium text-white">Pull de la nube</span>
-                <span className="text-[10px] text-zinc-500">Descarga a este navegador</span>
+                <span className="text-[10px] text-zinc-500">Recarga desde la nube</span>
               </div>
             </button>
           </div>

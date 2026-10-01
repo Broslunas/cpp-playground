@@ -24,6 +24,9 @@ import {
   getActiveProjectId,
   setActiveProjectId,
   createProject,
+  createInitialProjectForLanguage,
+  getRawLocalProjects,
+  clearAllLocalStorage,
 } from "@/lib/projects";
 import { generateShareUrl, decodeShareableState } from "@/lib/share";
 import { downloadSourceFile, generateCMakeLists, generateMakefile } from "@/lib/export";
@@ -219,124 +222,157 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
     setTimeout(() => setSaveToast(false), 2000);
   };
 
-  // Load language-specific projects on mount or route language change
+  // Load projects & Auth sync initialization
   useEffect(() => {
+    let mounted = true;
     const currentLang = initialLanguage;
     setLanguage(currentLang);
 
-    // Check if URL has shared code in hash
-    if (typeof window !== "undefined" && window.location.hash) {
-      const shared = decodeShareableState(window.location.hash);
-      if (shared) {
-        const sharedLang: SupportedLanguage = shared.language || currentLang;
-        // If shared link belongs to another language, redirect to that playground
-        if (sharedLang !== currentLang) {
-          router.push(`/${sharedLang}/playground${window.location.hash}`);
-          return;
+    async function initWorkspace() {
+      // 1. Shared link in hash check
+      if (typeof window !== "undefined" && window.location.hash) {
+        const shared = decodeShareableState(window.location.hash);
+        if (shared) {
+          const sharedLang: SupportedLanguage = shared.language || currentLang;
+          if (sharedLang !== currentLang) {
+            router.push(`/${sharedLang}/playground${window.location.hash}`);
+            return;
+          }
+
+          const langDef = getLanguage(sharedLang);
+          const sharedProject = createProject(
+            "Código Compartido",
+            shared.code,
+            shared.standard || langDef.defaultStandard,
+            shared.stdin || "",
+            shared.settings || DEFAULT_COMPILER_SETTINGS,
+            sharedLang
+          );
+          if (shared.compiler) sharedProject.compiler = shared.compiler;
+
+          const authStatus = await fetchAuthStatus();
+          if (!mounted) return;
+
+          if (authStatus.user) {
+            setAuthUser(authStatus.user);
+            setSyncStatus("saving");
+            const saved = await saveProjectToCloud(sharedProject);
+            const cloudProjs = await fetchCloudProjects();
+            const filtered = cloudProjs.filter((p) => (p.language || "cpp") === sharedLang);
+            const merged = saved ? [saved, ...filtered.filter((p) => p.id !== saved.id)] : filtered;
+            setProjects(merged);
+            setActiveId(sharedProject.id);
+            setCode(sharedProject.code);
+            setStdin(sharedProject.stdin);
+            setCompiler(sharedProject.compiler);
+            setStandard(sharedProject.options || langDef.defaultStandard);
+            setCompilerSettings(sharedProject.settings || DEFAULT_COMPILER_SETTINGS);
+            setProjectName(sharedProject.name);
+            setSyncStatus("synced");
+            showNotification("Enlace compartido guardado en la nube ✓");
+            return;
+          } else {
+            setAuthUser(null);
+            setSyncStatus("offline");
+            const langProjects = getProjectsByLanguage(sharedLang);
+            const updated = [sharedProject, ...langProjects];
+            setProjects(updated);
+            saveLanguageProjects(sharedLang, updated);
+            setActiveId(sharedProject.id);
+            setActiveProjectId(sharedProject.id, sharedLang);
+            setCode(sharedProject.code);
+            setStdin(sharedProject.stdin);
+            setCompiler(sharedProject.compiler);
+            setStandard(sharedProject.options || langDef.defaultStandard);
+            setCompilerSettings(sharedProject.settings || DEFAULT_COMPILER_SETTINGS);
+            setProjectName(sharedProject.name);
+            showNotification("Enlace compartido cargado ✓");
+            return;
+          }
         }
-
-        const langDef = getLanguage(sharedLang);
-        const sharedProject = createProject(
-          "Código Compartido",
-          shared.code,
-          shared.standard || langDef.defaultStandard,
-          shared.stdin || "",
-          shared.settings || DEFAULT_COMPILER_SETTINGS,
-          sharedLang
-        );
-        if (shared.compiler) sharedProject.compiler = shared.compiler;
-
-        const langProjects = getProjectsByLanguage(sharedLang);
-        const updated = [sharedProject, ...langProjects];
-        setProjects(updated);
-        saveLanguageProjects(sharedLang, updated);
-        setActiveId(sharedProject.id);
-        setActiveProjectId(sharedProject.id, sharedLang);
-        setCode(sharedProject.code);
-        setStdin(sharedProject.stdin);
-        setCompiler(sharedProject.compiler);
-        setStandard(sharedProject.options || langDef.defaultStandard);
-        setCompilerSettings(sharedProject.settings || DEFAULT_COMPILER_SETTINGS);
-        setProjectName(sharedProject.name);
-        showNotification("Enlace compartido cargado ✓");
-        return;
       }
-    }
 
-    const langProjects = getProjectsByLanguage(currentLang);
-    setProjects(langProjects);
-
-    const savedActiveId = getActiveProjectId(currentLang);
-    const active =
-      langProjects.find((p) => p.id === savedActiveId) || langProjects[0];
-
-    if (active) {
-      const langDef = getLanguage(currentLang);
-      setActiveId(active.id);
-      setActiveProjectId(active.id, currentLang);
-      setCode(active.code);
-      setStdin(active.stdin);
-      setCompiler(active.compiler || langDef.defaultCompiler);
-      setStandard(active.options || langDef.defaultStandard);
-      setCompilerSettings(active.settings || DEFAULT_COMPILER_SETTINGS);
-      setProjectName(active.name);
-    } else {
-      setActiveId(null);
-      setActiveProjectId(null, currentLang);
-      setCode("");
-      setStdin("");
-      setProjectName("Sin proyectos");
-      setOutput(null);
-    }
-  }, [initialLanguage, router]);
-
-  // Sync with Cloud upon mounting or user change
-  useEffect(() => {
-    let mounted = true;
-    fetchAuthStatus().then(async (status) => {
+      // 2. Regular initialization: check auth
+      const authStatus = await fetchAuthStatus();
       if (!mounted) return;
-      if (status.user) {
-        setAuthUser(status.user);
+
+      if (authStatus.user) {
+        setAuthUser(authStatus.user);
         setSyncStatus("saving");
+
+        // Migrate local projects if any exist
+        const localProjects = getRawLocalProjects();
+        if (localProjects.length > 0) {
+          await pushProjectsToCloud(localProjects);
+        }
+        // Wipe all local storage for logged-in user
+        clearAllLocalStorage();
+
+        // Fetch cloud projects
         const cloudProjs = await fetchCloudProjects();
         if (!mounted) return;
 
-        if (cloudProjs.length > 0) {
-          // Filter cloud projects for current language
-          const cloudForLang = cloudProjs.filter((p) => (p.language || "cpp") === language);
-          if (cloudForLang.length > 0) {
-            setProjects((prevLocal) => {
-              const cloudIds = new Set(cloudForLang.map((p) => p.id));
-              const merged = [...cloudForLang, ...prevLocal.filter((p) => !cloudIds.has(p.id))];
-              saveLanguageProjects(language, merged);
-              return merged;
-            });
-          }
-          setSyncStatus("synced");
-        } else {
-          // Cloud has no projects yet; backup existing local projects to cloud
-          const localProjs = getProjectsByLanguage(language);
-          if (localProjs.length > 0) {
-            const synced = await pushProjectsToCloud(localProjs);
-            if (!mounted) return;
-            if (synced && synced.length > 0) {
-              setSyncStatus("synced");
-            } else {
-              setSyncStatus("error");
-            }
-          } else {
-            setSyncStatus("idle");
-          }
+        let langProjects = cloudProjs.filter((p) => (p.language || "cpp") === currentLang);
+
+        if (langProjects.length === 0) {
+          const initial = createInitialProjectForLanguage(currentLang);
+          const saved = await saveProjectToCloud(initial);
+          langProjects = [saved || initial];
+        }
+
+        setProjects(langProjects);
+        const active = langProjects[0];
+        if (active) {
+          const langDef = getLanguage(currentLang);
+          setActiveId(active.id);
+          setCode(active.code);
+          setStdin(active.stdin);
+          setCompiler(active.compiler || langDef.defaultCompiler);
+          setStandard(active.options || langDef.defaultStandard);
+          setCompilerSettings(active.settings || DEFAULT_COMPILER_SETTINGS);
+          setProjectName(active.name);
+        }
+        setSyncStatus("synced");
+        if (localProjects.length > 0) {
+          showNotification("Proyectos locales migrados a la nube y almacenamiento local eliminado ✓");
         }
       } else {
+        setAuthUser(null);
         setSyncStatus("offline");
+        const langProjects = getProjectsByLanguage(currentLang);
+        setProjects(langProjects);
+
+        const savedActiveId = getActiveProjectId(currentLang);
+        const active =
+          langProjects.find((p) => p.id === savedActiveId) || langProjects[0];
+
+        if (active) {
+          const langDef = getLanguage(currentLang);
+          setActiveId(active.id);
+          setActiveProjectId(active.id, currentLang);
+          setCode(active.code);
+          setStdin(active.stdin);
+          setCompiler(active.compiler || langDef.defaultCompiler);
+          setStandard(active.options || langDef.defaultStandard);
+          setCompilerSettings(active.settings || DEFAULT_COMPILER_SETTINGS);
+          setProjectName(active.name);
+        } else {
+          setActiveId(null);
+          setActiveProjectId(null, currentLang);
+          setCode("");
+          setStdin("");
+          setProjectName("Sin proyectos");
+          setOutput(null);
+        }
       }
-    });
+    }
+
+    initWorkspace();
 
     return () => {
       mounted = false;
     };
-  }, [language]);
+  }, [initialLanguage, router]);
 
   // Save current project state for current language
   const saveCurrentProject = useCallback(() => {
@@ -362,22 +398,25 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
         }
         return p;
       });
-      saveLanguageProjects(language, updated);
+
+      if (!authUser) {
+        saveLanguageProjects(language, updated);
+      }
       return updated;
     });
 
     if (!authUser) {
       showNotification("Guardado localmente ✓");
+      return;
     }
 
-    // Push to Cloud (MongoDB + R2) if logged in
+    // Push to Cloud (MongoDB + R2) if logged in - no localStorage
     if (authUser && targetProject) {
       setSyncStatus("saving");
       saveProjectToCloud(targetProject)
         .then((saved) => {
           if (saved) {
             setSyncStatus("synced");
-            showNotification("Sincronizado en la nube ✓");
             setProjects((prev) =>
               prev.map((p) =>
                 p.id === activeProjectId
@@ -387,12 +426,12 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
             );
           } else {
             setSyncStatus("error");
-            showNotification("Error de sincronización (guardado local)");
+            showNotification("Error al guardar en la nube");
           }
         })
         .catch(() => {
           setSyncStatus("error");
-          showNotification("Error de sincronización (guardado local)");
+          showNotification("Error al guardar en la nube");
         });
     }
   }, [activeProjectId, language, code, stdin, compiler, standard, compilerSettings, authUser]);
@@ -419,7 +458,9 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
     const target = projects.find((p) => p.id === id);
     if (target) {
       setActiveId(target.id);
-      setActiveProjectId(target.id, language);
+      if (!authUser) {
+        setActiveProjectId(target.id, language);
+      }
       setCode(target.code);
       setStdin(target.stdin);
       setCompiler(target.compiler);
@@ -438,7 +479,7 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
   };
 
   // Create Project in current language
-  const handleCreateProject = () => {
+  const handleCreateProject = async () => {
     const langDef = getLanguage(language);
     const newProj = createProject(
       `Proyecto ${langDef.name} ${projects.length + 1}`,
@@ -448,22 +489,36 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
       DEFAULT_COMPILER_SETTINGS,
       language
     );
-    const updated = [newProj, ...projects];
-    setProjects(updated);
-    saveLanguageProjects(language, updated);
-    handleSelectProject(newProj.id);
+
+    if (authUser) {
+      setSyncStatus("saving");
+      const saved = await saveProjectToCloud(newProj);
+      const finalProj = saved || newProj;
+      const updated = [finalProj, ...projects];
+      setProjects(updated);
+      handleSelectProject(finalProj.id);
+      setSyncStatus("synced");
+      showNotification("Proyecto creado en la nube ✓");
+    } else {
+      const updated = [newProj, ...projects];
+      setProjects(updated);
+      saveLanguageProjects(language, updated);
+      handleSelectProject(newProj.id);
+    }
   };
 
   // Delete Project in current language
-  const handleDeleteProject = (id: string) => {
+  const handleDeleteProject = async (id: string) => {
     const updated = projects.filter((p) => p.id !== id);
     setProjects(updated);
-    saveLanguageProjects(language, updated);
 
     if (authUser) {
-      deleteProjectFromCloud(id).catch((err) =>
-        console.error("Error al borrar en la nube:", err)
-      );
+      setSyncStatus("saving");
+      await deleteProjectFromCloud(id);
+      setSyncStatus("synced");
+      showNotification("Proyecto eliminado de la nube ✓");
+    } else {
+      saveLanguageProjects(language, updated);
     }
 
     if (activeProjectId === id) {
@@ -471,7 +526,9 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
         handleSelectProject(updated[0].id);
       } else {
         setActiveId(null);
-        setActiveProjectId(null, language);
+        if (!authUser) {
+          setActiveProjectId(null, language);
+        }
         setCode("");
         setStdin("");
         setProjectName("Sin proyectos");
@@ -491,16 +548,15 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
       const pushed = await pushProjectsToCloud(projects);
       if (pushed && pushed.length > 0) {
         setProjects(pushed);
-        saveLanguageProjects(language, pushed);
         setSyncStatus("synced");
-        showNotification(`Push completado: ${pushed.length} proyectos subidos a la nube ✓`);
+        showNotification(`Sincronizado: ${pushed.length} proyectos guardados en la nube ✓`);
       } else {
         setSyncStatus("synced");
         showNotification("Nube actualizada ✓");
       }
     } catch {
       setSyncStatus("error");
-      showNotification("Error en push a la nube");
+      showNotification("Error en sincronización a la nube");
     }
   };
 
@@ -517,13 +573,10 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
 
       if (cloudForLang.length > 0) {
         setProjects(cloudForLang);
-        saveLanguageProjects(language, cloudForLang);
 
-        // Update active project if loaded
         const currentActive = cloudForLang.find((p) => p.id === activeProjectId) || cloudForLang[0];
         if (currentActive) {
           setActiveId(currentActive.id);
-          setActiveProjectId(currentActive.id, language);
           setCode(currentActive.code);
           setStdin(currentActive.stdin);
           setCompiler(currentActive.compiler);
@@ -533,14 +586,14 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
         }
 
         setSyncStatus("synced");
-        showNotification(`Pull completado: ${cloudForLang.length} proyectos descargados ✓`);
+        showNotification(`Descargados ${cloudForLang.length} proyectos de la nube ✓`);
       } else {
         setSyncStatus("synced");
         showNotification("No hay proyectos en la nube para este lenguaje");
       }
     } catch {
       setSyncStatus("error");
-      showNotification("Error en pull de la nube");
+      showNotification("Error al descargar de la nube");
     }
   };
 
@@ -555,9 +608,7 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
       const res = await syncBidirectional(projects);
       const forLang = res.merged.filter((p) => (p.language || "cpp") === language);
       setProjects(forLang);
-      saveLanguageProjects(language, forLang);
 
-      // Re-sync active project code if cloud had newer version
       const activeCurrent = forLang.find((p) => p.id === activeProjectId);
       if (activeCurrent) {
         setCode(activeCurrent.code);
@@ -566,9 +617,7 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
       }
 
       setSyncStatus("synced");
-      showNotification(
-        `Sincronizado: ${res.pushedCount} subidos (push), ${res.pulledCount} descargados (pull) ✓`
-      );
+      showNotification("Proyectos sincronizados con la nube ✓");
     } catch {
       setSyncStatus("error");
       showNotification("Error al sincronizar con la nube");
@@ -576,23 +625,36 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
   };
 
   // Rename Project
-  const handleRenameProject = (id: string, newName: string) => {
-    const updated = projects.map((p) =>
-      p.id === id ? { ...p, name: newName, updatedAt: Date.now() } : p
-    );
+  const handleRenameProject = async (id: string, newName: string) => {
+    let targetProject: Project | null = null;
+    const updated = projects.map((p) => {
+      if (p.id === id) {
+        const upd = { ...p, name: newName, updatedAt: Date.now() };
+        targetProject = upd;
+        return upd;
+      }
+      return p;
+    });
     setProjects(updated);
-    saveLanguageProjects(language, updated);
+
+    if (authUser && targetProject) {
+      setSyncStatus("saving");
+      await saveProjectToCloud(targetProject);
+      setSyncStatus("synced");
+    } else if (!authUser) {
+      saveLanguageProjects(language, updated);
+    }
+
     if (activeProjectId === id) {
       setProjectName(newName);
     }
   };
 
   // Load Template
-  const handleSelectTemplate = (template: CodeTemplate) => {
+  const handleSelectTemplate = async (template: CodeTemplate) => {
     const templateLang = template.language || "cpp";
     const langDef = getLanguage(templateLang);
 
-    // If template belongs to another language, redirect
     if (templateLang !== language) {
       router.push(`/${templateLang}/playground`);
       return;
@@ -608,11 +670,22 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
     );
     newProj.compiler = langDef.defaultCompiler;
 
-    const updated = [newProj, ...projects];
-    setProjects(updated);
-    saveLanguageProjects(language, updated);
-    handleSelectProject(newProj.id);
-    showNotification(`Plantilla "${template.title}" cargada`);
+    if (authUser) {
+      setSyncStatus("saving");
+      const saved = await saveProjectToCloud(newProj);
+      const finalProj = saved || newProj;
+      const updated = [finalProj, ...projects];
+      setProjects(updated);
+      handleSelectProject(finalProj.id);
+      setSyncStatus("synced");
+      showNotification(`Plantilla guardada en la nube ✓`);
+    } else {
+      const updated = [newProj, ...projects];
+      setProjects(updated);
+      saveLanguageProjects(language, updated);
+      handleSelectProject(newProj.id);
+      showNotification(`Plantilla "${template.title}" cargada`);
+    }
   };
 
   // Code Formatter

@@ -24,6 +24,29 @@ function markLanguageInitialized(lang: string): void {
   } catch {}
 }
 
+export function getRawLocalProjects(): Project[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (!data) return [];
+    const parsed: Project[] = JSON.parse(data);
+    return Array.isArray(parsed)
+      ? parsed.map((p) => ({ ...p, language: p.language || "cpp" }))
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export function clearAllLocalStorage(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.clear();
+  } catch (e) {
+    console.error("Error al limpiar localStorage:", e);
+  }
+}
+
 export function getProjects(): Project[] {
   if (typeof window === "undefined") return [];
   try {
