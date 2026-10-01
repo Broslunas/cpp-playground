@@ -12,6 +12,7 @@ import {
   FolderOpen,
   Cloud,
   CloudUpload,
+  CloudDownload,
 } from "lucide-react";
 import { Project } from "@/types";
 import { getLanguage } from "@/lib/languages";
@@ -29,6 +30,8 @@ interface ProjectSidebarProps {
   languageName?: string;
   isLoggedIn?: boolean;
   onSyncAllToCloud?: () => void;
+  onPull?: () => void;
+  onPush?: () => void;
 }
 
 export function ProjectSidebar({
@@ -44,6 +47,8 @@ export function ProjectSidebar({
   languageName,
   isLoggedIn = false,
   onSyncAllToCloud,
+  onPull,
+  onPush,
 }: ProjectSidebarProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -87,20 +92,34 @@ export function ProjectSidebar({
         <span className="text-[11px] font-mono font-semibold tracking-wider text-zinc-400 uppercase">
           Proyectos {languageName ? `· ${languageName}` : ""}
         </span>
-        <div className="flex items-center gap-1">
-          {isLoggedIn && onSyncAllToCloud && (
-            <button
-              onClick={onSyncAllToCloud}
-              className="p-1 text-zinc-400 hover:text-cyan-400 hover:bg-zinc-850 rounded transition-colors"
-              title="Sincronizar todos a la nube"
-              aria-label="Sincronizar todos a la nube"
-            >
-              <CloudUpload className="w-3.5 h-3.5" />
-            </button>
+        <div className="flex items-center gap-0.5">
+          {isLoggedIn && (
+            <>
+              {onPull && (
+                <button
+                  onClick={onPull}
+                  className="p-1 text-zinc-400 hover:text-emerald-400 hover:bg-zinc-800 rounded transition-colors"
+                  title="Pull: descargar proyectos de la nube"
+                  aria-label="Descargar proyectos de la nube"
+                >
+                  <CloudDownload className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {onPush && (
+                <button
+                  onClick={onPush}
+                  className="p-1 text-zinc-400 hover:text-cyan-400 hover:bg-zinc-800 rounded transition-colors"
+                  title="Push: subir proyectos locales a la nube"
+                  aria-label="Subir proyectos locales a la nube"
+                >
+                  <CloudUpload className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </>
           )}
           <button
             onClick={onCreateProject}
-            className="p-1 text-zinc-400 hover:text-neon-green hover:bg-zinc-800/80 rounded transition-colors"
+            className="p-1 text-zinc-400 hover:text-neon-green hover:bg-zinc-800/80 rounded transition-colors ml-0.5"
             title="Nuevo proyecto"
             aria-label="Nuevo proyecto"
           >

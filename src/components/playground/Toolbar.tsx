@@ -54,7 +54,9 @@ interface ToolbarProps {
   onResetSizes: () => void;
   onOpenCustomModal?: () => void;
   syncStatus?: CloudSyncState;
-  onManualSync?: () => void;
+  onPull?: () => void;
+  onPush?: () => void;
+  onBidirectionalSync?: () => void;
   authUser?: AuthUser | null;
   onUserChange?: (user: AuthUser | null) => void;
 }
@@ -88,7 +90,9 @@ export function Toolbar({
   onResetSizes,
   onOpenCustomModal,
   syncStatus = "idle",
-  onManualSync,
+  onPull,
+  onPush,
+  onBidirectionalSync,
   authUser,
   onUserChange,
 }: ToolbarProps) {
@@ -147,7 +151,9 @@ export function Toolbar({
           </span>
           <CloudSyncStatus
             status={syncStatus}
-            onManualSync={onManualSync}
+            onPull={onPull}
+            onPush={onPush}
+            onBidirectionalSync={onBidirectionalSync}
             isLoggedIn={Boolean(authUser)}
           />
         </div>

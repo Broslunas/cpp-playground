@@ -46,7 +46,9 @@ import {
   fetchCloudProjects,
   saveProjectToCloud,
   deleteProjectFromCloud,
-  syncBatchProjectsToCloud,
+  pushProjectsToCloud,
+  pullProjectsFromCloud,
+  syncBidirectional,
 } from "@/lib/cloud-projects";
 
 interface PlaygroundWorkspaceProps {
@@ -308,7 +310,7 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
           // Cloud has no projects yet; backup existing local projects to cloud
           const localProjs = getProjectsByLanguage(language);
           if (localProjs.length > 0) {
-            const synced = await syncBatchProjectsToCloud(localProjs);
+            const synced = await pushProjectsToCloud(localProjs);
             if (!mounted) return;
             if (synced && synced.length > 0) {
               setSyncStatus("synced");
@@ -467,24 +469,95 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
     }
   };
 
-  // Manual Cloud Sync
-  const handleManualSync = async () => {
+  // Push to Cloud
+  const handlePush = async () => {
     if (!authUser) {
       window.location.href = "/api/auth/github/login";
       return;
     }
     setSyncStatus("saving");
     try {
-      const synced = await syncBatchProjectsToCloud(projects);
-      if (synced && synced.length > 0) {
-        setProjects(synced);
-        saveLanguageProjects(language, synced);
+      const pushed = await pushProjectsToCloud(projects);
+      if (pushed && pushed.length > 0) {
+        setProjects(pushed);
+        saveLanguageProjects(language, pushed);
         setSyncStatus("synced");
-        showNotification("Proyectos sincronizados en la nube ✓");
+        showNotification(`Push completado: ${pushed.length} proyectos subidos a la nube ✓`);
       } else {
         setSyncStatus("synced");
-        showNotification("Sincronización al día ✓");
+        showNotification("Nube actualizada ✓");
       }
+    } catch {
+      setSyncStatus("error");
+      showNotification("Error en push a la nube");
+    }
+  };
+
+  // Pull from Cloud
+  const handlePull = async () => {
+    if (!authUser) {
+      window.location.href = "/api/auth/github/login";
+      return;
+    }
+    setSyncStatus("saving");
+    try {
+      const cloudProjs = await pullProjectsFromCloud();
+      const cloudForLang = cloudProjs.filter((p) => (p.language || "cpp") === language);
+
+      if (cloudForLang.length > 0) {
+        setProjects(cloudForLang);
+        saveLanguageProjects(language, cloudForLang);
+
+        // Update active project if loaded
+        const currentActive = cloudForLang.find((p) => p.id === activeProjectId) || cloudForLang[0];
+        if (currentActive) {
+          setActiveId(currentActive.id);
+          setActiveProjectId(currentActive.id, language);
+          setCode(currentActive.code);
+          setStdin(currentActive.stdin);
+          setCompiler(currentActive.compiler);
+          setStandard(currentActive.options || getLanguage(language).defaultStandard);
+          setCompilerSettings(currentActive.settings || DEFAULT_COMPILER_SETTINGS);
+          setProjectName(currentActive.name);
+        }
+
+        setSyncStatus("synced");
+        showNotification(`Pull completado: ${cloudForLang.length} proyectos descargados ✓`);
+      } else {
+        setSyncStatus("synced");
+        showNotification("No hay proyectos en la nube para este lenguaje");
+      }
+    } catch {
+      setSyncStatus("error");
+      showNotification("Error en pull de la nube");
+    }
+  };
+
+  // Bidirectional Intelligent Sync
+  const handleBidirectionalSync = async () => {
+    if (!authUser) {
+      window.location.href = "/api/auth/github/login";
+      return;
+    }
+    setSyncStatus("saving");
+    try {
+      const res = await syncBidirectional(projects);
+      const forLang = res.merged.filter((p) => (p.language || "cpp") === language);
+      setProjects(forLang);
+      saveLanguageProjects(language, forLang);
+
+      // Re-sync active project code if cloud had newer version
+      const activeCurrent = forLang.find((p) => p.id === activeProjectId);
+      if (activeCurrent) {
+        setCode(activeCurrent.code);
+        setStdin(activeCurrent.stdin);
+        setProjectName(activeCurrent.name);
+      }
+
+      setSyncStatus("synced");
+      showNotification(
+        `Sincronizado: ${res.pushedCount} subidos (push), ${res.pulledCount} descargados (pull) ✓`
+      );
     } catch {
       setSyncStatus("error");
       showNotification("Error al sincronizar con la nube");
@@ -745,7 +818,9 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
           onResetSizes={handleResetSizes}
           onOpenCustomModal={() => setIsCustomModalOpen(true)}
           syncStatus={syncStatus}
-          onManualSync={handleManualSync}
+          onPull={handlePull}
+          onPush={handlePush}
+          onBidirectionalSync={handleBidirectionalSync}
           authUser={authUser}
           onUserChange={setAuthUser}
         />
@@ -768,7 +843,9 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
               width={sidebarWidth}
               languageName={langDef.name}
               isLoggedIn={Boolean(authUser)}
-              onSyncAllToCloud={handleManualSync}
+              onSyncAllToCloud={handleBidirectionalSync}
+              onPull={handlePull}
+              onPush={handlePush}
             />
 
             {/* Sidebar Resizer */}
