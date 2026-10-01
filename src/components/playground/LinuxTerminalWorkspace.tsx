@@ -164,7 +164,7 @@ Sep 30 21:00:05 ubuntu-sandbox kernel: [    0.000000] Command line: BOOT_IMAGE=/
   },
 };
 
-const NEOFETCH_ART = `       _,met$$$$$gg.          playground@broslunas-sandbox
+const NEOFETCH_ART = `       _,met$$$$$gg.          broslunas@ejecuta.tech-sandbox
     ,g$$$$$$$$$$$$$$$P.       -------------------
   ,g$$P"        """Y$$.".     OS: Ubuntu 24.04 LTS x86_64
  ,$$P'              \`$$$.    Host: Cloud Sandbox Environment
@@ -1547,7 +1547,7 @@ Change: 2026-09-30 21:00:00.000000000 +0000`,
 
           <span className="ml-2 text-xs text-zinc-300 font-semibold flex items-center gap-1.5">
             <Terminal className="w-3.5 h-3.5 text-neon-green" />
-            <span className="hidden sm:inline">playground@broslunas-sandbox:</span>
+            <span className="hidden sm:inline">broslunas@ejecuta.tech-sandbox:</span>
             <span className="text-neon-cyan">{formatPath(currentDir)}</span>
           </span>
         </div>
@@ -1921,7 +1921,7 @@ Change: 2026-09-30 21:00:00.000000000 +0000`,
             <div key={index} className="space-y-1">
               {/* Prompt line */}
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-neon-green font-semibold">playground@broslunas</span>
+                <span className="text-neon-green font-semibold">broslunas@ejecuta.tech</span>
                 <span className="text-zinc-500">:</span>
                 <span className="text-blue-400 font-semibold">
                   {formatPath(entry.directory)}
@@ -1945,7 +1945,7 @@ Change: 2026-09-30 21:00:00.000000000 +0000`,
 
           {/* Active Input Line */}
           <div className="flex items-center gap-2 flex-wrap pt-1">
-            <span className="text-neon-green font-semibold">playground@broslunas</span>
+            <span className="text-neon-green font-semibold">broslunas@ejecuta.tech</span>
             <span className="text-zinc-500">:</span>
             <span className="text-blue-400 font-semibold">
               {formatPath(currentDir)}

@@ -80,8 +80,65 @@ export async function POST(req: NextRequest) {
       compiler.startsWith("nodejs") ||
       compiler.startsWith("typescript");
 
+    let codeToCompile = body.code;
+    if (body.inputMode === "interactive") {
+      if (body.language === "cpp" || (!isPython && !isBash && !isSql && !isC && !isNodeOrTs)) {
+        codeToCompile = `#if defined(__cplusplus)
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <exception>
+namespace __interactive_helper {
+  static void __on_term() {
+    std::cerr << std::endl << "__INTERACTIVE_WAITING_INPUT__" << std::endl;
+    std::exit(0);
+  }
+  struct __Init {
+    __Init() {
+      std::set_terminate(__on_term);
+      std::cin.exceptions(std::ios_base::eofbit);
+    }
+  } __init;
+}
+static inline int __interactive_check_scanf(int r) {
+  if (r == EOF) {
+    fprintf(stderr, "\n__INTERACTIVE_WAITING_INPUT__\n");
+    exit(0);
+  }
+  return r;
+}
+#define scanf(...) (fflush(stdout), __interactive_check_scanf(scanf(__VA_ARGS__)))
+#endif
+#line 1 "main.cpp"
+` + body.code;
+      } else if (body.language === "c" || isC) {
+        codeToCompile = `#ifndef __cplusplus
+#include <stdio.h>
+#include <stdlib.h>
+static inline int __interactive_check_scanf(int r) {
+  if (r == EOF) {
+    fprintf(stderr, "\n__INTERACTIVE_WAITING_INPUT__\n");
+    exit(0);
+  }
+  return r;
+}
+static inline int __interactive_check_getchar(int c) {
+  if (c == EOF) {
+    fprintf(stderr, "\n__INTERACTIVE_WAITING_INPUT__\n");
+    exit(0);
+  }
+  return c;
+}
+#define scanf(...) (fflush(stdout), __interactive_check_scanf(scanf(__VA_ARGS__)))
+#define getchar() (fflush(stdout), __interactive_check_getchar(getchar()))
+#endif
+#line 1 "main.c"
+` + body.code;
+      }
+    }
+
     const wandboxPayload: Record<string, string> = {
-      code: body.code,
+      code: codeToCompile,
       compiler: compiler,
       stdin: body.stdin || "",
     };

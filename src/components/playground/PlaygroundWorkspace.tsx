@@ -7,6 +7,7 @@ import { Toolbar } from "@/components/playground/Toolbar";
 import { Editor } from "@/components/playground/Editor";
 import { StdinPanel } from "@/components/playground/StdinPanel";
 import { OutputPanel } from "@/components/playground/OutputPanel";
+import { InteractiveTerminal } from "@/components/playground/InteractiveTerminal";
 import { ProjectSidebar } from "@/components/playground/ProjectSidebar";
 import {
   CompilerSettingsModal,
@@ -18,6 +19,7 @@ import {
   CustomLayoutModal,
   DEFAULT_CUSTOM_LAYOUT,
 } from "@/components/playground/CustomLayoutModal";
+import { ShareModal } from "@/components/playground/ShareModal";
 import {
   getProjectsByLanguage,
   saveLanguageProjects,
@@ -27,7 +29,7 @@ import {
   getRawLocalProjects,
   clearAllLocalStorage,
 } from "@/lib/projects";
-import { generateShareUrl, decodeShareableState } from "@/lib/share";
+import { generateShareUrl, decodeShareableState, ShareableState } from "@/lib/share";
 import { downloadSourceFile, generateCMakeLists, generateMakefile } from "@/lib/export";
 import { formatCode } from "@/lib/formatter";
 import { getLanguage } from "@/lib/languages";
@@ -42,6 +44,7 @@ import {
   PanelId,
   AuthUser,
   CloudSyncState,
+  ConsoleMode,
 } from "@/types";
 import {
   fetchAuthStatus,
@@ -53,14 +56,16 @@ import {
   syncBidirectional,
 } from "@/lib/cloud-projects";
 
-interface PlaygroundWorkspaceProps {
+export interface PlaygroundWorkspaceProps {
   initialLanguage?: SupportedLanguage;
   initialProjectId?: string;
+  initialSharedState?: ShareableState;
 }
 
 export function PlaygroundWorkspace({
   initialLanguage = "cpp",
   initialProjectId,
+  initialSharedState,
 }: PlaygroundWorkspaceProps) {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -83,6 +88,7 @@ export function PlaygroundWorkspace({
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isZenMode, setIsZenMode] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Execution state
   const [isRunning, setIsRunning] = useState(false);
@@ -97,6 +103,8 @@ export function PlaygroundWorkspace({
   // Layout mode & panel visibility
   const [layout, setLayout] = useState<PlaygroundLayout>("standard");
   const [showStdin, setShowStdin] = useState(true);
+  const [consoleMode, setConsoleMode] = useState<ConsoleMode>("split");
+  const [interactiveRunTrigger, setInteractiveRunTrigger] = useState(0);
 
   // Custom layout modal & configuration
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
@@ -139,6 +147,10 @@ export function PlaygroundWorkspace({
       const savedStdin = localStorage.getItem("cpp_show_stdin");
       if (savedStdin !== null) {
         setShowStdin(savedStdin === "true");
+      }
+      const savedConsole = localStorage.getItem("playground_console_mode");
+      if (savedConsole === "interactive" || savedConsole === "split") {
+        setConsoleMode(savedConsole as ConsoleMode);
       }
       const sw = localStorage.getItem("cpp_sidebar_width");
       if (sw) setSidebarWidth(Math.max(160, Math.min(500, Number(sw))));
@@ -197,6 +209,21 @@ export function PlaygroundWorkspace({
     });
   };
 
+  const handleToggleConsoleMode = () => {
+    setConsoleMode((prev) => {
+      const next: ConsoleMode = prev === "interactive" ? "split" : "interactive";
+      try {
+        localStorage.setItem("playground_console_mode", next);
+      } catch {}
+      showNotification(
+        next === "interactive"
+          ? "Consola Normal activada (inputs interactivos uno a uno) ✓"
+          : "Modo Dividido activado (stdin por lote) ✓"
+      );
+      return next;
+    });
+  };
+
   const handleResetSizes = () => {
     setEditorHeight(60);
     setStdinWidth(30);
@@ -232,26 +259,29 @@ export function PlaygroundWorkspace({
     setLanguage(currentLang);
 
     async function initWorkspace() {
-      // 1. Shared link in hash check
-      if (typeof window !== "undefined" && window.location.hash) {
-        const shared = decodeShareableState(window.location.hash);
-        if (shared) {
-          const sharedLang: SupportedLanguage = shared.language || currentLang;
-          if (sharedLang !== currentLang) {
-            router.push(`/${sharedLang}/playground${window.location.hash}`);
-            return;
-          }
+      // 1. Shared state check (prop or URL hash)
+      const sharedFromHash =
+        typeof window !== "undefined" && window.location.hash
+          ? decodeShareableState(window.location.hash)
+          : null;
+      const shared = initialSharedState || sharedFromHash;
+      if (shared) {
+        const sharedLang: SupportedLanguage = shared.language || currentLang;
+        if (sharedLang !== currentLang && !initialSharedState) {
+          router.push(`/${sharedLang}/playground${window.location.hash}`);
+          return;
+        }
 
-          const langDef = getLanguage(sharedLang);
-          const sharedProject = createProject(
-            "Código Compartido",
-            shared.code,
-            shared.standard || langDef.defaultStandard,
-            shared.stdin || "",
-            shared.settings || DEFAULT_COMPILER_SETTINGS,
-            sharedLang
-          );
-          if (shared.compiler) sharedProject.compiler = shared.compiler;
+        const langDef = getLanguage(sharedLang);
+        const sharedProject = createProject(
+          shared.title || "Código Compartido",
+          shared.code,
+          shared.standard || langDef.defaultStandard,
+          shared.stdin || "",
+          shared.settings || DEFAULT_COMPILER_SETTINGS,
+          sharedLang
+        );
+        if (shared.compiler) sharedProject.compiler = shared.compiler;
 
           const authStatus = await fetchAuthStatus();
           if (!mounted) return;
@@ -293,7 +323,6 @@ export function PlaygroundWorkspace({
             return;
           }
         }
-      }
 
       // 2. Regular initialization: check auth
       const authStatus = await fetchAuthStatus();
@@ -377,7 +406,7 @@ export function PlaygroundWorkspace({
     return () => {
       mounted = false;
     };
-  }, [initialLanguage, initialProjectId, router]);
+  }, [initialLanguage, initialProjectId, initialSharedState, router]);
 
   // Save current project state for current language
   const saveCurrentProject = useCallback(() => {
@@ -719,22 +748,13 @@ export function PlaygroundWorkspace({
     showNotification("Código formateado ✓");
   };
 
-  // Share via URL hash
+  // Share via modal
   const handleShare = () => {
     if (!activeProjectId) {
       showNotification("Crea un proyecto para poder compartir");
       return;
     }
-    const url = generateShareUrl({
-      language,
-      code,
-      stdin,
-      compiler,
-      standard,
-      settings: compilerSettings,
-    });
-    navigator.clipboard.writeText(url);
-    showNotification("¡Enlace copiado al portapapeles!");
+    setIsShareModalOpen(true);
   };
 
   // Export Project Files
@@ -761,6 +781,12 @@ export function PlaygroundWorkspace({
       showNotification("Crea un proyecto para ejecutar código");
       return;
     }
+
+    if (effectiveConsoleMode === "interactive" && !isWebPreview) {
+      setInteractiveRunTrigger((prev) => prev + 1);
+      return;
+    }
+
     setIsRunning(true);
     setOutput(null);
 
@@ -849,6 +875,7 @@ export function PlaygroundWorkspace({
   const langDef = getLanguage(language);
   const isWebPreview = Boolean(langDef.isWebPreview || language === "html");
   const effectiveShowStdin = !isWebPreview && showStdin;
+  const effectiveConsoleMode: ConsoleMode = isWebPreview ? "split" : consoleMode;
 
   const editorPanel = projects.length === 0 ? (
     <div className="relative w-full h-full min-h-0 min-w-0 flex flex-col items-center justify-center bg-[#090a0f] p-6 text-center select-none font-mono">
@@ -910,6 +937,7 @@ export function PlaygroundWorkspace({
       disabled={isRunning || !activeProjectId}
       onMaximize={() => setMaximizedPanel(maximizedPanel === "stdin" ? null : "stdin")}
       isMaximized={maximizedPanel === "stdin"}
+      onSwitchToInteractive={handleToggleConsoleMode}
     />
   );
 
@@ -925,8 +953,27 @@ export function PlaygroundWorkspace({
     />
   );
 
+  const interactiveTerminalPanel = (
+    <InteractiveTerminal
+      code={code}
+      language={language}
+      compiler={compiler}
+      standard={standard}
+      compilerSettings={compilerSettings}
+      onSwitchToSplit={handleToggleConsoleMode}
+      onMaximize={() => setMaximizedPanel(maximizedPanel === "output" ? null : "output")}
+      isMaximized={maximizedPanel === "output"}
+      initialStdin={stdin}
+      onStdinChange={setStdin}
+      runTrigger={interactiveRunTrigger}
+    />
+  );
+
   const renderPanel = (pid: PanelId) => {
     if (pid === "editor") return editorPanel;
+    if (consoleMode === "interactive" && !isWebPreview) {
+      if (pid === "stdin" || pid === "output") return interactiveTerminalPanel;
+    }
     if (pid === "stdin") return stdinPanel;
     if (pid === "output") return outputPanel;
     return null;
@@ -974,6 +1021,8 @@ export function PlaygroundWorkspace({
           onBidirectionalSync={handleBidirectionalSync}
           authUser={authUser}
           onUserChange={setAuthUser}
+          consoleMode={consoleMode}
+          onToggleConsoleMode={handleToggleConsoleMode}
         />
       )}
 
@@ -1119,7 +1168,11 @@ export function PlaygroundWorkspace({
                 style={{ height: `calc(${100 - editorHeight}% - 4px)` }}
                 className="w-full min-h-0 flex flex-row overflow-hidden"
               >
-                {effectiveShowStdin ? (
+                {effectiveConsoleMode === "interactive" ? (
+                  <div className="w-full h-full min-w-0 overflow-hidden">
+                    {interactiveTerminalPanel}
+                  </div>
+                ) : effectiveShowStdin ? (
                   <>
                     <div
                       style={{ width: `calc(${stdinWidth}% - 4px)` }}
@@ -1219,7 +1272,11 @@ export function PlaygroundWorkspace({
                 style={{ width: `calc(${100 - editorWidth}% - 4px)` }}
                 className="h-full min-w-0 flex flex-col overflow-hidden"
               >
-                {effectiveShowStdin ? (
+                {effectiveConsoleMode === "interactive" ? (
+                  <div className="w-full h-full min-w-0 overflow-hidden">
+                    {interactiveTerminalPanel}
+                  </div>
+                ) : effectiveShowStdin ? (
                   <>
                     <div
                       style={{ height: `calc(${stdinHeight}% - 4px)` }}
@@ -1314,7 +1371,14 @@ export function PlaygroundWorkspace({
                 <div className="w-[2px] h-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
               </div>
 
-              {effectiveShowStdin ? (
+              {effectiveConsoleMode === "interactive" ? (
+                <div
+                  style={{ width: `calc(${100 - col1Width}% - 4px)` }}
+                  className="h-full min-w-0 overflow-hidden flex-1"
+                >
+                  {interactiveTerminalPanel}
+                </div>
+              ) : effectiveShowStdin ? (
                 <>
                   <div
                     style={{ width: `calc(${col2Width}% - 4px)` }}
@@ -1413,7 +1477,14 @@ export function PlaygroundWorkspace({
                 <div className="h-[2px] w-full bg-zinc-800/80 group-hover:bg-neon-green group-active:bg-neon-green transition-colors" />
               </div>
 
-              {effectiveShowStdin ? (
+              {effectiveConsoleMode === "interactive" ? (
+                <div
+                  style={{ height: `calc(${100 - row1Height}% - 4px)` }}
+                  className="w-full min-h-0 overflow-hidden flex-1"
+                >
+                  {interactiveTerminalPanel}
+                </div>
+              ) : effectiveShowStdin ? (
                 <>
                   <div
                     style={{ height: `calc(${row2Height}% - 4px)` }}
@@ -1893,6 +1964,18 @@ export function PlaygroundWorkspace({
       </div>
 
       {/* Modals */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        projectName={projectName}
+        language={language}
+        code={code}
+        stdin={stdin}
+        compiler={compiler}
+        standard={standard}
+        settings={compilerSettings}
+      />
+
       <CompilerSettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}

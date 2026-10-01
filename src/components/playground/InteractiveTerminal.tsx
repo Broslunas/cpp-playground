@@ -34,6 +34,7 @@ interface InteractiveTerminalProps {
   isMaximized?: boolean;
   initialStdin?: string;
   onStdinChange?: (newStdin: string) => void;
+  runTrigger?: number;
 }
 
 export function InteractiveTerminal({
@@ -47,6 +48,7 @@ export function InteractiveTerminal({
   isMaximized = false,
   initialStdin = "",
   onStdinChange,
+  runTrigger,
 }: InteractiveTerminalProps) {
   const [entries, setEntries] = useState<TerminalEntry[]>([]);
   const [interactiveInputs, setInteractiveInputs] = useState<string[]>(() => {
@@ -102,6 +104,7 @@ export function InteractiveTerminal({
             compiler,
             options: standard,
             settings: compilerSettings,
+            inputMode: "interactive",
           }),
         });
 
@@ -143,16 +146,23 @@ export function InteractiveTerminal({
           });
         }
 
-        // Check if stderr contains EOF waiting (e.g. Python EOFError)
+        // Check if stderr signals that program is waiting for next user input
         const isEofWaiting =
+          stderr.includes("__INTERACTIVE_WAITING_INPUT__") ||
           stderr.includes("EOFError: EOF when reading a line") ||
           stderr.includes("EOFError");
 
-        if (stderr && !isEofWaiting) {
+        const cleanStderr = stderr
+          .replace(/__INTERACTIVE_WAITING_INPUT__/g, "")
+          .replace(/Traceback \(most recent call last\):[\s\S]*?EOFError: EOF when reading a line/g, "")
+          .replace(/Traceback \(most recent call last\):[\s\S]*?EOFError/g, "")
+          .trim();
+
+        if (cleanStderr && !isEofWaiting) {
           newEntries.push({
             id: `${Date.now()}-err`,
             type: "stderr",
-            text: stderr,
+            text: cleanStderr,
           });
         }
 
@@ -203,6 +213,13 @@ export function InteractiveTerminal({
     ]);
     executeWithInputs([], true);
   }, [executeWithInputs, language]);
+
+  // Trigger from top toolbar or Ctrl+Enter
+  useEffect(() => {
+    if (runTrigger && runTrigger > 0) {
+      handleStart();
+    }
+  }, [runTrigger, handleStart]);
 
   // Restart / Reset
   const handleReset = () => {

@@ -43,6 +43,7 @@ import {
   PlaygroundLayout,
   CloudSyncState,
   AuthUser,
+  ConsoleMode,
 } from "@/types";
 import { LayoutSelector } from "@/components/playground/LayoutSelector";
 import { CloudSyncStatus } from "@/components/playground/CloudSyncStatus";
@@ -96,6 +97,8 @@ interface ToolbarProps {
   onBidirectionalSync?: () => void;
   authUser?: AuthUser | null;
   onUserChange?: (user: AuthUser | null) => void;
+  consoleMode?: ConsoleMode;
+  onToggleConsoleMode?: () => void;
 }
 
 export function Toolbar({
@@ -134,6 +137,8 @@ export function Toolbar({
   onBidirectionalSync,
   authUser,
   onUserChange,
+  consoleMode = "split",
+  onToggleConsoleMode,
 }: ToolbarProps) {
   const [copiedShare, setCopiedShare] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -169,8 +174,6 @@ export function Toolbar({
 
   const handleShareClick = () => {
     onShare();
-    setCopiedShare(true);
-    setTimeout(() => setCopiedShare(false), 2000);
   };
 
   const hasSpecialFlags =
@@ -390,14 +393,10 @@ export function Toolbar({
                 onClick={handleShareClick}
                 disabled={!hasActiveProject}
                 className="p-1.5 rounded text-zinc-400 hover:text-neon-green hover:bg-zinc-800 transition-colors disabled:opacity-40 disabled:hover:text-zinc-400 disabled:hover:bg-transparent"
-                title={copiedShare ? "¡Enlace copiado!" : "Compartir enlace"}
+                title="Compartir proyecto (/s/...)"
                 aria-label="Compartir enlace de código"
               >
-                {copiedShare ? (
-                  <Check className="w-3.5 h-3.5 text-neon-green animate-in fade-in" />
-                ) : (
-                  <Share2 className="w-3.5 h-3.5" />
-                )}
+                <Share2 className="w-3.5 h-3.5" />
               </button>
 
               <button
@@ -419,6 +418,29 @@ export function Toolbar({
                 onOpenCustomModal={onOpenCustomModal}
                 isHtml={Boolean(langDef.isWebPreview || language === "html")}
               />
+
+              {!langDef.isWebPreview && language !== "html" && onToggleConsoleMode && (
+                <button
+                  type="button"
+                  onClick={onToggleConsoleMode}
+                  className={`p-1.5 rounded transition-colors flex items-center gap-1 ${
+                    consoleMode === "interactive"
+                      ? "bg-zinc-800 text-neon-green border border-neon-green/40 shadow-[0_0_8px_rgba(0,255,136,0.2)]"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                  }`}
+                  title={
+                    consoleMode === "interactive"
+                      ? "Consola Normal activa (inputs uno a uno) — Clic para modo dividido"
+                      : "Cambiar a Consola Normal (introducir inputs uno a uno)"
+                  }
+                  aria-label="Alternar consola interactiva"
+                >
+                  <Terminal className="w-3.5 h-3.5" />
+                  <span className="text-[11px] font-semibold hidden 2xl:inline">
+                    {consoleMode === "interactive" ? "Consola" : "Dividido"}
+                  </span>
+                </button>
+              )}
             </div>
 
             <div className="h-4 w-[1px] bg-zinc-800 shrink-0" />
@@ -805,9 +827,8 @@ export function Toolbar({
                 >
                   <div className="flex items-center gap-2.5">
                     <Share2 className="w-4 h-4 text-zinc-400" />
-                    <span>Compartir Enlace</span>
+                    <span>Compartir Proyecto (/s/...)</span>
                   </div>
-                  {copiedShare && <span className="text-neon-green text-[10px]">Copiado ✓</span>}
                 </button>
 
                 <button
@@ -880,6 +901,31 @@ export function Toolbar({
                       }`}
                     >
                       {showStdin ? "Visible" : "Oculto"}
+                    </span>
+                  </button>
+                )}
+
+                {!langDef.isWebPreview && language !== "html" && onToggleConsoleMode && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onToggleConsoleMode();
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between p-2.5 rounded-lg bg-zinc-900/60 hover:bg-zinc-900 text-zinc-200 border border-zinc-800/80 transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Terminal className="w-4 h-4 text-neon-green" />
+                      <span>Modo de Ejecución</span>
+                    </div>
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded font-mono ${
+                        consoleMode === "interactive"
+                          ? "bg-neon-green/10 text-neon-green border border-neon-green/30 font-semibold"
+                          : "bg-zinc-800 text-zinc-400"
+                      }`}
+                    >
+                      {consoleMode === "interactive" ? "Consola Normal" : "Dividido (Lote)"}
                     </span>
                   </button>
                 )}
