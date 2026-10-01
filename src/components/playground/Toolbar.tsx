@@ -126,25 +126,30 @@ export function Toolbar({
 
         <button
           onClick={onToggleSidebar}
-          className={`p-1.5 rounded border transition-colors flex items-center gap-1.5 text-xs ${
+          className={`p-1.5 rounded transition-colors flex items-center justify-center text-xs ${
             isSidebarOpen
-              ? "bg-zinc-800 border-zinc-700 text-neon-green"
-              : "bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
+              ? "bg-zinc-800 text-neon-green"
+              : "text-zinc-400 hover:text-white hover:bg-zinc-800/80"
           }`}
-          aria-label={isSidebarOpen ? "Cerrar barra de proyectos" : "Abrir barra de proyectos"}
+          title={isSidebarOpen ? "Ocultar panel de proyectos" : "Mostrar panel de proyectos"}
+          aria-label={isSidebarOpen ? "Ocultar panel de proyectos" : "Mostrar panel de proyectos"}
           aria-expanded={isSidebarOpen}
         >
-          <FolderOpen className="w-3.5 h-3.5" />
-          <span className="hidden md:inline">Proyectos</span>
+          <FolderOpen className="w-4 h-4" />
         </button>
 
         <div className="h-4 w-[1px] bg-zinc-800 hidden sm:block" />
 
-        <div className="flex items-center gap-1.5 max-w-[140px] sm:max-w-[200px] truncate">
+        <div className="flex items-center gap-2 max-w-[150px] sm:max-w-[220px] truncate">
           <Terminal className="w-3.5 h-3.5 text-neon-green shrink-0" />
           <span className="font-medium text-zinc-200 truncate">
             {projectName}
           </span>
+          <CloudSyncStatus
+            status={syncStatus}
+            onManualSync={onManualSync}
+            isLoggedIn={Boolean(authUser)}
+          />
         </div>
       </div>
 
@@ -287,23 +292,15 @@ export function Toolbar({
 
         <div className="h-4 w-[1px] bg-zinc-800 hidden sm:block" />
 
-        {/* Cloud Sync Status */}
-        <CloudSyncStatus
-          status={syncStatus}
-          onManualSync={onManualSync}
-          isLoggedIn={Boolean(authUser)}
-        />
-
         {/* Save Button */}
         <button
           onClick={onSave}
           disabled={isRunning}
-          className="p-1.5 sm:px-2.5 sm:py-1.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700 text-xs flex items-center gap-1.5 transition-colors focus:outline-none disabled:opacity-50"
+          className="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-800/80 transition-colors focus:outline-none disabled:opacity-50"
           title="Guardar Proyecto (Ctrl+S)"
           aria-label="Guardar Proyecto"
         >
           <Save className="w-3.5 h-3.5" />
-          <span className="hidden lg:inline">Guardar</span>
         </button>
 
         {/* Run Button (Primary CTA) */}

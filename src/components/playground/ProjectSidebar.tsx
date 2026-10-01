@@ -83,30 +83,28 @@ export function ProjectSidebar({
       aria-label="Local Projects Management"
     >
       {/* Header */}
-      <div className="p-3 border-b border-zinc-800 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2 text-xs font-mono font-semibold text-zinc-300">
-          <FolderOpen className="w-4 h-4 text-neon-green" />
-          <span>PROYECTOS {languageName ? languageName.toUpperCase() : ""}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
+      <div className="px-3 py-2.5 border-b border-zinc-800 flex items-center justify-between shrink-0">
+        <span className="text-[11px] font-mono font-semibold tracking-wider text-zinc-400 uppercase">
+          Proyectos {languageName ? `· ${languageName}` : ""}
+        </span>
+        <div className="flex items-center gap-1">
           {isLoggedIn && onSyncAllToCloud && (
             <button
               onClick={onSyncAllToCloud}
-              className="p-1 text-zinc-400 hover:text-cyan-400 hover:bg-zinc-800 rounded transition-colors"
-              title="Sincronizar todos los proyectos a la nube"
-              aria-label="Sincronizar proyectos a la nube"
+              className="p-1 text-zinc-400 hover:text-cyan-400 hover:bg-zinc-850 rounded transition-colors"
+              title="Sincronizar todos a la nube"
+              aria-label="Sincronizar todos a la nube"
             >
               <CloudUpload className="w-3.5 h-3.5" />
             </button>
           )}
           <button
             onClick={onCreateProject}
-            className="px-2 py-1 bg-neon-green/10 border border-neon-green/30 text-neon-green hover:bg-neon-green hover:text-black rounded text-xs font-mono flex items-center gap-1 transition-colors"
-            title="Crear nuevo proyecto"
-            aria-label="Crear nuevo proyecto"
+            className="p-1 text-zinc-400 hover:text-neon-green hover:bg-zinc-800/80 rounded transition-colors"
+            title="Nuevo proyecto"
+            aria-label="Nuevo proyecto"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Nuevo</span>
+            <Plus className="w-4 h-4" />
           </button>
         </div>
       </div>
