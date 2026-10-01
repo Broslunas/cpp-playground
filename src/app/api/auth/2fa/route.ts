@@ -44,7 +44,7 @@ export async function GET() {
     // Generar nuevo secreto provisional para configuración (32 caracteres / 160 bits RFC 6238)
     const secret = generateBase32Secret(32);
     const accountIdentifier = String(doc?.email || user.email || user.username);
-    const otpauthUrl = buildOtpAuthUri(accountIdentifier, secret, "Broslunas Playground");
+    const otpauthUrl = buildOtpAuthUri(accountIdentifier, secret, "ejecuta.tech");
 
     return NextResponse.json({
       enabled: false,

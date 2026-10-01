@@ -521,7 +521,7 @@ export function Toolbar({
                 <button
                   onClick={handleInstallClick}
                   className="flex items-center gap-1.5 px-2 py-1 text-neon-green hover:bg-neon-green/20 text-xs font-semibold transition-colors"
-                  title="Instalar Broslunas Playground como aplicación"
+                  title="Instalar ejecuta.tech como aplicación"
                   aria-label="Instalar app"
                 >
                   <Download className="w-3.5 h-3.5 shrink-0" />

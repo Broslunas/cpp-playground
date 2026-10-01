@@ -41,10 +41,10 @@ export function Navbar() {
           </div>
           <div className="flex flex-col">
             <span className="font-mono font-bold text-sm tracking-wide text-white group-hover:text-neon-green transition-colors">
-              Broslunas <span className="text-neon-green font-extrabold">Playground</span>
+              ejecuta<span className="text-neon-green font-extrabold">.tech</span>
             </span>
             <span className="text-[10px] font-mono text-zinc-500 -mt-1 hidden sm:block">
-              Code Runner & IDE
+              Code Runner by Broslunas
             </span>
           </div>
         </Link>

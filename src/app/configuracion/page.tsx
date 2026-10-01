@@ -457,7 +457,7 @@ export default function SettingsPage() {
                   <span>Modelo de Acceso (Cero Contraseñas)</span>
                 </div>
                 <p className="text-zinc-400 leading-relaxed font-sans">
-                  Broslunas Playground utiliza una arquitectura <strong>passwordless</strong>: nunca
+                  ejecuta.tech utiliza una arquitectura <strong>passwordless</strong>: nunca
                   almacenamos contraseñas de usuarios. Puedes acceder con tu huella/FaceID mediante{" "}
                   <strong className="text-white">Passkeys (WebAuthn)</strong> o autenticarte con tu cuenta de{" "}
                   <strong className="text-white">GitHub</strong>.

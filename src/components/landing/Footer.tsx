@@ -46,7 +46,7 @@ export function Footer() {
                 </svg>
               </div>
               <span className="font-bold text-sm tracking-wider text-white">
-                BROSLUNAS <span className="text-neon-green">PLAYGROUND</span>
+                EJECUTA<span className="text-neon-green">.TECH</span>
               </span>
             </Link>
             <p className="text-zinc-400 text-xs leading-relaxed max-w-sm">
@@ -132,7 +132,7 @@ export function Footer() {
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div className="flex flex-col sm:flex-row items-center gap-2">
             <span className="text-zinc-400">
-              © {currentYear} <strong className="text-zinc-200 font-semibold">Broslunas Playground</strong>. Todos los derechos reservados.
+              © {currentYear} <strong className="text-zinc-200 font-semibold">ejecuta.tech</strong>. Todos los derechos reservados.
             </span>
           </div>
 

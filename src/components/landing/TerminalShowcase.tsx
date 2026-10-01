@@ -34,14 +34,14 @@ int main() {
     // C++20/23 Ranges pipeline
     auto evens = nums | std::views::filter([](int n) { return n % 2 == 0; });
     for (int n : evens) {
-        std::cout << "» Broslunas C++23 Par: " << n << "\\n";
+        std::cout << "» ejecuta.tech C++23 Par: " << n << "\\n";
     }
     return 0;
 }`,
     stdout: [
-      "» Broslunas C++23 Par: 2",
-      "» Broslunas C++23 Par: 4",
-      "» Broslunas C++23 Par: 6",
+      "» ejecuta.tech C++23 Par: 2",
+      "» ejecuta.tech C++23 Par: 4",
+      "» ejecuta.tech C++23 Par: 6",
     ],
     execTime: "0.082s",
   },
@@ -60,15 +60,15 @@ int main(void) {
 
     for (int i = 0; i < len; i++) {
         if (nums[i] % 2 == 0) {
-            printf("» Broslunas C17 Par: %d\\n", nums[i]);
+            printf("» ejecuta.tech C17 Par: %d\\n", nums[i]);
         }
     }
     return 0;
 }`,
     stdout: [
-      "» Broslunas C17 Par: 2",
-      "» Broslunas C17 Par: 4",
-      "» Broslunas C17 Par: 6",
+      "» ejecuta.tech C17 Par: 2",
+      "» ejecuta.tech C17 Par: 4",
+      "» ejecuta.tech C17 Par: 6",
     ],
     execTime: "0.012s",
   },
@@ -86,12 +86,12 @@ var nums = new[] { 1, 2, 3, 4, 5, 6 };
 var evens = nums.Where(n => n % 2 == 0);
 
 foreach (var n in evens) {
-    Console.WriteLine($"» Broslunas C# Par: {n}");
+    Console.WriteLine($"» ejecuta.tech C# Par: {n}");
 }`,
     stdout: [
-      "» Broslunas C# Par: 2",
-      "» Broslunas C# Par: 4",
-      "» Broslunas C# Par: 6",
+      "» ejecuta.tech C# Par: 2",
+      "» ejecuta.tech C# Par: 4",
+      "» ejecuta.tech C# Par: 6",
     ],
     execTime: "0.048s",
   },
@@ -136,14 +136,14 @@ print(f"» Primos hasta 25: {resultado}")`,
 
 const miProyecto: Proyecto = {
     id: "bl-01",
-    nombre: "Broslunas Playground",
+    nombre: "ejecuta.tech",
     lenguajes: ["C++", "Python", "TS", "Bash"],
     esActivo: true
 };
 
 console.log(\`» Entorno: \${miProyecto.nombre} cargado con \${miProyecto.lenguajes.length} runtimes\`);`,
     stdout: [
-      "» Entorno: Broslunas Playground cargado con 4 runtimes",
+      "» Entorno: ejecuta.tech cargado con 4 runtimes",
     ],
     execTime: "0.045s",
   },

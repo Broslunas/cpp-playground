@@ -132,7 +132,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!profile) {
     return {
-      title: "Perfil no encontrado | Broslunas Playground",
+      title: "Perfil no encontrado | ejecuta.tech",
       robots: { index: false, follow: false },
     };
   }
@@ -140,14 +140,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const isUnlisted = profile.profileVisibility === "unlisted";
 
   return {
-    title: `${profile.name} (@${profile.username}) | Broslunas Playground`,
-    description: profile.bio || `Perfil de desarrollador de @${profile.username} en Broslunas Playground`,
+    title: `${profile.name} (@${profile.username}) | ejecuta.tech`,
+    description: profile.bio || `Perfil de desarrollador de @${profile.username} en ejecuta.tech`,
     robots: isUnlisted
       ? { index: false, follow: false }
       : { index: true, follow: true },
     openGraph: {
       title: `${profile.name} (@${profile.username})`,
-      description: profile.bio || "Proyectos y código en Broslunas Playground",
+      description: profile.bio || "Proyectos y código en ejecuta.tech",
       images: profile.avatarUrl ? [profile.avatarUrl] : [],
     },
   };
@@ -175,7 +175,7 @@ export default async function PublicProfilePage({ params }: Props) {
           </Link>
 
           <Link href="/" className="font-bold text-xs tracking-wide text-zinc-200">
-            Broslunas <span className="text-neon-green">Playground</span>
+            ejecuta<span className="text-neon-green">.tech</span>
           </Link>
 
           <div className="flex items-center gap-3">
@@ -397,7 +397,7 @@ export default async function PublicProfilePage({ params }: Props) {
       </main>
 
       <footer className="border-t border-zinc-800/60 py-6 text-center text-xs text-zinc-600 font-mono">
-        Broslunas Playground • Entorno de ejecución en la nube
+        ejecuta.tech • Entorno de ejecución en la nube
       </footer>
     </div>
   );

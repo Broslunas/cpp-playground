@@ -140,7 +140,7 @@ export function verifyTotpToken(token: string, secretBase32: string, windowSteps
   return false;
 }
 
-export function buildOtpAuthUri(account: string, secretBase32: string, issuer = "Broslunas Playground"): string {
+export function buildOtpAuthUri(account: string, secretBase32: string, issuer = "ejecuta.tech"): string {
   const cleanIssuer = issuer.trim();
   const cleanAccount = account.trim();
   return `otpauth://totp/${encodeURIComponent(cleanIssuer)}:${encodeURIComponent(cleanAccount)}?secret=${secretBase32}&issuer=${encodeURIComponent(cleanIssuer)}&algorithm=SHA1&digits=6&period=30`;

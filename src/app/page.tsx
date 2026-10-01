@@ -28,7 +28,7 @@ export default function Home() {
                 <Sparkles className="w-3.5 h-3.5" /> Comienza en 1 Segundo
               </span>
               <h3 className="text-2xl sm:text-4xl font-extrabold font-mono text-white tracking-tight">
-                Entra a Broslunas Playground
+                Entra a ejecuta.tech
               </h3>
               <p className="text-zinc-400 text-sm sm:text-base font-sans">
                 Sin descargas, sin instalaciones y sin tarjetas de crédito. Abre tu editor en el navegador y empieza a compilar.

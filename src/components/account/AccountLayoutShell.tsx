@@ -35,7 +35,7 @@ export function AccountLayoutShell({
             <div className="h-4 w-[1px] bg-zinc-800" />
             <Link href="/" className="flex items-center gap-2">
               <span className="font-mono font-bold text-xs tracking-wide text-zinc-200">
-                Broslunas <span className="text-neon-green">Playground</span>
+                ejecuta<span className="text-neon-green">.tech</span>
               </span>
             </Link>
           </div>

@@ -33,18 +33,18 @@ export function Hero() {
         {/* Release & Brand Status Badge */}
         <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-neon-green/30 bg-neon-green/5 text-neon-green text-xs font-mono mb-8 backdrop-blur-md shadow-[0_0_20px_rgba(0,255,136,0.15)] hover:border-neon-green/60 transition-all">
           <span className="w-2 h-2 rounded-full bg-neon-green animate-pulse" />
-          <span className="font-semibold text-zinc-100">Broslunas Playground v1.2</span>
+          <span className="font-semibold text-zinc-100">ejecuta.tech v1.2</span>
           <span className="text-zinc-500">•</span>
           <span className="text-neon-cyan">6 Runtimes Listos</span>
           <span className="text-zinc-500">•</span>
-          <span className="text-zinc-300">Zero Configuración</span>
+          <span className="text-zinc-300">by Broslunas</span>
         </div>
 
         {/* Hero Title */}
         <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white mb-6 font-mono leading-[1.1]">
           <span className="block text-zinc-200">El Playground Definitivo</span>
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-green via-teal-300 to-neon-cyan drop-shadow-[0_0_40px_rgba(0,255,136,0.35)]">
-            Broslunas Playground
+            ejecuta.tech
           </span>
         </h1>
 

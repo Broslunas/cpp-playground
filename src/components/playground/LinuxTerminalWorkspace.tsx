@@ -1906,7 +1906,7 @@ Change: 2026-09-30 21:00:00.000000000 +0000`,
           {/* Welcome MOTD */}
           <div className="text-zinc-400 select-none pb-2 border-b border-zinc-900 leading-relaxed">
             <p className="text-neon-green font-bold">
-              Welcome to Broslunas Playground based on Linux
+              Welcome to ejecuta.tech based on Linux
             </p>
             <p className="text-zinc-400 mt-1">
               * Sesión actual: <span className="text-white font-semibold">{activeSession?.name}</span> (Persistencia local activa)

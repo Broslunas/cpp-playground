@@ -1,4 +1,4 @@
-// Service Worker for Broslunas Playground PWA
+// Service Worker for ejecuta.tech PWA
 const CACHE_NAME = 'broslunas-pwa-v1';
 const PRECACHE_ASSETS = [
   '/',

@@ -79,7 +79,7 @@ export function Features() {
           Potencia y Flexibilidad
         </h2>
         <p className="text-3xl sm:text-4xl font-bold font-mono text-white">
-          Todo lo que necesitas en Broslunas Playground
+          Todo lo que necesitas en ejecuta.tech
         </p>
         <p className="text-zinc-400 text-sm max-w-2xl mx-auto mt-3 font-sans">
           Diseñado para desarrolladores, estudiantes y creadores que buscan velocidad sin fricción.

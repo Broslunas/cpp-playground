@@ -134,7 +134,7 @@ export default function Verify2FAPage() {
           <span>Volver al Login</span>
         </Link>
         <span className="text-xs text-zinc-500 font-bold">
-          Broslunas <span className="text-neon-green">Playground</span>
+          ejecuta<span className="text-neon-green">.tech</span>
         </span>
       </header>
 
@@ -151,7 +151,7 @@ export default function Verify2FAPage() {
       </main>
 
       <footer className="px-6 py-4 text-center text-xs text-zinc-600 border-t border-zinc-800/40">
-        Broslunas Playground • Seguridad Cero Contraseñas
+        ejecuta.tech by <a href="https://broslunas.com" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-neon-green transition-colors">Broslunas</a> • Seguridad Cero Contraseñas
       </footer>
     </div>
   );

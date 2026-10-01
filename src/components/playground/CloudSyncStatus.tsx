@@ -44,7 +44,7 @@ export function CloudSyncStatus({
   if (!isLoggedIn) {
     return (
       <a
-        href="/api/auth/github/login"
+        href="/login"
         className="text-zinc-600 hover:text-zinc-400 p-1 rounded transition-colors flex items-center"
         title="Modo local. Inicia sesión con GitHub para sincronizar en la nube (MongoDB + R2)"
         aria-label="Iniciar sesión para sincronizar en la nube"

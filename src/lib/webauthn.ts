@@ -14,7 +14,7 @@ export function getWebAuthnRpConfig(requestUrl?: string) {
   }
 
   return {
-    rpName: "Broslunas Playground",
+    rpName: "ejecuta.tech",
     rpID,
     origin,
   };

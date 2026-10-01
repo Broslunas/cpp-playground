@@ -1,6 +1,6 @@
 {
-  "name": "Broslunas Playground",
-  "short_name": "Broslunas",
+  "name": "ejecuta.tech",
+  "short_name": "ejecuta.tech",
   "description": "Playground moderno e interactivo para compilar y ejecutar C++, Python, JavaScript, TypeScript, Bash y HTML en tiempo real.",
   "id": "/",
   "start_url": "/",

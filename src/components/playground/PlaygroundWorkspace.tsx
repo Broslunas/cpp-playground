@@ -563,7 +563,7 @@ export function PlaygroundWorkspace({
   // Push to Cloud
   const handlePush = async () => {
     if (!authUser) {
-      window.location.href = "/api/auth/github/login";
+      window.location.href = "/login";
       return;
     }
     setSyncStatus("saving");
@@ -586,7 +586,7 @@ export function PlaygroundWorkspace({
   // Pull from Cloud
   const handlePull = async () => {
     if (!authUser) {
-      window.location.href = "/api/auth/github/login";
+      window.location.href = "/login";
       return;
     }
     setSyncStatus("saving");
@@ -623,7 +623,7 @@ export function PlaygroundWorkspace({
   // Bidirectional Intelligent Sync
   const handleBidirectionalSync = async () => {
     if (!authUser) {
-      window.location.href = "/api/auth/github/login";
+      window.location.href = "/login";
       return;
     }
     setSyncStatus("saving");

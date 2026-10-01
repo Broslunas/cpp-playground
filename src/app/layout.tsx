@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { SkipLink } from "@/components/ui/SkipLink";
 
@@ -9,15 +10,16 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://playground.broslunas.com"),
+  metadataBase: new URL("https://ejecuta.tech"),
   title: {
-    default: "Broslunas Playground | Compilador & Runner Online Multi-Lenguaje",
-    template: "%s | Broslunas Playground",
+    default: "ejecuta.tech | Compilador & Runner Online Multi-Lenguaje",
+    template: "%s | ejecuta.tech",
   },
   description:
-    "Broslunas Playground: entorno de desarrollo web moderno para compilar y ejecutar C++, Python, JavaScript, TypeScript, Linux Bash y HTML en tiempo real con GCC, Clang, stdin y persistencia local.",
+    "ejecuta.tech: entorno de desarrollo web moderno para compilar y ejecutar C++, Python, JavaScript, TypeScript, Linux Bash y HTML en tiempo real con GCC, Clang, stdin y persistencia local.",
   keywords: [
-    "Broslunas Playground",
+    "ejecuta.tech",
+    "ejecuta",
     "Broslunas",
     "compilador online",
     "c++ playground",
@@ -53,14 +55,14 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Broslunas",
+    title: "ejecuta.tech",
   },
   openGraph: {
     type: "website",
     locale: "es_ES",
-    url: "https://playground.broslunas.com",
-    siteName: "Broslunas Playground",
-    title: "Broslunas Playground | Compilador & Runner Online",
+    url: "https://ejecuta.tech",
+    siteName: "ejecuta.tech",
+    title: "ejecuta.tech | Compilador & Runner Online",
     description:
       "Compila y ejecuta C++, Python, TypeScript, JavaScript, Bash y HTML en tu navegador con soporte para stdin, salida en vivo y plantillas.",
     images: [
@@ -68,13 +70,13 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Broslunas Playground Preview",
+        alt: "ejecuta.tech Preview",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Broslunas Playground | Compilador & Runner Online",
+    title: "ejecuta.tech | Compilador & Runner Online",
     description:
       "Compila y ejecuta C++, Python, TypeScript, JavaScript, Bash y HTML en tiempo real sin instalaciones.",
     creator: "@broslunas",
@@ -101,10 +103,10 @@ export default function RootLayout({
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "Broslunas Playground",
-    "url": "https://playground.broslunas.com",
+    "name": "ejecuta.tech",
+    "url": "https://ejecuta.tech",
     "description":
-      "Playground y compilador online multi-lenguaje de alto rendimiento con soporte para C++, Python, JavaScript, TypeScript, Linux Bash y HTML.",
+      "Playground y compilador online multi-lenguaje de alto rendimiento con soporte para C++, Python, JavaScript, TypeScript, Linux Bash y HTML por Broslunas.",
     "applicationCategory": "DeveloperApplication",
     "operatingSystem": "All",
     "author": {
@@ -126,7 +128,9 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <script
+        <Script
+          id="sw-register"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(e){console.warn('SW:',e);});});}`,
           }}
