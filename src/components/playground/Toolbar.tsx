@@ -104,6 +104,7 @@ export function Toolbar({
   const [copiedShare, setCopiedShare] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [inputName, setInputName] = useState(projectName);
+  const isSubmittingName = useRef(false);
 
   useEffect(() => {
     setInputName(projectName);
@@ -111,6 +112,9 @@ export function Toolbar({
 
   const handleNameSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (isSubmittingName.current) return;
+    isSubmittingName.current = true;
+
     const trimmed = inputName.trim();
     if (trimmed && trimmed !== projectName) {
       onProjectNameChange?.(trimmed);
@@ -118,6 +122,9 @@ export function Toolbar({
       setInputName(projectName);
     }
     setIsEditingName(false);
+    queueMicrotask(() => {
+      isSubmittingName.current = false;
+    });
   };
 
   const langDef = getLanguage(language);
