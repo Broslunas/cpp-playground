@@ -493,13 +493,9 @@ export function LanguageSelector() {
             </div>
             <div className="flex items-center gap-1.5 text-xs">
               <span className="font-semibold text-zinc-300 group-hover:text-neon-green transition-colors">
-                Broslunas
+                ejecuta
               </span>
-              <span className="text-zinc-600">/</span>
-              <span className="font-bold text-white tracking-tight">Playground</span>
-              <span className="hidden md:inline-block ml-1 px-1.5 py-0.2 text-[9px] uppercase tracking-wider text-neon-green/90 bg-neon-green/10 border border-neon-green/30 rounded font-bold">
-                Hub
-              </span>
+              <span className="font-bold text-neon-green tracking-tight">.tech</span>
             </div>
           </Link>
         </div>

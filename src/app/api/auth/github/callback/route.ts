@@ -50,7 +50,7 @@ export async function GET(request: Request) {
     const userRes = await fetch("https://api.github.com/user", {
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        "User-Agent": "Broslunas-Playground",
+        "User-Agent": "ejecuta-tech",
       },
     });
 
@@ -67,7 +67,7 @@ export async function GET(request: Request) {
         const emailRes = await fetch("https://api.github.com/user/emails", {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "User-Agent": "Broslunas-Playground",
+            "User-Agent": "ejecuta-tech",
           },
         });
         if (emailRes.ok) {

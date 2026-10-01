@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { generateQrMatrix, generateQrSvgPath } from "./qr";
 
 // Self-check: QR matrix generation and dimensions
-const otpauth = "otpauth://totp/Broslunas%20Playground:user%40example.com?secret=JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP&issuer=Broslunas%20Playground&algorithm=SHA1&digits=6&period=30";
+const otpauth = "otpauth://totp/ejecuta.tech:user%40example.com?secret=JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP&issuer=ejecuta.tech&algorithm=SHA1&digits=6&period=30";
 const matrix = generateQrMatrix(otpauth);
 
 // Matrix must be square and larger than 21x21
