@@ -515,8 +515,8 @@ export function PlaygroundWorkspace({
     router.push(`/${newLang}/playground`);
   };
 
-  // Create Project in current language
-  const handleCreateProject = async () => {
+  // Create Project in current language (optional folder)
+  const handleCreateProject = async (folder?: string) => {
     saveCurrentProject();
 
     const langDef = getLanguage(language);
@@ -526,7 +526,8 @@ export function PlaygroundWorkspace({
       langDef.defaultStandard,
       "",
       DEFAULT_COMPILER_SETTINGS,
-      language
+      language,
+      folder
     );
 
     setActiveId(newProj.id);
@@ -556,6 +557,110 @@ export function PlaygroundWorkspace({
       const updated = [newProj, ...projects];
       setProjects(updated);
       saveLanguageProjects(language, updated);
+    }
+  };
+
+  // Move Project to Folder (or root if null/"")
+  const handleMoveProject = async (id: string, folder: string | null) => {
+    const cleanFolder = folder?.trim() || undefined;
+    let targetProject: Project | null = null;
+    const updated = projects.map((p) => {
+      if (p.id === id) {
+        const upd: Project = { ...p, folder: cleanFolder, updatedAt: Date.now() };
+        targetProject = upd;
+        return upd;
+      }
+      return p;
+    });
+    setProjects(updated);
+
+    if (authUser && targetProject) {
+      setSyncStatus("saving");
+      await saveProjectToCloud(targetProject);
+      setSyncStatus("synced");
+    } else if (!authUser) {
+      saveLanguageProjects(language, updated);
+    }
+  };
+
+  // Rename a Folder across all projects that belong to it
+  const handleRenameFolder = async (oldFolder: string, newFolder: string) => {
+    const cleanOld = oldFolder.trim();
+    const cleanNew = newFolder.trim();
+    if (!cleanOld || !cleanNew || cleanOld === cleanNew) return;
+
+    const toSync: Project[] = [];
+    const updated = projects.map((p) => {
+      if ((p.folder || "").trim() === cleanOld) {
+        const upd: Project = { ...p, folder: cleanNew, updatedAt: Date.now() };
+        toSync.push(upd);
+        return upd;
+      }
+      return p;
+    });
+    setProjects(updated);
+
+    if (authUser && toSync.length > 0) {
+      setSyncStatus("saving");
+      await pushProjectsToCloud(toSync);
+      setSyncStatus("synced");
+      showNotification(`Carpeta "${cleanOld}" renombrada a "${cleanNew}" ✓`);
+    } else if (!authUser) {
+      saveLanguageProjects(language, updated);
+    }
+  };
+
+  // Delete a Folder: either move its projects to root or delete them
+  const handleDeleteFolder = async (folderName: string, deleteProjects: boolean) => {
+    const cleanFolder = folderName.trim();
+    if (!cleanFolder) return;
+
+    if (deleteProjects) {
+      const toDelete = projects.filter((p) => (p.folder || "").trim() === cleanFolder);
+      const updated = projects.filter((p) => (p.folder || "").trim() !== cleanFolder);
+      setProjects(updated);
+
+      if (authUser) {
+        setSyncStatus("saving");
+        await Promise.all(toDelete.map((p) => deleteProjectFromCloud(p.id)));
+        setSyncStatus("synced");
+      } else {
+        saveLanguageProjects(language, updated);
+      }
+
+      if (activeProjectId && toDelete.some((p) => p.id === activeProjectId)) {
+        if (updated.length > 0) {
+          handleSelectProject(updated[0].id);
+        } else {
+          setActiveId(null);
+          if (!authUser) setActiveProjectId(null, language);
+          setCode("");
+          setStdin("");
+          setProjectName("Sin proyectos");
+          setOutput(null);
+        }
+      }
+      showNotification(`Carpeta "${cleanFolder}" y sus proyectos eliminados ✓`);
+    } else {
+      const toSync: Project[] = [];
+      const updated = projects.map((p) => {
+        if ((p.folder || "").trim() === cleanFolder) {
+          const upd: Project = { ...p, folder: undefined, updatedAt: Date.now() };
+          toSync.push(upd);
+          return upd;
+        }
+        return p;
+      });
+      setProjects(updated);
+
+      if (authUser && toSync.length > 0) {
+        setSyncStatus("saving");
+        await pushProjectsToCloud(toSync);
+        setSyncStatus("synced");
+      } else if (!authUser) {
+        saveLanguageProjects(language, updated);
+      }
+      showNotification(`Proyectos movidos a la raíz ✓`);
     }
   };
 
@@ -890,7 +995,7 @@ export function PlaygroundWorkspace({
       </p>
       <div className="flex items-center gap-2">
         <button
-          onClick={handleCreateProject}
+          onClick={() => handleCreateProject()}
           className="px-3.5 py-1.5 rounded bg-neon-green text-black font-semibold text-xs flex items-center gap-1.5 hover:bg-[#00e67a] active:bg-[#00cc6c] transition-all shadow-[0_0_15px_rgba(0,255,136,0.3)] hover:shadow-[0_0_20px_rgba(0,255,136,0.5)]"
         >
           <Plus className="w-3.5 h-3.5" />
@@ -1039,6 +1144,9 @@ export function PlaygroundWorkspace({
               onCreateProject={handleCreateProject}
               onDeleteProject={handleDeleteProject}
               onRenameProject={handleRenameProject}
+              onMoveProject={handleMoveProject}
+              onRenameFolder={handleRenameFolder}
+              onDeleteFolder={handleDeleteFolder}
               isOpen={isSidebarOpen}
               onClose={() => setIsSidebarOpen(false)}
               width={sidebarWidth}

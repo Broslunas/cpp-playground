@@ -56,6 +56,7 @@ export async function GET(request: Request, { params }: RouteParams) {
         publicCode: doc.publicCode ?? false,
         featured: doc.featured ?? false,
         collectionIds: doc.collectionIds || [],
+        folder: doc.folder || undefined,
       },
     });
   } catch (error) {
@@ -89,6 +90,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       publicCode,
       featured,
       collectionIds,
+      folder,
     } = body;
 
     const r2Key = `projects/${user.id}/${id}.txt`;
@@ -122,6 +124,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
     if (publicCode !== undefined) updateDoc.publicCode = Boolean(publicCode);
     if (featured !== undefined) updateDoc.featured = Boolean(featured);
     if (Array.isArray(collectionIds)) updateDoc.collectionIds = collectionIds;
+    if (folder !== undefined) updateDoc.folder = typeof folder === "string" ? folder.trim() : "";
 
     await db.collection("projects").updateOne(
       { userId: user.id, projectId: id },

@@ -59,6 +59,7 @@ export async function GET() {
           publicCode: doc.publicCode ?? false,
           featured: doc.featured ?? false,
           collectionIds: doc.collectionIds || [],
+          folder: doc.folder || undefined,
         };
       })
     );
@@ -104,6 +105,7 @@ export async function POST(request: Request) {
       publicCode = false,
       featured = false,
       collectionIds = [],
+      folder,
     } = body;
 
     if (!id || !name) {
@@ -149,6 +151,7 @@ export async function POST(request: Request) {
           publicCode: Boolean(publicCode),
           featured: Boolean(featured),
           collectionIds: Array.isArray(collectionIds) ? collectionIds : [],
+          folder: typeof folder === "string" ? folder.trim() : "",
         },
         $setOnInsert: {
           createdAt,
@@ -176,6 +179,7 @@ export async function POST(request: Request) {
         publicCode: Boolean(publicCode),
         featured: Boolean(featured),
         collectionIds,
+        folder: typeof folder === "string" ? folder.trim() || undefined : undefined,
       },
     });
   } catch (error) {

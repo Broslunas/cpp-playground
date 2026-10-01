@@ -56,6 +56,7 @@ export async function POST(request: Request) {
             r2Key,
             updatedAt: project.updatedAt || now,
             syncedAt: now,
+            folder: project.folder || "",
           },
           $setOnInsert: {
             createdAt: project.createdAt || now,

@@ -108,7 +108,8 @@ export function createProject(
   standard?: string,
   stdin: string = "",
   settings?: CompilerSettings,
-  language: SupportedLanguage = "cpp"
+  language: SupportedLanguage = "cpp",
+  folder?: string
 ): Project {
   const langDef = getLanguage(language);
 
@@ -121,6 +122,7 @@ export function createProject(
     compiler: langDef.defaultCompiler,
     options: standard || langDef.defaultStandard,
     settings,
+    folder: folder?.trim() || undefined,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
