@@ -56,6 +56,7 @@ export interface Project {
   publicCode?: boolean; // Solo si true expone el código a visitantes en perfiles públicos
   featured?: boolean;
   collectionIds?: string[];
+  folder?: string;
 }
 
 export type ProfileVisibility = "public" | "unlisted" | "private";
