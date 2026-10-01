@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Play,
@@ -18,6 +18,7 @@ import {
   Maximize2,
   Minimize2,
   Check,
+  Edit2,
 } from "lucide-react";
 import { SUPPORTED_LANGUAGES_LIST, getLanguage } from "@/lib/languages";
 import { CompilerSettings, SupportedLanguage, PlaygroundLayout, CloudSyncState, AuthUser } from "@/types";
@@ -38,6 +39,7 @@ interface ToolbarProps {
   onToggleSidebar: () => void;
   isSidebarOpen: boolean;
   projectName: string;
+  onProjectNameChange?: (newName: string) => void;
   compilerSettings: CompilerSettings;
   hasActiveProject?: boolean;
   onOpenSettings: () => void;
@@ -75,6 +77,7 @@ export function Toolbar({
   onToggleSidebar,
   isSidebarOpen,
   projectName,
+  onProjectNameChange,
   hasActiveProject = true,
   compilerSettings,
   onOpenSettings,
@@ -99,6 +102,23 @@ export function Toolbar({
   onUserChange,
 }: ToolbarProps) {
   const [copiedShare, setCopiedShare] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [inputName, setInputName] = useState(projectName);
+
+  useEffect(() => {
+    setInputName(projectName);
+  }, [projectName]);
+
+  const handleNameSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = inputName.trim();
+    if (trimmed && trimmed !== projectName) {
+      onProjectNameChange?.(trimmed);
+    } else {
+      setInputName(projectName);
+    }
+    setIsEditingName(false);
+  };
 
   const langDef = getLanguage(language);
   const availableCompilers = langDef.compilers;
@@ -146,11 +166,56 @@ export function Toolbar({
 
         <div className="h-4 w-[1px] bg-zinc-800 hidden sm:block" />
 
-        <div className="flex items-center gap-2 max-w-[150px] sm:max-w-[220px] truncate">
+        <div className="flex items-center gap-2 max-w-[170px] sm:max-w-[260px] truncate">
           <Terminal className={`w-3.5 h-3.5 shrink-0 ${hasActiveProject ? "text-neon-green" : "text-zinc-600"}`} />
-          <span className={`font-medium truncate ${!hasActiveProject ? "text-zinc-500 italic" : "text-zinc-200"}`}>
-            {projectName || "Sin proyectos"}
-          </span>
+          {isEditingName && hasActiveProject ? (
+            <form onSubmit={handleNameSubmit} className="flex items-center gap-1 min-w-0">
+              <input
+                type="text"
+                value={inputName}
+                onChange={(e) => setInputName(e.target.value)}
+                onBlur={() => handleNameSubmit()}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setInputName(projectName);
+                    setIsEditingName(false);
+                  }
+                }}
+                autoFocus
+                className="bg-zinc-950 border border-neon-green/80 rounded px-1.5 py-0.5 text-xs text-white focus:outline-none w-[110px] sm:w-[150px]"
+                placeholder="Nombre del proyecto"
+              />
+              <button
+                type="submit"
+                className="p-1 text-neon-green hover:bg-zinc-800 rounded"
+                aria-label="Confirmar nombre"
+              >
+                <Check className="w-3 h-3" />
+              </button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                if (hasActiveProject && onProjectNameChange) {
+                  setInputName(projectName);
+                  setIsEditingName(true);
+                }
+              }}
+              disabled={!hasActiveProject || !onProjectNameChange}
+              className={`flex items-center gap-1.5 truncate group/name text-left ${
+                hasActiveProject && onProjectNameChange ? "cursor-pointer hover:opacity-90" : "cursor-default"
+              }`}
+              title={hasActiveProject && onProjectNameChange ? "Clic para editar nombre del proyecto" : undefined}
+            >
+              <span className={`font-medium truncate ${!hasActiveProject ? "text-zinc-500 italic" : "text-zinc-200 group-hover/name:text-white transition-colors"}`}>
+                {projectName || "Sin proyectos"}
+              </span>
+              {hasActiveProject && onProjectNameChange && (
+                <Edit2 className="w-3 h-3 text-zinc-500 opacity-0 group-hover/name:opacity-100 transition-opacity shrink-0" />
+              )}
+            </button>
+          )}
           <CloudSyncStatus
             status={syncStatus}
             onPull={onPull}

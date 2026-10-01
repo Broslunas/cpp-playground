@@ -21,10 +21,12 @@ import {
   Binary,
   ArrowLeft,
   Plus,
+  ExternalLink,
 } from "lucide-react";
-import { SupportedLanguage, Project } from "@/types";
+import { SupportedLanguage, Project, AuthUser } from "@/types";
 import { getProjects, getRawLocalProjects, clearAllLocalStorage } from "@/lib/projects";
 import { fetchAuthStatus, fetchCloudProjects, pushProjectsToCloud } from "@/lib/cloud-projects";
+import { UserMenu } from "@/components/auth/UserMenu";
 
 export const ALL_LANGUAGES: SupportedLanguage[] = [
   "cpp",
@@ -365,40 +367,108 @@ export function LanguageSelector() {
 
   return (
     <div className="min-h-screen bg-[#07090e] text-zinc-100 flex flex-col font-mono selection:bg-neon-green/30 selection:text-white">
-      {/* Compact Top Navigation Bar */}
-      <header className="border-b border-zinc-800/80 bg-[#080a10] px-3 sm:px-6 py-2.5 flex items-center justify-between text-xs">
+      {/* Redesigned Sleek Header */}
+      <header className="sticky top-0 z-40 w-full border-b border-zinc-800/80 bg-[#07090e]/85 backdrop-blur-md px-3 sm:px-6 h-14 flex items-center justify-between text-xs font-mono">
+        {/* Left: Home Navigation & Brand Lockup */}
         <div className="flex items-center gap-2 sm:gap-3">
           <Link
             href="/"
-            className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors px-2 py-1 rounded bg-zinc-900 border border-zinc-800"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/60 border border-transparent hover:border-zinc-700/60 transition-all"
+            title="Volver al inicio"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Inicio</span>
+            <span className="hidden sm:inline">Inicio</span>
           </Link>
-          <span className="text-zinc-600">/</span>
-          <div className="flex items-center gap-1.5 font-semibold text-zinc-200">
-            <Terminal className="w-3.5 h-3.5 text-neon-green" />
-            <span>BROSLUNAS PLAYGROUND</span>
-            <span className="text-zinc-600">/</span>
-            <span className="text-zinc-400 font-normal">SELECTOR DE ENTORNO</span>
+
+          <div className="h-4 w-[1px] bg-zinc-800/90 hidden sm:block" />
+
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="w-7 h-7 rounded-lg overflow-hidden border border-neon-green/30 shadow-[0_0_10px_rgba(0,255,136,0.15)] flex items-center justify-center bg-zinc-950 group-hover:border-neon-green transition-all">
+              <svg viewBox="0 0 512 512" className="w-4 h-4" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M 235 110 A 145 145 0 1 0 375 295 A 120 120 0 1 1 235 110 Z"
+                  fill="url(#headerMoonGrad)"
+                />
+                <path
+                  d="M 220 195 L 285 256 L 220 317"
+                  stroke="#ffffff"
+                  strokeWidth="38"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <line
+                  x1="295"
+                  y1="317"
+                  x2="355"
+                  y2="317"
+                  stroke="#00ff88"
+                  strokeWidth="38"
+                  strokeLinecap="round"
+                />
+                <defs>
+                  <linearGradient id="headerMoonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#00ff88" />
+                    <stop offset="100%" stopColor="#00d4ff" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs">
+              <span className="font-semibold text-zinc-300 group-hover:text-neon-green transition-colors">
+                Broslunas
+              </span>
+              <span className="text-zinc-600">/</span>
+              <span className="font-bold text-white tracking-tight">Playground</span>
+              <span className="hidden md:inline-block ml-1 px-1.5 py-0.2 text-[9px] uppercase tracking-wider text-neon-green/90 bg-neon-green/10 border border-neon-green/30 rounded font-bold">
+                Hub
+              </span>
+            </div>
+          </Link>
+        </div>
+
+        {/* Center: Live Status & Hotkeys Pill */}
+        <div className="hidden lg:flex items-center gap-3 px-3 py-1 rounded-full bg-zinc-900/70 border border-zinc-800/80 text-[11px] text-zinc-400">
+          <div className="flex items-center gap-1.5">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <span className="text-zinc-300 font-medium">{ALL_LANGUAGES.length} Runtimes Online</span>
+          </div>
+          <div className="w-[1px] h-3 bg-zinc-700/60" />
+          <div className="flex items-center gap-1 text-zinc-400">
+            <span>Atajos:</span>
+            <div className="flex items-center gap-0.5">
+              {ALL_LANGUAGES.map((_, i) => (
+                <kbd key={i} className="px-1 py-0.5 rounded bg-zinc-800/90 border border-zinc-700/60 text-zinc-300 text-[10px] font-bold">
+                  {i + 1}
+                </kbd>
+              ))}
+            </div>
+            <span>•</span>
+            <kbd className="px-1.5 py-0.5 rounded bg-zinc-800/90 border border-zinc-700/60 text-zinc-300 text-[10px] font-bold">
+              Enter ↵
+            </kbd>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 text-[11px] text-zinc-400">
-          <div className="hidden sm:flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-zinc-400">{ALL_LANGUAGES.length} Runtimes Online</span>
-          </div>
-          <div className="hidden md:flex items-center gap-1 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded text-[10px]">
-            <span>Atajos:</span>
-            {ALL_LANGUAGES.map((_, i) => (
-              <kbd key={i} className="px-1 bg-zinc-800 rounded text-zinc-300 font-bold">
-                {i + 1}
-              </kbd>
-            ))}
-            <span>•</span>
-            <kbd className="px-1 bg-zinc-800 rounded text-zinc-300 font-bold">Enter</kbd>
-          </div>
+        {/* Right: Quick Links & Cloud Account */}
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <a
+            href="https://broslunas.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 transition-colors text-xs font-mono"
+          >
+            <span>broslunas.com</span>
+            <ExternalLink className="w-3 h-3 text-zinc-500" />
+          </a>
+          <UserMenu
+            compact={true}
+            onUserChange={(user) => {
+              setIsLoggedIn(Boolean(user));
+            }}
+          />
         </div>
       </header>
 

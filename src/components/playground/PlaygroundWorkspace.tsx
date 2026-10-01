@@ -451,10 +451,10 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
   }, [code, stdin, compiler, standard, compilerSettings, language, saveCurrentProject, activeProjectId]);
 
   // Project selection within current language
-  const handleSelectProject = (id: string) => {
+  const handleSelectProject = (id: string, projectList?: Project[]) => {
     saveCurrentProject();
 
-    const target = projects.find((p) => p.id === id);
+    const target = (projectList || projects).find((p) => p.id === id);
     if (target) {
       setActiveId(target.id);
       if (!authUser) {
@@ -479,15 +479,29 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
 
   // Create Project in current language
   const handleCreateProject = async () => {
+    saveCurrentProject();
+
     const langDef = getLanguage(language);
     const newProj = createProject(
       `Proyecto ${langDef.name} ${projects.length + 1}`,
-      langDef.defaultCode,
+      "",
       langDef.defaultStandard,
       "",
       DEFAULT_COMPILER_SETTINGS,
       language
     );
+
+    setActiveId(newProj.id);
+    if (!authUser) {
+      setActiveProjectId(newProj.id, language);
+    }
+    setCode("");
+    setStdin("");
+    setCompiler(newProj.compiler);
+    setStandard(newProj.options || langDef.defaultStandard);
+    setCompilerSettings(DEFAULT_COMPILER_SETTINGS);
+    setProjectName(newProj.name);
+    setOutput(null);
 
     if (authUser) {
       setSyncStatus("saving");
@@ -495,14 +509,15 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
       const finalProj = saved || newProj;
       const updated = [finalProj, ...projects];
       setProjects(updated);
-      handleSelectProject(finalProj.id);
+      if (finalProj.id !== newProj.id) {
+        setActiveId(finalProj.id);
+      }
       setSyncStatus("synced");
       showNotification("Proyecto creado en la nube ✓");
     } else {
       const updated = [newProj, ...projects];
       setProjects(updated);
       saveLanguageProjects(language, updated);
-      handleSelectProject(newProj.id);
     }
   };
 
@@ -675,14 +690,14 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
       const finalProj = saved || newProj;
       const updated = [finalProj, ...projects];
       setProjects(updated);
-      handleSelectProject(finalProj.id);
+      handleSelectProject(finalProj.id, updated);
       setSyncStatus("synced");
       showNotification(`Plantilla guardada en la nube ✓`);
     } else {
       const updated = [newProj, ...projects];
       setProjects(updated);
       saveLanguageProjects(language, updated);
-      handleSelectProject(newProj.id);
+      handleSelectProject(newProj.id, updated);
       showNotification(`Plantilla "${template.title}" cargada`);
     }
   };
@@ -925,6 +940,9 @@ export function PlaygroundWorkspace({ initialLanguage = "cpp" }: PlaygroundWorks
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           isSidebarOpen={isSidebarOpen}
           projectName={projectName}
+          onProjectNameChange={(newName) => {
+            if (activeProjectId) handleRenameProject(activeProjectId, newName);
+          }}
           hasActiveProject={Boolean(activeProjectId)}
           compilerSettings={compilerSettings}
           onOpenSettings={() => setIsSettingsOpen(true)}

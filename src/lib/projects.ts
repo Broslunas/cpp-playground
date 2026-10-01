@@ -140,3 +140,5 @@ export function createInitialProjectForLanguage(lang: SupportedLanguage): Projec
     updatedAt: Date.now(),
   };
 }
+
+
