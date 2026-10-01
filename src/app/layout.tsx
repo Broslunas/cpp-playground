@@ -50,6 +50,11 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
   },
   manifest: "/site.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Broslunas",
+  },
   openGraph: {
     type: "website",
     locale: "es_ES",
@@ -120,6 +125,11 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(e){console.warn('SW:',e);});});}`,
+          }}
         />
       </head>
       <body className="bg-[#090a0f] text-zinc-200 antialiased selection:bg-neon-green/20 selection:text-neon-green font-sans">

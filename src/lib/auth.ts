@@ -90,8 +90,12 @@ export async function verifySessionToken(token: string): Promise<AuthUser | null
           return {
             ...baseUser,
             name: doc.name || baseUser.name,
+            email: doc.email || baseUser.email,
+            isEmailPublic: Boolean(doc.isEmailPublic),
             bio: doc.bio || "",
             website: doc.website || "",
+            githubUrl: doc.githubUrl || `https://github.com/${doc.username || baseUser.username}`,
+            socials: doc.socials || {},
             availableForCollaboration: doc.availableForCollaboration ?? true,
             profileVisibility: doc.profileVisibility || "public",
             showActivity: doc.showActivity ?? true,

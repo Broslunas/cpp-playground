@@ -17,7 +17,7 @@ import {
   Maximize2,
   Minimize2,
 } from "lucide-react";
-import { CompileResponse, SupportedLanguage, ExerciseTestResult } from "@/types";
+import { CompileResponse, SupportedLanguage } from "@/types";
 import { ExerciseSolutionPanel } from "@/components/exercises/ExerciseSolutionPanel";
 
 interface OutputPanelProps {
@@ -28,12 +28,11 @@ interface OutputPanelProps {
   code?: string;
   onMaximize?: () => void;
   isMaximized?: boolean;
-  testResults?: ExerciseTestResult[];
   solution?: string;
   onLoadSolution?: () => void;
 }
 
-type TabType = "preview" | "stdout" | "stderr" | "compiler" | "tests" | "solution";
+type TabType = "preview" | "stdout" | "stderr" | "compiler" | "solution";
 
 export function OutputPanel({
   result,
@@ -43,22 +42,15 @@ export function OutputPanel({
   code = "",
   onMaximize,
   isMaximized = false,
-  testResults,
   solution,
   onLoadSolution,
 }: OutputPanelProps) {
   const isHtml = language === "html";
-  const [activeTab, setActiveTab] = useState<TabType>(() => (testResults !== undefined ? "tests" : isHtml ? "preview" : "stdout"));
+  const [activeTab, setActiveTab] = useState<TabType>(() => (isHtml ? "preview" : "stdout"));
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [consoleLogs, setConsoleLogs] = useState<Array<{ type: "log" | "error"; text: string; time: string }>>([]);
   const [iframeKey, setIframeKey] = useState(0);
-
-  useEffect(() => {
-    if (testResults !== undefined) {
-      setActiveTab("tests");
-    }
-  }, [testResults]);
 
   // Switch initial tab when language changes
   useEffect(() => {
@@ -280,27 +272,6 @@ export function OutputPanel({
                 <span className="hidden sm:inline">Compilador</span>
                 {hasCompilerOut && <span className="w-2 h-2 rounded-full bg-amber-500" />}
               </button>
-
-              {testResults !== undefined && (
-                <button
-                  role="tab"
-                  aria-selected={activeTab === "tests"}
-                  aria-controls="panel-tests"
-                  id="tab-tests"
-                  onClick={() => setActiveTab("tests")}
-                  className={`px-2 sm:px-2.5 py-1 rounded text-xs font-mono flex items-center gap-1.5 transition-colors ${
-                    activeTab === "tests"
-                      ? "bg-zinc-800 text-neon-green font-semibold"
-                      : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"
-                  }`}
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Pruebas</span>
-                  <span className="text-[10px] px-1 rounded bg-zinc-700 text-zinc-300">
-                    {testResults.filter((r) => r.passed).length}/{testResults.length}
-                  </span>
-                </button>
-              )}
 
               {solution !== undefined && (
                 <button
@@ -525,62 +496,6 @@ export function OutputPanel({
               <span className="text-zinc-600 italic">
                 (Compilación exitosa sin advertencias ni logs)
               </span>
-            )}
-          </div>
-        )}
-        {/* Tests Tab */}
-        {!isHtml && activeTab === "tests" && (
-          <div
-            id="panel-tests"
-            role="tabpanel"
-            aria-labelledby="tab-tests"
-            className="p-3 font-mono text-xs overflow-auto h-full space-y-3"
-          >
-            {!testResults || testResults.length === 0 ? (
-              <div className="text-zinc-600 italic">
-                Haz clic en &quot;Comprobar ejercicio&quot; para ejecutar los casos de prueba.
-              </div>
-            ) : (
-              testResults.map((item, idx) => (
-                <div
-                  key={idx}
-                  className={`rounded border p-2.5 space-y-1.5 ${
-                    item.passed
-                      ? "border-emerald-800/40 bg-emerald-950/20"
-                      : "border-red-800/40 bg-red-950/20"
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-semibold text-zinc-200">
-                      Caso {idx + 1}{item.testCase.label ? ` · ${item.testCase.label}` : ""}
-                    </span>
-                    <span
-                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                        item.passed
-                          ? "bg-emerald-900/60 text-neon-green"
-                          : "bg-red-900/60 text-red-300"
-                      }`}
-                    >
-                      {item.passed ? "CORRECTO" : "INCORRECTO"}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px]">
-                    <div>
-                      <p className="text-[10px] text-zinc-500 mb-0.5">Esperado</p>
-                      <pre className="p-1.5 rounded bg-black/50 text-neon-green whitespace-pre-wrap">
-                        {item.testCase.expectedOutput}
-                      </pre>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-zinc-500 mb-0.5">Obtenido</p>
-                      <pre className="p-1.5 rounded bg-black/50 text-zinc-200 whitespace-pre-wrap">
-                        {item.actualOutput || (item.error ? `Error: ${item.error}` : "(vacío)")}
-                      </pre>
-                    </div>
-                  </div>
-                </div>
-              ))
             )}
           </div>
         )}

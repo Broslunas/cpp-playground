@@ -70,8 +70,6 @@ interface ToolbarProps {
   authUser?: AuthUser | null;
   onUserChange?: (user: AuthUser | null) => void;
   exercise?: CppExercise | null;
-  onRunTests?: () => void;
-  isTesting?: boolean;
   onToggleExerciseDetails?: () => void;
   isExerciseDetailsOpen?: boolean;
 }
@@ -113,8 +111,6 @@ export function Toolbar({
   authUser,
   onUserChange,
   exercise,
-  onRunTests,
-  isTesting = false,
   onToggleExerciseDetails,
   isExerciseDetailsOpen = false,
 }: ToolbarProps) {
@@ -160,6 +156,28 @@ export function Toolbar({
     (compilerSettings.sanitizers.length > 0 ||
       compilerSettings.optimization !== "-O2" ||
       compilerSettings.customFlags.trim().length > 0);
+
+  // PWA install prompt handler
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    await deferredPrompt.prompt();
+    const choice = await deferredPrompt.userChoice;
+    if (choice?.outcome === "accepted") {
+      setDeferredPrompt(null);
+    }
+  };
 
   return (
     <header className="h-14 border-b border-zinc-800 bg-[#090a0f] px-3 sm:px-4 flex items-center justify-between gap-3 select-none font-mono text-xs">
@@ -419,29 +437,6 @@ export function Toolbar({
           <Save className="w-3.5 h-3.5" />
         </button>
 
-        {/* Comprobar Ejercicio Button */}
-        {exercise && onRunTests && (
-          <button
-            type="button"
-            onClick={onRunTests}
-            disabled={isRunning || isTesting || !hasActiveProject}
-            className="px-3.5 py-1.5 rounded bg-cyan-400 text-black font-semibold text-xs flex items-center gap-1.5 hover:bg-cyan-300 transition-all shadow-[0_0_15px_rgba(34,211,238,0.3)] focus:outline-none shrink-0 disabled:opacity-40"
-            title="Comprobar todos los casos de prueba del ejercicio"
-          >
-            {isTesting ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Comprobando...</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Comprobar</span>
-              </>
-            )}
-          </button>
-        )}
-
         {/* Run Button (Primary CTA) */}
         <button
           onClick={onRun}
@@ -495,6 +490,19 @@ export function Toolbar({
             <Maximize2 className="w-3.5 h-3.5" />
           )}
         </button>
+
+        {/* PWA Install Button */}
+        {deferredPrompt && (
+          <button
+            onClick={handleInstallClick}
+            className="flex items-center gap-1.5 px-2 py-1 rounded bg-neon-green/15 text-neon-green border border-neon-green/40 hover:bg-neon-green/25 text-xs font-semibold transition-all shadow-[0_0_10px_rgba(0,255,136,0.15)]"
+            title="Instalar Broslunas Playground como aplicación"
+            aria-label="Instalar app"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Instalar</span>
+          </button>
+        )}
 
         <div className="h-4 w-[1px] bg-zinc-800 hidden sm:block" />
 

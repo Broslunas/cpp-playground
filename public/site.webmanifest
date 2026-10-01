@@ -2,24 +2,51 @@
   "name": "Broslunas Playground",
   "short_name": "Broslunas",
   "description": "Playground moderno e interactivo para compilar y ejecutar C++, Python, JavaScript, TypeScript, Bash y HTML en tiempo real.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#00ff88",
+  "background_color": "#090a0f",
+  "categories": ["developer", "education", "utilities"],
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/android-chrome-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/favicon.svg",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
-  "theme_color": "#00ff88",
-  "background_color": "#090a0f",
-  "display": "standalone"
+  "shortcuts": [
+    {
+      "name": "Nuevo Playground",
+      "url": "/",
+      "description": "Abrir nuevo editor de código"
+    }
+  ]
 }

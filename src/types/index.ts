@@ -89,6 +89,13 @@ export interface UserSecurityConfig {
   activeSessionsCount: number;
 }
 
+export interface SocialLinks {
+  twitter?: string;
+  linkedin?: string;
+  discord?: string;
+  youtube?: string;
+}
+
 export interface AuthUser {
   id: string;
   githubId?: string;
@@ -96,8 +103,11 @@ export interface AuthUser {
   name: string;
   avatarUrl: string;
   email?: string;
+  isEmailPublic?: boolean;
   bio?: string;
   website?: string;
+  githubUrl?: string;
+  socials?: SocialLinks;
   availableForCollaboration?: boolean;
   profileVisibility?: ProfileVisibility;
   showActivity?: boolean;
@@ -113,6 +123,9 @@ export interface PublicUserProfile {
   avatarUrl: string;
   bio?: string;
   website?: string;
+  githubUrl?: string;
+  publicEmail?: string;
+  socials?: SocialLinks;
   availableForCollaboration: boolean;
   profileVisibility: ProfileVisibility;
   showActivity: boolean;
@@ -201,10 +214,4 @@ export interface CppExercise {
   testCases: ExerciseTestCase[];
 }
 
-export interface ExerciseTestResult {
-  testCase: ExerciseTestCase;
-  actualOutput: string;
-  passed: boolean;
-  error?: string;
-}
 

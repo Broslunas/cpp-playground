@@ -5,17 +5,23 @@ import { Metadata } from "next";
 import { getDb, isMongoConfigured } from "@/lib/mongodb";
 import { getCodeFromR2, isR2Configured } from "@/lib/r2";
 import { PublicUserProfile, PublicProjectCard } from "@/types";
+import { UserMenu } from "@/components/auth/UserMenu";
 import {
   User,
   Globe,
   Calendar,
   Code2,
   FolderCode,
-  Sparkles,
   ExternalLink,
   ArrowLeft,
   Lock,
   Layers,
+  Mail,
+  Github,
+  Twitter,
+  Linkedin,
+  MessageSquare,
+  Youtube,
 } from "lucide-react";
 
 interface Props {
@@ -102,6 +108,9 @@ async function getProfileData(username: string): Promise<PublicUserProfile | nul
       avatarUrl: userDoc.avatarUrl || "",
       bio: userDoc.bio || "",
       website: userDoc.website || "",
+      githubUrl: userDoc.githubUrl || `https://github.com/${userDoc.username}`,
+      publicEmail: userDoc.isEmailPublic && userDoc.email ? userDoc.email : undefined,
+      socials: userDoc.socials || {},
       availableForCollaboration: userDoc.availableForCollaboration ?? true,
       profileVisibility: visibility,
       showActivity: userDoc.showActivity ?? true,
@@ -169,12 +178,9 @@ export default async function PublicProfilePage({ params }: Props) {
             Broslunas <span className="text-neon-green">Playground</span>
           </Link>
 
-          <Link
-            href="/login"
-            className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 hover:border-neon-green text-xs font-semibold text-zinc-200 hover:text-white transition-colors"
-          >
-            Acceder
-          </Link>
+          <div className="flex items-center gap-3">
+            <UserMenu compact />
+          </div>
         </div>
       </header>
 
@@ -239,8 +245,36 @@ export default async function PublicProfilePage({ params }: Props) {
                 </p>
               )}
 
-              {/* Enlaces y Metadatos */}
-              <div className="mt-5 pt-4 border-t border-zinc-800/80 space-y-2 text-xs text-zinc-400 font-sans">
+              {/* Enlaces, Redes y Metadatos */}
+              <div className="mt-5 pt-4 border-t border-zinc-800/80 space-y-2.5 text-xs text-zinc-400 font-sans">
+                {/* Botón de GitHub */}
+                {profile.githubUrl && (
+                  <a
+                    href={profile.githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-2 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-200 hover:text-white transition-all group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Github className="w-4 h-4 text-white" />
+                      <span className="font-mono text-xs font-semibold">GitHub</span>
+                    </div>
+                    <ExternalLink className="w-3 h-3 text-zinc-500 group-hover:text-white transition-colors" />
+                  </a>
+                )}
+
+                {/* Correo público */}
+                {profile.publicEmail && (
+                  <a
+                    href={`mailto:${profile.publicEmail}`}
+                    className="flex items-center gap-2 hover:text-neon-green transition-colors truncate"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                    <span className="truncate">{profile.publicEmail}</span>
+                  </a>
+                )}
+
+                {/* Sitio web */}
                 {profile.website && (
                   <a
                     href={profile.website}
@@ -251,6 +285,54 @@ export default async function PublicProfilePage({ params }: Props) {
                     <Globe className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                     <span className="truncate">{profile.website.replace(/^https?:\/\//, "")}</span>
                   </a>
+                )}
+
+                {/* Otras Redes Sociales */}
+                {profile.socials && Object.values(profile.socials).some(Boolean) && (
+                  <div className="pt-2 border-t border-zinc-800/60 space-y-1.5">
+                    {profile.socials.twitter && (
+                      <a
+                        href={profile.socials.twitter.startsWith("http") ? profile.socials.twitter : `https://x.com/${profile.socials.twitter.replace(/^@/, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+                      >
+                        <Twitter className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                        <span className="truncate">{profile.socials.twitter.replace(/^https?:\/\/(x|twitter)\.com\//, "@")}</span>
+                      </a>
+                    )}
+
+                    {profile.socials.linkedin && (
+                      <a
+                        href={profile.socials.linkedin.startsWith("http") ? profile.socials.linkedin : `https://linkedin.com/in/${profile.socials.linkedin}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+                      >
+                        <Linkedin className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                        <span className="truncate">LinkedIn</span>
+                      </a>
+                    )}
+
+                    {profile.socials.discord && (
+                      <div className="flex items-center gap-2 text-zinc-400">
+                        <MessageSquare className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                        <span className="truncate">{profile.socials.discord}</span>
+                      </div>
+                    )}
+
+                    {profile.socials.youtube && (
+                      <a
+                        href={profile.socials.youtube.startsWith("http") ? profile.socials.youtube : `https://youtube.com/@${profile.socials.youtube.replace(/^@/, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+                      >
+                        <Youtube className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                        <span className="truncate">YouTube</span>
+                      </a>
+                    )}
+                  </div>
                 )}
 
                 <div className="flex items-center gap-2 text-zinc-500 text-[11px] pt-1">

@@ -19,6 +19,11 @@ import {
   Lock,
   Eye,
   FolderOpen,
+  Mail,
+  Twitter,
+  Linkedin,
+  MessageSquare,
+  Youtube,
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -32,6 +37,11 @@ export default function ProfilePage() {
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [website, setWebsite] = useState("");
+  const [isEmailPublic, setIsEmailPublic] = useState(false);
+  const [twitter, setTwitter] = useState("");
+  const [linkedin, setLinkedin] = useState("");
+  const [discord, setDiscord] = useState("");
+  const [youtube, setYoutube] = useState("");
   const [availableForCollaboration, setAvailable] = useState(true);
   const [profileVisibility, setProfileVisibility] = useState<"public" | "unlisted" | "private">("public");
   const [showActivity, setShowActivity] = useState(true);
@@ -46,6 +56,11 @@ export default function ProfilePage() {
         setName(res.user.name || "");
         setBio(res.user.bio || "");
         setWebsite(res.user.website || "");
+        setIsEmailPublic(Boolean(res.user.isEmailPublic));
+        setTwitter(res.user.socials?.twitter || "");
+        setLinkedin(res.user.socials?.linkedin || "");
+        setDiscord(res.user.socials?.discord || "");
+        setYoutube(res.user.socials?.youtube || "");
         setAvailable(res.user.availableForCollaboration ?? true);
         setProfileVisibility(res.user.profileVisibility || "public");
         setShowActivity(res.user.showActivity ?? true);
@@ -75,6 +90,13 @@ export default function ProfilePage() {
           name,
           bio,
           website,
+          isEmailPublic,
+          socials: {
+            twitter,
+            linkedin,
+            discord,
+            youtube,
+          },
           availableForCollaboration,
           profileVisibility,
           showActivity,
@@ -269,6 +291,78 @@ export default function ProfilePage() {
                   placeholder="https://tudominio.com"
                   className="w-full px-3 py-2 rounded-lg bg-black/60 border border-zinc-700/80 focus:border-neon-green focus:outline-none text-zinc-200"
                 />
+              </div>
+
+              {/* Correo Público */}
+              <div className="pt-2 border-t border-zinc-800/60">
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isEmailPublic}
+                    onChange={(e) => setIsEmailPublic(e.target.checked)}
+                    className="accent-[#00ff88]"
+                  />
+                  <div>
+                    <span className="text-zinc-200 font-semibold">Hacer visible mi correo en el perfil público</span>
+                    <p className="text-[10px] text-zinc-500 font-sans">
+                      {user.email ? `Mostrará "${user.email}" a los visitantes.` : "Actualmente no tienes correo configurado."}
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              {/* Redes Sociales */}
+              <div className="pt-2 border-t border-zinc-800/60 space-y-3">
+                <div className="font-semibold text-zinc-300">Otras Redes Sociales</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-zinc-500 text-[11px] mb-1">X / Twitter</label>
+                    <input
+                      type="text"
+                      value={twitter}
+                      onChange={(e) => setTwitter(e.target.value)}
+                      placeholder="@usuario o URL"
+                      maxLength={100}
+                      className="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-zinc-700/80 focus:border-neon-green focus:outline-none text-zinc-200"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-500 text-[11px] mb-1">LinkedIn</label>
+                    <input
+                      type="text"
+                      value={linkedin}
+                      onChange={(e) => setLinkedin(e.target.value)}
+                      placeholder="usuario o URL"
+                      maxLength={100}
+                      className="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-zinc-700/80 focus:border-neon-green focus:outline-none text-zinc-200"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-500 text-[11px] mb-1">Discord</label>
+                    <input
+                      type="text"
+                      value={discord}
+                      onChange={(e) => setDiscord(e.target.value)}
+                      placeholder="nombre#0000 o @usuario"
+                      maxLength={100}
+                      className="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-zinc-700/80 focus:border-neon-green focus:outline-none text-zinc-200"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-zinc-500 text-[11px] mb-1">YouTube</label>
+                    <input
+                      type="text"
+                      value={youtube}
+                      onChange={(e) => setYoutube(e.target.value)}
+                      placeholder="@canal o URL"
+                      maxLength={100}
+                      className="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-zinc-700/80 focus:border-neon-green focus:outline-none text-zinc-200"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -30,6 +30,8 @@ export async function PATCH(request: Request) {
       name,
       bio,
       website,
+      isEmailPublic,
+      socials,
       availableForCollaboration,
       profileVisibility,
       showActivity,
@@ -51,6 +53,17 @@ export async function PATCH(request: Request) {
       } else {
         return NextResponse.json({ error: "La URL debe comenzar con http:// o https://" }, { status: 400 });
       }
+    }
+    if (isEmailPublic !== undefined) {
+      updateDoc.isEmailPublic = Boolean(isEmailPublic);
+    }
+    if (socials && typeof socials === "object") {
+      updateDoc.socials = {
+        twitter: socials.twitter ? String(socials.twitter).trim().slice(0, 100) : "",
+        linkedin: socials.linkedin ? String(socials.linkedin).trim().slice(0, 100) : "",
+        discord: socials.discord ? String(socials.discord).trim().slice(0, 100) : "",
+        youtube: socials.youtube ? String(socials.youtube).trim().slice(0, 100) : "",
+      };
     }
     if (availableForCollaboration !== undefined) {
       updateDoc.availableForCollaboration = Boolean(availableForCollaboration);
