@@ -20,8 +20,10 @@ import {
   Check,
 } from "lucide-react";
 import { SUPPORTED_LANGUAGES_LIST, getLanguage } from "@/lib/languages";
-import { CompilerSettings, SupportedLanguage, PlaygroundLayout } from "@/types";
+import { CompilerSettings, SupportedLanguage, PlaygroundLayout, CloudSyncState, AuthUser } from "@/types";
 import { LayoutSelector } from "@/components/playground/LayoutSelector";
+import { CloudSyncStatus } from "@/components/playground/CloudSyncStatus";
+import { UserMenu } from "@/components/auth/UserMenu";
 
 interface ToolbarProps {
   onRun: () => void;
@@ -51,6 +53,10 @@ interface ToolbarProps {
   onToggleStdin: () => void;
   onResetSizes: () => void;
   onOpenCustomModal?: () => void;
+  syncStatus?: CloudSyncState;
+  onManualSync?: () => void;
+  authUser?: AuthUser | null;
+  onUserChange?: (user: AuthUser | null) => void;
 }
 
 export function Toolbar({
@@ -81,6 +87,10 @@ export function Toolbar({
   onToggleStdin,
   onResetSizes,
   onOpenCustomModal,
+  syncStatus = "idle",
+  onManualSync,
+  authUser,
+  onUserChange,
 }: ToolbarProps) {
   const [copiedShare, setCopiedShare] = useState(false);
 
@@ -277,6 +287,13 @@ export function Toolbar({
 
         <div className="h-4 w-[1px] bg-zinc-800 hidden sm:block" />
 
+        {/* Cloud Sync Status */}
+        <CloudSyncStatus
+          status={syncStatus}
+          onManualSync={onManualSync}
+          isLoggedIn={Boolean(authUser)}
+        />
+
         {/* Save Button */}
         <button
           onClick={onSave}
@@ -342,6 +359,11 @@ export function Toolbar({
             <Maximize2 className="w-3.5 h-3.5" />
           )}
         </button>
+
+        <div className="h-4 w-[1px] bg-zinc-800 hidden sm:block" />
+
+        {/* User Account / Login */}
+        <UserMenu compact onUserChange={onUserChange} />
       </div>
     </header>
   );

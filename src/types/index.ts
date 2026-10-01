@@ -48,7 +48,20 @@ export interface Project {
   settings?: CompilerSettings;
   createdAt: number;
   updatedAt: number;
+  syncedAt?: number;
+  isCloud?: boolean;
 }
+
+export interface AuthUser {
+  id: string;
+  githubId: string;
+  username: string;
+  name: string;
+  avatarUrl: string;
+  email?: string;
+}
+
+export type CloudSyncState = "idle" | "saving" | "synced" | "error" | "offline";
 
 export interface CompileRequest {
   language?: SupportedLanguage;

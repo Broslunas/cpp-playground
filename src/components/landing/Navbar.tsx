@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Terminal, Play, ExternalLink, Sparkles, Code2 } from "lucide-react";
+import { UserMenu } from "@/components/auth/UserMenu";
 
 export function Navbar() {
   return (
@@ -69,8 +70,9 @@ export function Navbar() {
           </a>
         </nav>
 
-        {/* Action button */}
+        {/* Action button & User */}
         <div className="flex items-center gap-3">
+          <UserMenu />
           <Link
             href="/playground"
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-neon-green text-black font-mono font-bold text-xs hover:bg-[#00e67a] transition-all transform hover:scale-[1.02] shadow-[0_0_15px_rgba(0,255,136,0.3)]"

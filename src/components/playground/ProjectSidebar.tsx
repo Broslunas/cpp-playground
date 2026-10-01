@@ -10,6 +10,8 @@ import {
   FileCode,
   Download,
   FolderOpen,
+  Cloud,
+  CloudUpload,
 } from "lucide-react";
 import { Project } from "@/types";
 import { getLanguage } from "@/lib/languages";
@@ -25,6 +27,8 @@ interface ProjectSidebarProps {
   onClose: () => void;
   width?: number;
   languageName?: string;
+  isLoggedIn?: boolean;
+  onSyncAllToCloud?: () => void;
 }
 
 export function ProjectSidebar({
@@ -38,6 +42,8 @@ export function ProjectSidebar({
   onClose,
   width = 260,
   languageName,
+  isLoggedIn = false,
+  onSyncAllToCloud,
 }: ProjectSidebarProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -80,17 +86,29 @@ export function ProjectSidebar({
       <div className="p-3 border-b border-zinc-800 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 text-xs font-mono font-semibold text-zinc-300">
           <FolderOpen className="w-4 h-4 text-neon-green" />
-          <span>PROYECTOS {languageName ? languageName.toUpperCase() : "LOCALES"}</span>
+          <span>PROYECTOS {languageName ? languageName.toUpperCase() : ""}</span>
         </div>
-        <button
-          onClick={onCreateProject}
-          className="px-2 py-1 bg-neon-green/10 border border-neon-green/30 text-neon-green hover:bg-neon-green hover:text-black rounded text-xs font-mono flex items-center gap-1 transition-colors"
-          title="Crear nuevo proyecto"
-          aria-label="Crear nuevo proyecto"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Nuevo</span>
-        </button>
+        <div className="flex items-center gap-1.5">
+          {isLoggedIn && onSyncAllToCloud && (
+            <button
+              onClick={onSyncAllToCloud}
+              className="p-1 text-zinc-400 hover:text-cyan-400 hover:bg-zinc-800 rounded transition-colors"
+              title="Sincronizar todos los proyectos a la nube"
+              aria-label="Sincronizar proyectos a la nube"
+            >
+              <CloudUpload className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <button
+            onClick={onCreateProject}
+            className="px-2 py-1 bg-neon-green/10 border border-neon-green/30 text-neon-green hover:bg-neon-green hover:text-black rounded text-xs font-mono flex items-center gap-1 transition-colors"
+            title="Crear nuevo proyecto"
+            aria-label="Crear nuevo proyecto"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Nuevo</span>
+          </button>
+        </div>
       </div>
 
       {/* Projects List */}
@@ -161,6 +179,11 @@ export function ProjectSidebar({
                         }`}
                       />
                       <span className="truncate">{project.name}</span>
+                      {project.isCloud && (
+                        <span title="Sincronizado en la nube" className="inline-flex">
+                          <Cloud className="w-3 h-3 text-cyan-400/80 shrink-0" />
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
